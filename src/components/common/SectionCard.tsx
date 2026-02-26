@@ -17,8 +17,8 @@ export function SectionCard({
   headerAction
 }: SectionCardProps) {
   return (
-    <Card className={cn("border-border/70", className)}>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+    <Card className={cn("border-border/80 shadow-md", className)}>
+      <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-border/40 pb-4">
         <div>
           <CardTitle className="text-sm font-heading sm:text-base">
             {title}

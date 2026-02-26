@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
 import { partners } from "@/mock-data/partners";
 import { drivers } from "@/mock-data/drivers";
 import { rides } from "@/mock-data/rides";
@@ -48,29 +51,38 @@ export default function AdminPartnerDetailPage() {
   return (
     <AppShell title={`Partner • ${partner.name}`}>
       <PageContainer>
+        <div className="mb-4 flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/admin/partners" className="gap-1.5">
+              <ArrowLeft className="h-4 w-4" />
+              Back to partners
+            </Link>
+          </Button>
+        </div>
         <div className="grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Partner profile"
+            description="Core details for this fleet partner"
             className="lg:col-span-2"
           >
             <div className="grid gap-4 sm:grid-cols-2 text-sm">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Name</p>
-                <p className="font-medium">{partner.name}</p>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
+                <p className="mt-0.5 font-heading font-medium">{partner.name}</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">City</p>
-                <p className="font-medium">{partner.city}</p>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">City</p>
+                <p className="mt-0.5 font-heading font-medium">{partner.city}</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Status</p>
-                <StatusBadge status={partner.status} />
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
+                <div className="mt-0.5">
+                  <StatusBadge status={partner.status} />
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Created at
-                </p>
-                <p className="font-medium">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Created at</p>
+                <p className="mt-0.5 font-heading font-medium">
                   {new Date(partner.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -82,29 +94,17 @@ export default function AdminPartnerDetailPage() {
             description="High level metrics for this partner across your marketplace."
           >
             <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">
-                  Drivers (same city)
-                </span>
-                <span className="font-semibold">
-                  {partnerDrivers.length}
-                </span>
+              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                <span className="text-muted-foreground">Drivers (same city)</span>
+                <span className="font-heading font-semibold">{partnerDrivers.length}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">
-                  Completed rides
-                </span>
-                <span className="font-semibold">
-                  {completedRides.length}
-                </span>
+              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                <span className="text-muted-foreground">Completed rides</span>
+                <span className="font-heading font-semibold">{completedRides.length}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">
-                  Gross fares (mock)
-                </span>
-                <span className="font-semibold">
-                  ${Math.round(totalFare)}
-                </span>
+              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                <span className="text-muted-foreground">Gross fares (mock)</span>
+                <span className="font-heading font-semibold">${Math.round(totalFare)}</span>
               </div>
             </div>
           </SectionCard>
@@ -117,12 +117,11 @@ export default function AdminPartnerDetailPage() {
           >
             <ol className="space-y-3 text-xs">
               {partner.statusHistory.map((entry) => (
-                <li key={entry.changedAt} className="flex gap-2">
-                  <div className="mt-0.5 h-2 w-2 rounded-full bg-emerald-500" />
-                  <div>
-                    <p className="font-medium">
-                      {entry.status} •{" "}
-                      {new Date(entry.changedAt).toLocaleDateString()}
+                <li key={entry.changedAt} className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                  <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                  <div className="min-w-0">
+                    <p className="font-heading font-medium">
+                      {entry.status} • {new Date(entry.changedAt).toLocaleDateString()}
                     </p>
                     <p className="text-[0.7rem] text-muted-foreground">
                       by user {entry.changedByUserId}
@@ -147,7 +146,7 @@ export default function AdminPartnerDetailPage() {
                 {partnerRides.slice(0, 6).map((ride) => (
                   <div
                     key={ride.id}
-                    className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2"
+                    className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50"
                   >
                     <div>
                       <p className="font-medium">

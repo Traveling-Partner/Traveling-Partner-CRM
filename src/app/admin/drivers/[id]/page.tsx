@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -76,30 +78,41 @@ export default function AdminDriverDetailPage() {
   return (
     <AppShell title={`Driver • ${driver.name}`}>
       <PageContainer>
+        <div className="mb-4 flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/admin/drivers" className="gap-1.5">
+              <ArrowLeft className="h-4 w-4" />
+              Back to drivers
+            </Link>
+          </Button>
+        </div>
         <div className="grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Personal information"
+            description="Contact and status for this driver"
             className="lg:col-span-2"
           >
             {loading ? (
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full rounded-lg" />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1 text-sm">
-                  <p className="text-xs text-muted-foreground">Full name</p>
-                  <p className="font-medium">{driver.name}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Full name</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver.name}</p>
                 </div>
-                <div className="space-y-1 text-sm">
-                  <p className="text-xs text-muted-foreground">Phone</p>
-                  <p className="font-medium">{driver.phone}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver.phone}</p>
                 </div>
-                <div className="space-y-1 text-sm">
-                  <p className="text-xs text-muted-foreground">City</p>
-                  <p className="font-medium">{driver.city}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">City</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver.city}</p>
                 </div>
-                <div className="space-y-1 text-sm">
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <StatusBadge status={driver.status} />
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
+                  <div className="mt-0.5">
+                    <StatusBadge status={driver.status} />
+                  </div>
                 </div>
               </div>
             )}

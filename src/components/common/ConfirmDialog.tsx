@@ -20,6 +20,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   icon?: ReactNode;
+  children?: ReactNode;
 }
 
 export function ConfirmDialog({
@@ -31,7 +32,8 @@ export function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   destructive,
-  icon
+  icon,
+  children
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -53,6 +55,7 @@ export function ConfirmDialog({
             </div>
           </div>
         </DialogHeader>
+        {children && <div className="mt-3">{children}</div>}
         <DialogFooter className="mt-4">
           <DialogClose asChild>
             <Button variant="outline">{cancelLabel}</Button>
