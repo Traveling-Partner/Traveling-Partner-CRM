@@ -76,12 +76,17 @@ html.dark body {
   color: hsl(var(--foreground));
 }
 
-/* Breadcrumbs: no list numbers or bullets */
-[aria-label="Breadcrumb"] ol,
-[aria-label="Breadcrumb"] ol li {
+/* Breadcrumbs: no list numbers or bullets (works even before Tailwind utilities load) */
+nav[aria-label="Breadcrumb"] ol,
+nav[aria-label="Breadcrumb"] ol li,
+ol.breadcrumb-list,
+ol.breadcrumb-list li {
   list-style: none !important;
   list-style-type: none !important;
-  padding-left: 0;
-  margin: 0;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+nav[aria-label="Breadcrumb"] ol {
+  counter-reset: none !important;
 }
 

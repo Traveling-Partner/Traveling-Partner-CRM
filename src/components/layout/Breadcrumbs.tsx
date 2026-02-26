@@ -33,7 +33,7 @@ export function Breadcrumbs() {
 
   return (
     <nav className="flex items-center text-xs text-muted-foreground" aria-label="Breadcrumb">
-      <ol className="inline-flex list-none flex-wrap items-center gap-1 pl-0">
+      <ol className="breadcrumb-list inline-flex list-none flex-wrap items-center gap-1 pl-0">
         <li>
           <Link
             href="/"
