@@ -33,26 +33,24 @@ export function Breadcrumbs() {
 
   return (
     <nav className="flex items-center text-xs text-muted-foreground" aria-label="Breadcrumb">
-      <ol className="inline-flex items-center gap-1">
+      <ol className="inline-flex list-none flex-wrap items-center gap-1 pl-0">
         <li>
           <Link
             href="/"
-            className="hover:text-foreground transition-colors"
+            className="transition-colors hover:text-foreground"
           >
             Home
           </Link>
         </li>
         {items.map((item) => (
           <li key={item.href} className="flex items-center gap-1">
-            <ChevronRight className="h-3 w-3 opacity-60" />
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
             {item.isLast ? (
               <span className="font-medium text-foreground">{item.label}</span>
             ) : (
               <Link
                 href={item.href}
-                className={cn(
-                  "hover:text-foreground transition-colors"
-                )}
+                className="transition-colors hover:text-foreground"
               >
                 {item.label}
               </Link>

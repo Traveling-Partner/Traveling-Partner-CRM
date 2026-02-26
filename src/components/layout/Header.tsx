@@ -26,7 +26,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const isDark = theme === "dark";
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background/70 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-border/80 bg-card/95 px-4 shadow-sm backdrop-blur-md md:px-6">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"

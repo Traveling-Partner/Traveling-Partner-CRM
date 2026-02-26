@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import "./globals.css";
 import { Poppins, Montserrat } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -27,12 +28,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="h-full">
       <body
-        className={`${poppins.variable} ${montserrat.variable} font-body antialiased`}
+        className={`${poppins.variable} ${montserrat.variable} min-h-full font-body antialiased bg-background text-foreground`}
+        style={
+          {
+            // Fallback so styles persist on back/forward navigation
+            backgroundColor: "hsl(var(--background))",
+            color: "hsl(var(--foreground))"
+          } as CSSProperties
+        }
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="traveling-partner-theme">
+          <div className="min-h-full bg-background text-foreground">
+            {children}
+          </div>
           <Toaster position="top-right" />
         </ThemeProvider>
       </body>

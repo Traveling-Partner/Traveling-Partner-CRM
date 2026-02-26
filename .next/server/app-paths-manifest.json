@@ -1,8 +1,13 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
+  "/agent/commissions/page": "app/agent/commissions/page.js",
+  "/agent/profile/page": "app/agent/profile/page.js",
+  "/agent/listings/page": "app/agent/listings/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
   "/admin/drivers/page": "app/admin/drivers/page.js",
-  "/admin/partners/[id]/page": "app/admin/partners/[id]/page.js",
+  "/agent/dashboard/page": "app/agent/dashboard/page.js",
+  "/admin/partners/page": "app/admin/partners/page.js",
+  "/admin/agents/page": "app/admin/agents/page.js",
+  "/page": "app/page.js",
+  "/admin/documents/page": "app/admin/documents/page.js",
   "/(auth)/login/page": "app/(auth)/login/page.js"
 }

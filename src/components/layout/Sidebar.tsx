@@ -69,32 +69,27 @@ export function Sidebar({
   const sidebarContent = (
     <div
       className={cn(
-        "flex h-full flex-col border-r bg-background/80 backdrop-blur-sm",
-        "transition-all duration-200",
+        "flex h-screen flex-col border-r border-border/80 bg-card shadow-lg",
+        "overflow-y-auto overflow-x-hidden transition-[width] duration-200 ease-out",
         collapsed ? "w-[4.25rem]" : "w-64"
       )}
     >
-      <div className="flex h-16 items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813]" />
+      <div className="flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border/60 px-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813] shadow-sm" />
           {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Traveling Partner
-              </span>
-              <span className="text-sm font-heading font-semibold">
-                Partner Portal
-              </span>
-            </div>
+            <span className="truncate text-sm font-heading font-semibold">
+              Traveling Partner Portal
+            </span>
           )}
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="hidden md:inline-flex"
+          className="hidden shrink-0 md:inline-flex"
           onClick={onToggleCollapsed}
+          aria-label="Collapse sidebar"
         >
-          <span className="sr-only">Toggle sidebar</span>
           <div
             className={cn(
               "h-3 w-3 border-b-2 border-l-2 border-muted-foreground transition-transform",
@@ -104,18 +99,18 @@ export function Sidebar({
         </Button>
       </div>
 
-      <nav className="flex-1 space-y-1 px-2 py-2">
+      <nav className="flex-1 space-y-0.5 px-2 py-3" role="navigation">
         {items.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && item.href !== "/agent/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
-                "hover:bg-muted/70",
+                "group flex items-center gap-2 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
+                "hover:bg-muted/80",
                 isActive
-                  ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 shadow-sm"
+                  ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 shadow-md"
                   : "text-muted-foreground"
               )}
               onClick={() => onMobileOpenChange(false)}
@@ -136,12 +131,12 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <div className="hidden h-full md:block">{sidebarContent}</div>
+      {/* Desktop: fixed vertical sidebar */}
+      <div className="hidden md:block">{sidebarContent}</div>
 
-      {/* Mobile drawer */}
+      {/* Mobile: drawer overlay */}
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="p-0 sm:max-w-xs md:hidden">
+        <DialogContent className="max-h-[90dvh] w-[min(18rem,100vw-2rem)] overflow-hidden p-0 md:hidden [&>div]:max-h-[90dvh]">
           {sidebarContent}
         </DialogContent>
       </Dialog>

@@ -334,23 +334,26 @@ export default function DocumentsQueuePage() {
           description={
             decisionType === "APPROVE"
               ? "This will mark the driver's documents as approved in a real environment. This sandbox does not persist changes."
-              : undefined
+              : "Optionally provide a reason for rejection. This sandbox does not persist changes."
           }
+          confirmLabel={decisionType === "APPROVE" ? "Approve" : "Reject"}
           destructive={decisionType === "REJECT"}
+          children={
+            decisionType === "REJECT" ? (
+              <div className="rounded-lg border border-border/80 bg-muted/40 p-3">
+                <label className="mb-2 block text-xs font-medium text-foreground">
+                  Rejection reason (optional)
+                </label>
+                <Input
+                  placeholder="e.g. Document expired or unclear"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="bg-background"
+                />
+              </div>
+            ) : undefined
+          }
         />
-
-        {decisionType === "REJECT" && decisionDialogOpen && (
-          <div className="mt-3 max-w-md rounded-lg border border-dashed border-red-500/40 bg-red-500/5 p-3 text-xs">
-            <p className="mb-1 font-medium text-red-600 dark:text-red-400">
-              Rejection reason (mock)
-            </p>
-            <Input
-              placeholder="Provide a short reason for rejecting these documents"
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-            />
-          </div>
-        )}
       </PageContainer>
     </AppShell>
   );
