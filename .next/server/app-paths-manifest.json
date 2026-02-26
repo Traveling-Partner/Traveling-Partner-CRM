@@ -1,0 +1,8 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/drivers/page": "app/admin/drivers/page.js",
+  "/admin/partners/[id]/page": "app/admin/partners/[id]/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
+}
