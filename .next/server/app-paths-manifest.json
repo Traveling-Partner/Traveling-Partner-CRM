@@ -1,8 +1,5 @@
 {
-  "/admin/drivers/page": "app/admin/drivers/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/partners/page": "app/admin/partners/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/documents/page": "app/admin/documents/page.js",
   "/(auth)/login/page": "app/(auth)/login/page.js"
 }
