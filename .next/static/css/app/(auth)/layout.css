@@ -630,6 +630,9 @@ video {
 .block {
   display: block;
 }
+.inline {
+  display: inline;
+}
 .flex {
   display: flex;
 }
@@ -847,6 +850,9 @@ video {
 }
 .rotate-45 {
   --tw-rotate: 45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 @keyframes pulse {
@@ -1626,13 +1632,18 @@ html.dark body {
   color: hsl(var(--foreground));
 }
 
-/* Breadcrumbs: no list numbers or bullets */
-[aria-label="Breadcrumb"] ol,
-[aria-label="Breadcrumb"] ol li {
+/* Breadcrumbs: no list numbers or bullets (works even before Tailwind utilities load) */
+nav[aria-label="Breadcrumb"] ol,
+nav[aria-label="Breadcrumb"] ol li,
+ol.breadcrumb-list,
+ol.breadcrumb-list li {
   list-style: none !important;
   list-style-type: none !important;
-  padding-left: 0;
-  margin: 0;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+nav[aria-label="Breadcrumb"] ol {
+  counter-reset: none !important;
 }
 .file\:border-0::file-selector-button {
   border-width: 0px;

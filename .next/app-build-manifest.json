@@ -27,25 +27,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/admin/dashboard/page.js"
     ],
-    "/admin/drivers/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/drivers/page.js"
-    ],
     "/admin/documents/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/documents/page.js"
     ],
-    "/admin/partners/page": [
+    "/admin/rides/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/partners/page.js"
+      "static/chunks/app/admin/rides/page.js"
     ],
-    "/admin/settings/page": [
+    "/admin/audit-logs/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/settings/page.js"
+      "static/chunks/app/admin/audit-logs/page.js"
+    ],
+    "/admin/notifications/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/notifications/page.js"
     ]
   }
 }
