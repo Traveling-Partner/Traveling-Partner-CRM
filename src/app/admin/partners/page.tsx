@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { partners } from "@/mock-data/partners";
 import type { Partner } from "@/types/domain";
+import { useToast } from "@/components/ui/toast";
 
 interface PartnerRow extends Partner {}
 
@@ -26,6 +27,7 @@ const PAGE_SIZE = 10;
 
 export default function AdminPartnersPage() {
   const router = useRouter();
+  const { success } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
@@ -87,13 +89,35 @@ export default function AdminPartnersPage() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/admin/partners/${row.original.id}`)}
-        >
-          View
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/admin/partners/${row.original.id}`)}
+          >
+            View
+          </Button>
+          {row.original.status === "APPROVED" ? (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() =>
+                success(`Partner "${row.original.name}" marked inactive (mock).`)
+              }
+            >
+              Inactive
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() =>
+                success(`Partner "${row.original.name}" marked active (mock).`)
+              }
+            >
+              Active
+            </Button>
+          )}
+        </div>
       )
     }
   ];

@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "clean": "if exist .next rmdir /s /q .next",
+    "reset": "if exist .next rmdir /s /q .next && if exist node_modules rmdir /s /q node_modules && npm ci",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

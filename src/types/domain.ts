@@ -34,6 +34,16 @@ export interface Partner {
   createdByAgentId: string;
   approvedByAdminId?: string;
   statusHistory: StatusHistoryEntry[];
+  documents?: PartnerDocument[];
+}
+
+export interface PartnerDocument {
+  id: string;
+  type: "TRADE_LICENSE" | "VAT_CERTIFICATE" | "OWNER_ID" | "OTHER";
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: "PENDING" | "VERIFIED" | "REJECTED";
 }
 
 export interface Agent {

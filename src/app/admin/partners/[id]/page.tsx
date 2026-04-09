@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { partners } from "@/mock-data/partners";
 import { drivers } from "@/mock-data/drivers";
 import { rides } from "@/mock-data/rides";
@@ -47,6 +48,23 @@ export default function AdminPartnerDetailPage() {
     (r) => r.status === "COMPLETED"
   );
   const totalFare = completedRides.reduce((acc, r) => acc + r.fare, 0);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
+    partner.documents?.[0]?.id ?? ""
+  );
+  const selectedDocument =
+    partner.documents?.find((doc) => doc.id === selectedDocumentId) ??
+    partner.documents?.[0];
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string>("");
+  const selectedIsPdf = selectedDocument
+    ? selectedDocument.fileName.toLowerCase().endsWith(".pdf") ||
+      selectedDocument.fileUrl.toLowerCase().includes(".pdf")
+    : false;
+  const fallbackImage = "https://picsum.photos/seed/document-fallback/1200/800";
+
+  useEffect(() => {
+    setPreviewSrc(selectedDocument?.fileUrl ?? "");
+  }, [selectedDocument?.id, selectedDocument?.fileUrl]);
 
   return (
     <AppShell title={`Partner • ${partner.name}`}>
@@ -110,6 +128,123 @@ export default function AdminPartnerDetailPage() {
           </SectionCard>
         </div>
 
+        <div className="mt-4">
+          <SectionCard
+            title="Uploaded documents"
+            description="Partner-level verification documents uploaded during onboarding."
+          >
+            {!partner.documents || partner.documents.length === 0 ? (
+              <EmptyState
+                title="No documents uploaded"
+                description="Uploaded files will appear here for review."
+              />
+            ) : (
+              <div className="grid gap-3 text-xs lg:grid-cols-[360px,1fr]">
+                <div className="space-y-2">
+                  {partner.documents.map((doc) => (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      onClick={() => setSelectedDocumentId(doc.id)}
+                      className={`w-full rounded-xl border p-3 text-left transition-all ${
+                        selectedDocument?.id === doc.id
+                          ? "border-primary/60 bg-primary/10 shadow-sm"
+                          : "border-border/60 bg-card hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="h-12 w-16 overflow-hidden rounded-md border border-border/60 bg-muted/30">
+                          <img
+                            src={doc.fileUrl}
+                            alt={doc.fileName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                            }}
+                          />
+                        </div>
+                        <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">
+                            {doc.type.replaceAll("_", " ")}
+                          </p>
+                          <p className="truncate text-[0.7rem] text-muted-foreground">
+                            {doc.fileName}
+                          </p>
+                          <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
+                            Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="ml-2 shrink-0">
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
+                          {doc.status}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {selectedDocument ? (
+                  <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+                    <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {selectedDocument.fileName}
+                        </p>
+                        <p className="text-[0.68rem] text-muted-foreground">
+                          {selectedDocument.type.replaceAll("_", " ")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <a
+                          href={selectedDocument.fileUrl}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPreviewOpen(true);
+                          }}
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Preview
+                        </a>
+                        <a
+                          href={selectedDocument.fileUrl}
+                          download
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                        >
+                          <Download className="h-3 w-3" />
+                          Download
+                        </a>
+                      </div>
+                    </div>
+                    <div className="h-[360px] bg-muted/20 p-2">
+                      {selectedIsPdf ? (
+                        <iframe
+                          src={selectedDocument.fileUrl}
+                          title={selectedDocument.fileName}
+                          className="h-full w-full rounded-md border border-border/60 bg-background"
+                        />
+                      ) : (
+                        <img
+                          src={previewSrc}
+                          alt={selectedDocument.fileName}
+                          className="h-full w-full rounded-md object-cover bg-background"
+                          onError={() => {
+                            setPreviewSrc(fallbackImage);
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </SectionCard>
+        </div>
+
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <SectionCard
             title="Status history"
@@ -165,6 +300,51 @@ export default function AdminPartnerDetailPage() {
             )}
           </SectionCard>
         </div>
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedDocument?.fileName ?? "Document preview"}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedDocument ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    {selectedDocument.type.replaceAll("_", " ")} • Uploaded{" "}
+                    {new Date(selectedDocument.uploadedAt).toLocaleDateString()}
+                  </p>
+                  <a
+                    href={selectedDocument.fileUrl}
+                    download
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                  >
+                    <Download className="h-3 w-3" />
+                    Download
+                  </a>
+                </div>
+                <div className="h-[65vh] overflow-hidden rounded-lg border border-border/70 bg-muted/20 p-2">
+                  {selectedIsPdf ? (
+                    <iframe
+                      src={selectedDocument.fileUrl}
+                      title={selectedDocument.fileName}
+                      className="h-full w-full rounded-md border border-border/60 bg-background"
+                    />
+                  ) : (
+                    <img
+                      src={previewSrc}
+                      alt={selectedDocument.fileName}
+                      className="h-full w-full rounded-md object-cover bg-background"
+                      onError={() => {
+                        setPreviewSrc(fallbackImage);
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
       </PageContainer>
     </AppShell>
   );

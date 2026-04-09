@@ -18,6 +18,11 @@ import type { Driver } from "@/types/domain";
 import { useToast } from "@/components/ui/toast";
 
 type DriverStatus = Driver["status"];
+const driverDocumentImages = [
+  "https://cdn.pixabay.com/photo/2016/11/29/03/53/adult-1867743_1280.jpg",
+  "https://cdn.pixabay.com/photo/2016/03/27/21/16/polaroid-1284455_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/01/31/13/14/animal-2023924_1280.jpg"
+];
 
 export default function AdminDriverDetailPage() {
   const params = useParams<{ id: string }>();
@@ -157,12 +162,18 @@ export default function AdminDriverDetailPage() {
           >
             <div className="grid gap-3 sm:grid-cols-3">
               {["Driver license", "Vehicle registration", "ID document"].map(
-                (label) => (
+                (label, index) => (
                   <div
                     key={label}
-                    className="space-y-1.5 rounded-lg border border-dashed border-border/70 bg-muted/40 p-3 text-center"
+                    className="space-y-1.5 rounded-lg border border-border/70 bg-muted/30 p-3 text-center"
                   >
-                    <div className="h-20 rounded-md bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-700" />
+                    <div className="h-20 overflow-hidden rounded-md border border-border/60">
+                      <img
+                        src={driverDocumentImages[index] ?? driverDocumentImages[0]}
+                        alt={label}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                     <p className="text-xs font-medium">{label}</p>
                     <p className="text-[0.7rem] text-muted-foreground">
                       Tap to preview in the Documents queue screen.
