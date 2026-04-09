@@ -10,6 +10,9 @@ const titles = [
   "Building Trust with Premium Partner Experience"
 ];
 
+const categories = ["Operations", "Growth", "Product", "Safety", "Partnerships"];
+const readTimes = ["4 min read", "5 min read", "6 min read", "7 min read"];
+
 export const blogPosts: BlogPost[] = Array.from({ length: 16 }).map(
   (_, index) => {
     const admin = adminUsers[index % adminUsers.length];
@@ -32,6 +35,9 @@ export const blogPosts: BlogPost[] = Array.from({ length: 16 }).map(
         "A strategic look at how mobility companies can use the Traveling Partner model to accelerate market expansion while maintaining operational excellence.",
       content:
         "<p>This is rich text placeholder content for the Traveling Partner Portal blog. It demonstrates how articles will be stored and rendered in the admin experience.</p>",
+      category: categories[index % categories.length],
+      authorName: admin.name,
+      readTime: readTimes[index % readTimes.length],
       status: index % 4 === 0 ? "DRAFT" : "PUBLISHED",
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),

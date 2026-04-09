@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import "./globals.css";
 import { Poppins, Montserrat } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "react-hot-toast";
+import { ToastProvider } from "@/components/ui/toast";
 import { ReduxProvider } from "@/store/ReduxProvider";
 
 const poppins = Poppins({
@@ -45,7 +45,7 @@ export default function RootLayout({
             <div className="min-h-full bg-background text-foreground">
               {children}
             </div>
-            <Toaster position="top-right" />
+            <ToastProvider />
           </ThemeProvider>
         </ReduxProvider>
       </body>
