@@ -1,94 +1,52 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-
-export type Role = "ADMIN" | "AGENT";
-
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  mustChangePassword?: boolean;
-}
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  loginUserThunk,
+  logout as logoutAction,
+  setForcePasswordChange,
+  type AuthUser,
+  type Role
+} from "@/store/slices/authSlice";
 
 interface AuthState {
   user: AuthUser | null;
+  token: string | null;
+  loading: boolean;
+  error: string | null;
   isAuthenticated: boolean;
   forcePasswordChange: boolean;
-  login: (params: { email: string; password: string }) => Promise<AuthUser>;
+  login: (params: { mobileNumber: string; otp: string }) => Promise<AuthUser>;
   logout: () => void;
   isAdmin: () => boolean;
   isAgent: () => boolean;
   setForcePasswordChange: (value: boolean) => void;
 }
 
-const ADMIN_USER: AuthUser = {
-  id: "admin-1",
-  name: "Admin User",
-  email: "admin@demo.com",
-  role: "ADMIN",
-  mustChangePassword: false
-};
+export type { AuthUser, Role };
 
-const AGENT_USER: AuthUser = {
-  id: "agent-1",
-  name: "Sales Agent",
-  email: "agent@demo.com",
-  role: "AGENT",
-  mustChangePassword: false
-};
+function useAuthStoreInternal(): AuthState;
+function useAuthStoreInternal<T>(selector: (state: AuthState) => T): T;
+function useAuthStoreInternal<T>(selector?: (state: AuthState) => T) {
+  const dispatch = useAppDispatch();
+  const auth = useAppSelector((state) => state.auth);
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      isAuthenticated: false,
-      forcePasswordChange: false,
-      async login({ email, password }) {
-        // Mock auth logic with hardcoded demo users
-        if (password !== "123456") {
-          throw new Error("Invalid credentials");
-        }
-
-        let user: AuthUser | null = null;
-
-        if (email.toLowerCase() === ADMIN_USER.email) {
-          user = ADMIN_USER;
-        } else if (email.toLowerCase() === AGENT_USER.email) {
-          user = AGENT_USER;
-        } else {
-          throw new Error("User not found");
-        }
-
-        set({
-          user,
-          isAuthenticated: true,
-          forcePasswordChange: Boolean(user.mustChangePassword)
-        });
-
-        return user;
-      },
-      logout() {
-        set({ user: null, isAuthenticated: false, forcePasswordChange: false });
-      },
-      isAdmin() {
-        return get().user?.role === "ADMIN";
-      },
-      isAgent() {
-        return get().user?.role === "AGENT";
-      },
-      setForcePasswordChange(value: boolean) {
-        set({ forcePasswordChange: value });
-      }
-    }),
-    {
-      name: "traveling-partner-auth",
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        forcePasswordChange: state.forcePasswordChange
-      })
+  const state: AuthState = {
+    ...auth,
+    login: async ({ mobileNumber, otp }) => {
+      const result = await dispatch(loginUserThunk({ mobileNumber, otp })).unwrap();
+      return result.user;
+    },
+    logout: () => {
+      dispatch(logoutAction());
+    },
+    isAdmin: () => auth.user?.role === "ADMIN",
+    isAgent: () => auth.user?.role === "AGENT",
+    setForcePasswordChange: (value: boolean) => {
+      dispatch(setForcePasswordChange(value));
     }
-  )
-);
+  };
+
+  return selector ? selector(state) : state;
+}
+
+export const useAuthStore = useAuthStoreInternal;
 

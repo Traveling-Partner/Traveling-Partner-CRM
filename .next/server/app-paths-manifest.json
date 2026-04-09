@@ -1,7 +1,7 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/documents/page": "app/admin/documents/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(auth)/forgot-password/page": "app/(auth)/forgot-password/page.js"
+  "/admin/blog/page": "app/admin/blog/page.js",
+  "/admin/blog/create/page": "app/admin/blog/create/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
 }

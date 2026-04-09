@@ -22,25 +22,30 @@
       "static/css/app/(auth)/layout.css",
       "static/chunks/app/(auth)/layout.js"
     ],
+    "/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/page.js"
+    ],
     "/admin/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/dashboard/page.js"
     ],
-    "/(auth)/forgot-password/page": [
+    "/admin/documents/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/forgot-password/page.js"
+      "static/chunks/app/admin/documents/page.js"
     ],
-    "/admin/settings/page": [
+    "/admin/blog/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/settings/page.js"
+      "static/chunks/app/admin/blog/page.js"
     ],
-    "/_not-found/page": [
+    "/admin/blog/create/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/admin/blog/create/page.js"
     ]
   }
 }

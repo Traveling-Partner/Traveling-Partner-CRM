@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -9,14 +10,23 @@ import { cn } from "@/lib/utils";
 interface AppShellProps {
   children: React.ReactNode;
   title?: string;
+  allowedRoles?: string[];
 }
 
-export function AppShell({ children, title }: AppShellProps) {
+export function AppShell({ children, title, allowedRoles }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const routeRoles =
+    allowedRoles ??
+    (pathname?.startsWith("/admin")
+      ? ["ADMIN"]
+      : pathname?.startsWith("/agent")
+        ? ["AGENT", "ADMIN"]
+        : undefined);
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={routeRoles}>
       <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/80 to-slate-100 dark:from-slate-950 dark:via-slate-950/95 dark:to-slate-950">
         {/* Fixed sidebar: always left, never reflows */}
         <aside
