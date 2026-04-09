@@ -3,7 +3,8 @@ import type { CSSProperties } from "react";
 import "./globals.css";
 import { Poppins, Montserrat } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "react-hot-toast";
+import { ToastProvider } from "@/components/ui/toast";
+import { ReduxProvider } from "@/store/ReduxProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -39,12 +40,14 @@ export default function RootLayout({
           } as CSSProperties
         }
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="traveling-partner-theme">
-          <div className="min-h-full bg-background text-foreground">
-            {children}
-          </div>
-          <Toaster position="top-right" />
-        </ThemeProvider>
+        <ReduxProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="traveling-partner-theme">
+            <div className="min-h-full bg-background text-foreground">
+              {children}
+            </div>
+            <ToastProvider />
+          </ThemeProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

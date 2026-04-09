@@ -1,7 +1,11 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/partners/[id]/page": "app/admin/partners/[id]/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(auth)/forgot-password/page": "app/(auth)/forgot-password/page.js"
+  "/admin/documents/page": "app/admin/documents/page.js",
+  "/page": "app/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/admin/partners/page": "app/admin/partners/page.js",
+  "/admin/agents/[id]/page": "app/admin/agents/[id]/page.js",
+  "/admin/agents/page": "app/admin/agents/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
 }

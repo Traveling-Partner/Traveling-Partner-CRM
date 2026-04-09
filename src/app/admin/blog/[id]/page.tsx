@@ -21,10 +21,14 @@ import { blogPosts } from "@/mock-data/blog-posts";
 import type { BlogPost } from "@/types/domain";
 
 const schema = z.object({
-  title: z.string().min(4),
-  excerpt: z.string().min(10),
+  main_title: z.string().min(4, "Main title is required"),
+  description1: z.string().min(10, "Description is required"),
+  cover_image: z.string().url("Cover image must be a valid URL").optional().or(z.literal("")),
+  date: z.string().min(1, "Date is required"),
+  author: z.string().min(2, "Author is required"),
+  category: z.string().min(2, "Category is required"),
+  readTime: z.string().min(3, "Read time is required"),
   content: z.string().min(10),
-  featuredImageUrl: z.string().url().optional().or(z.literal("")),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"])
@@ -57,19 +61,27 @@ export default function AdminBlogEditPage() {
     resolver: zodResolver(schema),
     defaultValues: post
       ? {
-          title: post.title,
-          excerpt: post.excerpt,
+          main_title: post.title,
+          description1: post.excerpt,
+          cover_image: post.featuredImageUrl ?? "",
+          date: (post.publishedAt ?? post.createdAt).slice(0, 10),
+          author: post.authorName,
+          category: post.category,
+          readTime: post.readTime,
           content: post.content,
-          featuredImageUrl: post.featuredImageUrl ?? "",
           seoTitle: post.seoTitle ?? "",
           seoDescription: post.seoDescription ?? "",
           status: post.status
         }
       : {
-          title: "",
-          excerpt: "",
+          main_title: "",
+          description1: "",
+          cover_image: "",
+          date: new Date().toISOString().slice(0, 10),
+          author: "",
+          category: "",
+          readTime: "5 min read",
           content: "",
-          featuredImageUrl: "",
           seoTitle: "",
           seoDescription: "",
           status: "DRAFT"
@@ -80,7 +92,7 @@ export default function AdminBlogEditPage() {
 
   const onSubmit = (values: FormValues) => {
     success(
-      `Blog post "${values.title}" updated as ${values.status.toLowerCase()} (mock).`
+      `Blog post "${values.main_title}" updated as ${values.status.toLowerCase()} (mock).`
     );
     router.push("/admin/blog");
   };
@@ -90,7 +102,7 @@ export default function AdminBlogEditPage() {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setImagePreview(url);
-    setValue("featuredImageUrl", url);
+    setValue("cover_image", url);
   };
 
   if (!post) {
@@ -134,21 +146,56 @@ export default function AdminBlogEditPage() {
             >
               <div className="space-y-4">
                 <FormField
-                  label="Title"
-                  htmlFor="title"
+                  label="Main Title (main_title)"
+                  htmlFor="main_title"
                   required
-                  error={errors.title}
+                  error={errors.main_title}
                 >
-                  <Input id="title" {...register("title")} />
+                  <Input id="main_title" {...register("main_title")} />
                 </FormField>
                 <FormField
-                  label="Excerpt"
-                  htmlFor="excerpt"
+                  label="Description (description1)"
+                  htmlFor="description1"
                   required
-                  error={errors.excerpt}
+                  error={errors.description1}
                 >
-                  <Textarea id="excerpt" rows={3} {...register("excerpt")} />
+                  <Textarea id="description1" rows={3} {...register("description1")} />
                 </FormField>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    label="Category"
+                    htmlFor="category"
+                    required
+                    error={errors.category}
+                  >
+                    <Input id="category" {...register("category")} />
+                  </FormField>
+                  <FormField
+                    label="Author (author)"
+                    htmlFor="author"
+                    required
+                    error={errors.author}
+                  >
+                    <Input id="author" {...register("author")} />
+                  </FormField>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    label="Read time"
+                    htmlFor="readTime"
+                    required
+                    error={errors.readTime}
+                  >
+                    <Input id="readTime" {...register("readTime")} />
+                  </FormField>
+                  <FormField
+                    label="Date (date)"
+                    htmlFor="date"
+                    description="Website listing date field."
+                  >
+                    <Input id="date" type="date" {...register("date")} />
+                  </FormField>
+                </div>
                 <FormField
                   label="Body"
                   htmlFor="content"
@@ -216,7 +263,7 @@ export default function AdminBlogEditPage() {
             </SectionCard>
 
             <SectionCard
-              title="Featured image"
+              title="Cover image (cover_image)"
               description="Upload a hero image (mock preview only)."
             >
               <div className="space-y-3">

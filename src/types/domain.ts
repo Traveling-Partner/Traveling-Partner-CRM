@@ -92,6 +92,9 @@ export interface BlogPost {
   slug: string;
   excerpt: string;
   content: string;
+  category: string;
+  authorName: string;
+  readTime: string;
   status: "DRAFT" | "PUBLISHED";
   createdAt: string;
   updatedAt: string;

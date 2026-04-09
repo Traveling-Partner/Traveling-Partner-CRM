@@ -58,11 +58,34 @@ export default function AdminBlogPage() {
       )
     },
     {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => (
+        <span className="text-xs font-medium text-muted-foreground">
+          {row.original.category}
+        </span>
+      )
+    },
+    {
+      accessorKey: "authorName",
+      header: "Author",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">{row.original.authorName}</span>
+      )
+    },
+    {
+      accessorKey: "readTime",
+      header: "Read Time",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">{row.original.readTime}</span>
+      )
+    },
+    {
       accessorKey: "createdAt",
       header: "Date",
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString()}
+          {new Date(row.original.publishedAt ?? row.original.createdAt).toLocaleDateString()}
         </span>
       )
     },

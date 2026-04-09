@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { decodeToken } from "@/lib/decodeToken";
 import {
   LOGIN_ROUTE,
   getRedirectForRoleOnProtectedRoute
@@ -43,17 +44,20 @@ function InlineLoader() {
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[];
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
   const [shellReady, setShellReady] = useState(false);
 
-  const { user, isAuthenticated } = useAuthStore((state) => ({
+  const { user, token, isAuthenticated, logout } = useAuthStore((state) => ({
     user: state.user,
-    isAuthenticated: state.isAuthenticated
+    token: state.token,
+    isAuthenticated: state.isAuthenticated,
+    logout: state.logout
   }));
 
   useEffect(() => {
@@ -70,8 +74,25 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     if (!hydrated) return;
 
-    if (!isAuthenticated || !user) {
+    const localToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const activeToken = token ?? localToken;
+
+    if (!activeToken || !isAuthenticated || !user) {
       router.replace(LOGIN_ROUTE);
+      return;
+    }
+
+    const decoded = decodeToken(activeToken);
+    const now = Math.floor(Date.now() / 1000);
+
+    if (!decoded || decoded.exp <= now) {
+      logout();
+      router.replace(LOGIN_ROUTE);
+      return;
+    }
+
+    if (allowedRoles && !allowedRoles.includes(decoded.role)) {
+      router.replace("/403");
       return;
     }
 
@@ -79,7 +100,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (redirect && redirect !== pathname) {
       router.replace(redirect);
     }
-  }, [hydrated, isAuthenticated, user, pathname, router]);
+  }, [hydrated, isAuthenticated, user, pathname, router, token, allowedRoles, logout]);
 
   if (!hydrated) {
     return <InlineLoader />;

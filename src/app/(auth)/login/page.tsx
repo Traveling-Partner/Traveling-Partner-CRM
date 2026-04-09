@@ -1,35 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuthStore } from "@/store/auth.store";
-import { getDefaultRouteForRole } from "@/lib/rbac";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { clearAuthError, loginUserThunk } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/common/FormField";
-import { useToast } from "@/components/ui/toast";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 const loginSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  remember: z.boolean().optional()
+  mobileNumber: z.string().min(8, "Enter a valid mobile number"),
+  otp: z.string().min(4, "OTP must be at least 4 characters")
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { success, error } = useToast();
-  const login = useAuthStore((state) => state.login);
-  const forcePasswordChange = useAuthStore((state) => state.forcePasswordChange);
-
-  const [submitting, setSubmitting] = useState(false);
+  const dispatch = useAppDispatch();
+  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const {
     register,
@@ -38,35 +31,29 @@ export default function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
-      remember: true
+      mobileNumber: "",
+      otp: ""
     }
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearAuthError());
+    };
+  }, [dispatch]);
+
   const onSubmit = async (values: LoginFormValues) => {
-    setSubmitting(true);
     try {
-      const user = await login({
-        email: values.email,
-        password: values.password
-      });
-
-      success("Welcome back to Traveling Partner Portal");
-
-      if (user.mustChangePassword || forcePasswordChange) {
-        router.replace("/force-change-password");
-        return;
-      }
-
-      const target = getDefaultRouteForRole(user.role);
-      router.replace(target);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to login. Please try again.";
-      error(message);
-    } finally {
-      setSubmitting(false);
+      await dispatch(loginUserThunk(values)).unwrap();
+      router.replace("/dashboard");
+    } catch {
+      // Error state is already handled in Redux.
     }
   };
 
@@ -78,81 +65,61 @@ export default function LoginPage() {
             Sign in to your workspace
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Use the demo credentials to explore the Traveling Partner Portal.
+            Use your mobile number and OTP to access the portal.
           </p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <FormField
-            label="Email"
-            htmlFor="email"
+            label="Mobile Number"
+            htmlFor="mobileNumber"
             required
-            error={errors.email}
+            error={errors.mobileNumber}
           >
             <Input
-              id="email"
-              type="email"
-              placeholder="you@company.com"
-              autoComplete="email"
-              {...register("email")}
+              id="mobileNumber"
+              type="text"
+              placeholder="03002234519"
+              autoComplete="tel"
+              {...register("mobileNumber")}
             />
           </FormField>
 
           <FormField
-            label="Password"
-            htmlFor="password"
+            label="OTP"
+            htmlFor="otp"
             required
-            error={errors.password}
+            error={errors.otp}
           >
             <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              {...register("password")}
+              id="otp"
+              type="text"
+              autoComplete="one-time-code"
+              placeholder="1234"
+              {...register("otp")}
             />
           </FormField>
 
-          <div className="flex items-center justify-between gap-2 text-sm">
-            <label className="inline-flex items-center gap-2">
-              <Checkbox
-                className="mt-[1px]"
-                {...register("remember")}
-                onCheckedChange={(checked) =>
-                  // react-hook-form expects boolean, Radix can send boolean | "indeterminate"
-                  (document.activeElement as HTMLElement | null)?.blur() ??
-                  undefined
-                }
-              />
-              <span className="text-xs text-muted-foreground">
-                Remember this device
-              </span>
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          {error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
 
           <Button
             type="submit"
             className="mt-2 w-full"
-            disabled={submitting}
+            disabled={loading}
           >
-            {submitting ? "Signing in..." : "Sign in"}
+            {loading ? "Signing in..." : "Login"}
           </Button>
         </form>
 
         <div className="rounded-md bg-muted/40 p-3 text-[0.7rem] text-muted-foreground">
           <p className="font-semibold text-xs text-foreground">
-            Demo credentials
+            Example
           </p>
           <ul className="mt-1 space-y-0.5">
-            <li>Admin: admin@demo.com</li>
-            <li>Agent: agent@demo.com</li>
-            <li>Password: 123456</li>
+            <li>Mobile Number: 03002234519</li>
+            <li>OTP: 1234</li>
           </ul>
         </div>
       </CardContent>
