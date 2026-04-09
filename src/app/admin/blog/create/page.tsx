@@ -44,7 +44,7 @@ export default function AdminBlogCreatePage() {
   const { loading, error } = useAppSelector((state) => state.blog);
   const authUser = useAppSelector((state) => state.auth.user);
   const [description2, setDescription2] = useState<string>("");
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("/mock-images/blog-cover.svg");
 
   const {
     register,
@@ -55,7 +55,7 @@ export default function AdminBlogCreatePage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      coverImage: "",
+      coverImage: "/mock-images/blog-cover.svg",
       mainTitle: "",
       description1: "",
       description2: "",
@@ -163,7 +163,7 @@ export default function AdminBlogCreatePage() {
                 >
                   <Input
                     id="coverImage"
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="/mock-images/blog-cover.svg"
                     {...register("coverImage")}
                   />
                 </FormField>

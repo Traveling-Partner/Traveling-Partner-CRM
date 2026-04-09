@@ -60,7 +60,7 @@ export default function AdminPartnerDetailPage() {
     ? selectedDocument.fileName.toLowerCase().endsWith(".pdf") ||
       selectedDocument.fileUrl.toLowerCase().includes(".pdf")
     : false;
-  const fallbackImage = "https://picsum.photos/seed/document-fallback/1200/800";
+  const fallbackImage = "/mock-images/document-fallback.svg";
 
   useEffect(() => {
     setPreviewSrc(selectedDocument?.fileUrl ?? "");

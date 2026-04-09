@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,6 +20,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { partners } from "@/mock-data/partners";
 import type { Partner } from "@/types/domain";
 import { useToast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 interface PartnerRow extends Partner {}
 
@@ -32,14 +33,61 @@ export default function AdminPartnersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [partnerRows, setPartnerRows] = useState<PartnerRow[]>(partners);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmPartner, setConfirmPartner] = useState<PartnerRow | null>(
+    null
+  );
+  const [confirmType, setConfirmType] = useState<"ACTIVE" | "INACTIVE" | null>(
+    null
+  );
+  const confirmSnapshotRef = useRef<{
+    partner: PartnerRow;
+    type: "ACTIVE" | "INACTIVE";
+  } | null>(null);
+
+  const openActiveConfirm = useCallback((partner: PartnerRow) => {
+    confirmSnapshotRef.current = { partner, type: "ACTIVE" };
+    setConfirmPartner(partner);
+    setConfirmType("ACTIVE");
+    setConfirmOpen(true);
+  }, []);
+
+  const openInactiveConfirm = useCallback((partner: PartnerRow) => {
+    confirmSnapshotRef.current = { partner, type: "INACTIVE" };
+    setConfirmPartner(partner);
+    setConfirmType("INACTIVE");
+    setConfirmOpen(true);
+  }, []);
+
+  const handleStatusConfirm = useCallback(() => {
+    const snap = confirmSnapshotRef.current;
+    if (!snap) return;
+    const nextStatus = snap.type === "ACTIVE" ? "APPROVED" : "SUSPENDED";
+    setPartnerRows((current) =>
+      current.map((partner) =>
+        partner.id === snap.partner.id
+          ? { ...partner, status: nextStatus }
+          : partner
+      )
+    );
+    if (snap.type === "ACTIVE") {
+      success(`Partner "${snap.partner.name}" marked active.`);
+    } else {
+      success(`Partner "${snap.partner.name}" marked inactive.`);
+    }
+    confirmSnapshotRef.current = null;
+    setConfirmPartner(null);
+    setConfirmType(null);
+  }, [success]);
 
   const cities = useMemo(
-    () => Array.from(new Set(partners.map((p) => p.city))),
-    []
+    () => Array.from(new Set(partnerRows.map((p) => p.city))),
+    [partnerRows]
   );
 
   const filtered = useMemo(() => {
-    return partners.filter((partner) => {
+    return partnerRows.filter((partner) => {
       const matchesSearch = partner.name
         .toLowerCase()
         .includes(search.toLowerCase());
@@ -49,7 +97,7 @@ export default function AdminPartnersPage() {
         cityFilter === "all" || partner.city === cityFilter;
       return matchesSearch && matchesStatus && matchesCity;
     });
-  }, [search, statusFilter, cityFilter]);
+  }, [partnerRows, search, statusFilter, cityFilter]);
 
   const paginated = useMemo(() => {
     const start = page * PAGE_SIZE;
@@ -58,7 +106,14 @@ export default function AdminPartnersPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
-  const columns: ColumnDef<PartnerRow>[] = [
+  useEffect(() => {
+    if (page + 1 > totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
+
+  const columns: ColumnDef<PartnerRow>[] = useMemo(
+    () => [
     {
       accessorKey: "name",
       header: "Partner",
@@ -101,18 +156,14 @@ export default function AdminPartnersPage() {
             <Button
               size="sm"
               variant="destructive"
-              onClick={() =>
-                success(`Partner "${row.original.name}" marked inactive (mock).`)
-              }
+              onClick={() => openInactiveConfirm(row.original)}
             >
               Inactive
             </Button>
           ) : (
             <Button
               size="sm"
-              onClick={() =>
-                success(`Partner "${row.original.name}" marked active (mock).`)
-              }
+              onClick={() => openActiveConfirm(row.original)}
             >
               Active
             </Button>
@@ -120,7 +171,9 @@ export default function AdminPartnersPage() {
         </div>
       )
     }
-  ];
+    ],
+    [router, openActiveConfirm, openInactiveConfirm]
+  );
 
   return (
     <AppShell title="Partners">
@@ -219,6 +272,34 @@ export default function AdminPartnersPage() {
             </div>
           </div>
         </SectionCard>
+
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={(open) => {
+            setConfirmOpen(open);
+            if (!open) {
+              confirmSnapshotRef.current = null;
+              setConfirmPartner(null);
+              setConfirmType(null);
+            }
+          }}
+          onConfirm={handleStatusConfirm}
+          title={
+            confirmType === "ACTIVE"
+              ? "Activate partner?"
+              : "Set partner inactive?"
+          }
+          description={
+            confirmPartner
+              ? confirmType === "ACTIVE"
+                ? `Mark "${confirmPartner.name}" as active? This will immediately update the list.`
+                : `Mark "${confirmPartner.name}" as inactive? This will immediately update the list.`
+              : undefined
+          }
+          confirmLabel={confirmType === "ACTIVE" ? "Activate" : "Set inactive"}
+          cancelLabel="Cancel"
+          destructive={confirmType === "INACTIVE"}
+        />
       </PageContainer>
     </AppShell>
   );

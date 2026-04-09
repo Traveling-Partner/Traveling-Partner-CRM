@@ -1,0 +1,11 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="#fff7ed"/>
+  <rect x="90" y="90" width="1020" height="620" rx="24" fill="#ffffff" stroke="#fdba74" stroke-width="8"/>
+  <text x="130" y="160" font-size="38" font-family="Arial, sans-serif" fill="#9a3412" font-weight="700">Trade License</text>
+  <rect x="130" y="210" width="940" height="20" rx="8" fill="#ffedd5"/>
+  <rect x="130" y="260" width="280" height="280" rx="14" fill="#fed7aa"/>
+  <rect x="460" y="270" width="560" height="22" rx="8" fill="#ffedd5"/>
+  <rect x="460" y="310" width="520" height="22" rx="8" fill="#ffedd5"/>
+  <rect x="460" y="350" width="420" height="22" rx="8" fill="#ffedd5"/>
+  <rect x="130" y="580" width="940" height="26" rx="10" fill="#ffedd5"/>
+</svg>

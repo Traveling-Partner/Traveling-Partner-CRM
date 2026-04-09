@@ -43,8 +43,7 @@ export const blogPosts: BlogPost[] = Array.from({ length: 16 }).map(
       updatedAt: updatedAt.toISOString(),
       publishedAt: published,
       views: 120 + index * 17,
-      featuredImageUrl:
-        "https://images.pexels.com/photos/104836/pexels-photo-104836.jpeg",
+      featuredImageUrl: "/mock-images/blog-cover.svg",
       seoTitle: `${title} | Traveling Partner Portal`,
       seoDescription:
         "Learn how to operate a high-performing ride-hailing partner network with actionable playbooks from our operations team.",

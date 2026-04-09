@@ -11,9 +11,9 @@ const statuses: Partner["status"][] = [
 ];
 
 const partnerDocumentImages = [
-  "https://picsum.photos/seed/trade-license/1200/800",
-  "https://picsum.photos/seed/vat-certificate/1200/800",
-  "https://picsum.photos/seed/owner-id/1200/800"
+  "/mock-images/trade-license.svg",
+  "/mock-images/vat-certificate.svg",
+  "/mock-images/owner-id.svg"
 ];
 
 function buildStatusHistory(

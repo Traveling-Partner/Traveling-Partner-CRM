@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { drivers } from "@/mock-data/drivers";
 import { rides } from "@/mock-data/rides";
 import type { Driver } from "@/types/domain";
@@ -19,10 +20,37 @@ import { useToast } from "@/components/ui/toast";
 
 type DriverStatus = Driver["status"];
 const driverDocumentImages = [
-  "https://cdn.pixabay.com/photo/2016/11/29/03/53/adult-1867743_1280.jpg",
-  "https://cdn.pixabay.com/photo/2016/03/27/21/16/polaroid-1284455_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/01/31/13/14/animal-2023924_1280.jpg"
+  "/mock-images/driver-license.svg",
+  "/mock-images/vehicle-registration.svg",
+  "/mock-images/id-document.svg"
 ];
+
+const driverDocuments = [
+  {
+    id: "driver-license",
+    type: "DRIVER_LICENSE",
+    fileName: "driver-license.jpg",
+    fileUrl: driverDocumentImages[0],
+    uploadedAt: "2026-03-10T10:00:00.000Z",
+    status: "VERIFIED"
+  },
+  {
+    id: "vehicle-registration",
+    type: "VEHICLE_REGISTRATION",
+    fileName: "vehicle-registration.jpg",
+    fileUrl: driverDocumentImages[1],
+    uploadedAt: "2026-03-11T10:00:00.000Z",
+    status: "VERIFIED"
+  },
+  {
+    id: "id-document",
+    type: "ID_DOCUMENT",
+    fileName: "id-document.jpg",
+    fileUrl: driverDocumentImages[2],
+    uploadedAt: "2026-03-12T10:00:00.000Z",
+    status: "PENDING"
+  }
+] as const;
 
 export default function AdminDriverDetailPage() {
   const params = useParams<{ id: string }>();
@@ -34,6 +62,11 @@ export default function AdminDriverDetailPage() {
   const [pendingAction, setPendingAction] = useState<
     DriverStatus | null
   >(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
+    driverDocuments[0].id
+  );
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string>(driverDocuments[0].fileUrl);
 
   const driver = useMemo(
     () => drivers.find((d) => d.id === params.id),
@@ -79,6 +112,14 @@ export default function AdminDriverDetailPage() {
     success(`Driver would be marked as ${pendingAction.toLowerCase()} (mock).`);
     setDialogOpen(false);
   };
+
+  const selectedDocument =
+    driverDocuments.find((doc) => doc.id === selectedDocumentId) ??
+    driverDocuments[0];
+  const selectedIsPdf =
+    selectedDocument.fileName.toLowerCase().endsWith(".pdf") ||
+    selectedDocument.fileUrl.toLowerCase().includes(".pdf");
+  const fallbackImage = "/mock-images/document-fallback.svg";
 
   return (
     <AppShell title={`Driver • ${driver.name}`}>
@@ -159,51 +200,143 @@ export default function AdminDriverDetailPage() {
           <SectionCard
             title="Documents"
             description="Mock preview of the driver's identity and vehicle documents."
+            className="lg:col-span-3"
           >
-            <div className="grid gap-3 sm:grid-cols-3">
-              {["Driver license", "Vehicle registration", "ID document"].map(
-                (label, index) => (
-                  <div
-                    key={label}
-                    className="space-y-1.5 rounded-lg border border-border/70 bg-muted/30 p-3 text-center"
+            <div className="grid gap-3 text-xs lg:grid-cols-[360px,1fr]">
+              <div className="space-y-2">
+                {driverDocuments.map((doc) => (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDocumentId(doc.id);
+                      setPreviewSrc(doc.fileUrl);
+                    }}
+                    className={`w-full rounded-xl border p-3 text-left transition-all ${
+                      selectedDocument.id === doc.id
+                        ? "border-primary/60 bg-primary/10 shadow-sm"
+                        : "border-border/60 bg-card hover:bg-muted/30"
+                    }`}
                   >
-                    <div className="h-20 overflow-hidden rounded-md border border-border/60">
-                      <img
-                        src={driverDocumentImages[index] ?? driverDocumentImages[0]}
-                        alt={label}
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="flex items-start gap-2">
+                      <div className="h-12 w-16 overflow-hidden rounded-md border border-border/60 bg-muted/30">
+                        <img
+                          src={doc.fileUrl}
+                          alt={doc.fileName}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                          }}
+                        />
+                      </div>
+                      <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {doc.type.replaceAll("_", " ")}
+                        </p>
+                        <p className="truncate text-[0.7rem] text-muted-foreground">
+                          {doc.fileName}
+                        </p>
+                        <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
+                          Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs font-medium">{label}</p>
-                    <p className="text-[0.7rem] text-muted-foreground">
-                      Tap to preview in the Documents queue screen.
+                    <div className="ml-2 mt-1">
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
+                        {doc.status}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+                <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {selectedDocument.fileName}
+                    </p>
+                    <p className="text-[0.68rem] text-muted-foreground">
+                      {selectedDocument.type.replaceAll("_", " ")}
                     </p>
                   </div>
-                )
-              )}
+                  <div className="flex items-center gap-1">
+                    <a
+                      href={selectedDocument.fileUrl}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPreviewOpen(true);
+                      }}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                    >
+                      <Eye className="h-3 w-3" />
+                      Preview
+                    </a>
+                    <a
+                      href={selectedDocument.fileUrl}
+                      download
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                    >
+                      <Download className="h-3 w-3" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+                <div className="h-[360px] bg-muted/20 p-2">
+                  {selectedIsPdf ? (
+                    <iframe
+                      src={selectedDocument.fileUrl}
+                      title={selectedDocument.fileName}
+                      className="h-full w-full rounded-md border border-border/60 bg-background"
+                    />
+                  ) : (
+                    <img
+                      src={previewSrc}
+                      alt={selectedDocument.fileName}
+                      className="h-full w-full rounded-md bg-background object-cover"
+                      onError={() => {
+                        setPreviewSrc(fallbackImage);
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </SectionCard>
 
           <SectionCard
             title="Vehicle"
             description="Mock vehicle information associated with this driver."
+            className="lg:col-span-3"
           >
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Make / Model</span>
-                <span className="font-medium">
-                  Toyota Camry {driver.id.slice(-1)}
-                </span>
+            <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
+              <div className="overflow-hidden rounded-lg border border-border/60">
+                <img
+                  src="/mock-images/vehicle-profile.svg"
+                  alt="Vehicle profile"
+                  className="h-full w-full object-cover"
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Plate</span>
-                <span className="font-medium">
-                  TP-{driver.id.slice(-3).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Color</span>
-                <span className="font-medium">White</span>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Make / Model</span>
+                  <span className="font-medium">
+                    Toyota Camry {driver.id.slice(-1)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Plate</span>
+                  <span className="font-medium">
+                    TP-{driver.id.slice(-3).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Color</span>
+                  <span className="font-medium">White</span>
+                </div>
               </div>
             </div>
           </SectionCard>
@@ -289,6 +422,47 @@ export default function AdminDriverDetailPage() {
           cancelLabel="Cancel"
           destructive={pendingAction === "SUSPENDED"}
         />
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{selectedDocument.fileName}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+                <p className="text-xs text-muted-foreground">
+                  {selectedDocument.type.replaceAll("_", " ")} • Uploaded{" "}
+                  {new Date(selectedDocument.uploadedAt).toLocaleDateString()}
+                </p>
+                <a
+                  href={selectedDocument.fileUrl}
+                  download
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                >
+                  <Download className="h-3 w-3" />
+                  Download
+                </a>
+              </div>
+              <div className="h-[65vh] overflow-hidden rounded-lg border border-border/70 bg-muted/20 p-2">
+                {selectedIsPdf ? (
+                  <iframe
+                    src={selectedDocument.fileUrl}
+                    title={selectedDocument.fileName}
+                    className="h-full w-full rounded-md border border-border/60 bg-background"
+                  />
+                ) : (
+                  <img
+                    src={previewSrc}
+                    alt={selectedDocument.fileName}
+                    className="h-full w-full rounded-md bg-background object-cover"
+                    onError={() => {
+                      setPreviewSrc(fallbackImage);
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </PageContainer>
     </AppShell>
   );

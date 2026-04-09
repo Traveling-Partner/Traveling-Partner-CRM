@@ -308,9 +308,9 @@ export default function DocumentsQueuePage() {
                     <div className="aspect-video w-full overflow-hidden rounded-md bg-slate-200 dark:bg-slate-800">
                       <img
                         src={[
-                          "https://cdn.pixabay.com/photo/2016/11/29/03/53/adult-1867743_1280.jpg",
-                          "https://cdn.pixabay.com/photo/2016/03/27/21/16/polaroid-1284455_1280.jpg",
-                          "https://cdn.pixabay.com/photo/2017/01/31/13/14/animal-2023924_1280.jpg"
+                          "/mock-images/driver-license.svg",
+                          "/mock-images/vehicle-registration.svg",
+                          "/mock-images/id-document.svg"
                         ][index - 1]}
                         alt="Mock document"
                         className="h-full w-full object-cover"
