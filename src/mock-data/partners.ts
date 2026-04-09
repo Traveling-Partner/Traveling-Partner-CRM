@@ -10,6 +10,12 @@ const statuses: Partner["status"][] = [
   "SUSPENDED"
 ];
 
+const partnerDocumentImages = [
+  "/mock-images/trade-license.svg",
+  "/mock-images/vat-certificate.svg",
+  "/mock-images/owner-id.svg"
+];
+
 function buildStatusHistory(
   baseDate: Date,
   initialStatus: Partner["status"],
@@ -64,7 +70,33 @@ export const partners: Partner[] = Array.from({ length: 18 }).map(
         addDays(createdAt, 3),
         status,
         approvedByAdmin
-      )
+      ),
+      documents: [
+        {
+          id: `partner-${index + 1}-doc-1`,
+          type: "TRADE_LICENSE",
+          fileName: `trade-license-${index + 1}.jpg`,
+          fileUrl: partnerDocumentImages[0],
+          uploadedAt: addDays(createdAt, 1).toISOString(),
+          status: "VERIFIED"
+        },
+        {
+          id: `partner-${index + 1}-doc-2`,
+          type: "VAT_CERTIFICATE",
+          fileName: `vat-certificate-${index + 1}.jpg`,
+          fileUrl: partnerDocumentImages[1],
+          uploadedAt: addDays(createdAt, 2).toISOString(),
+          status: status === "PENDING" ? "PENDING" : "VERIFIED"
+        },
+        {
+          id: `partner-${index + 1}-doc-3`,
+          type: "OWNER_ID",
+          fileName: `owner-id-${index + 1}.jpg`,
+          fileUrl: partnerDocumentImages[2],
+          uploadedAt: addDays(createdAt, 2).toISOString(),
+          status: status === "SUSPENDED" ? "REJECTED" : "VERIFIED"
+        }
+      ]
     };
   }
 );

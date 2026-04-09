@@ -20,7 +20,13 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  CartesianGrid
+  CartesianGrid,
+  Legend,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell
 } from "recharts";
 import { format, parseISO } from "date-fns";
 
@@ -54,6 +60,33 @@ function buildCommissionByAgent() {
   }));
 }
 
+function buildRideStatusBreakdown() {
+  const grouped = new Map<string, number>();
+  rides.forEach((ride) => {
+    grouped.set(ride.status, (grouped.get(ride.status) ?? 0) + 1);
+  });
+
+  return Array.from(grouped.entries()).map(([status, count]) => ({
+    status,
+    count
+  }));
+}
+
+function buildRevenueTrend() {
+  const grouped = new Map<string, number>();
+  rides
+    .filter((ride) => ride.status === "COMPLETED")
+    .forEach((ride) => {
+      const day = format(parseISO(ride.startedAt), "MMM d");
+      grouped.set(day, (grouped.get(day) ?? 0) + ride.fare);
+    });
+
+  return Array.from(grouped.entries()).map(([day, revenue]) => ({
+    day,
+    revenue: Math.round(revenue)
+  }));
+}
+
 export default function AdminDashboardPage() {
   const totalDrivers = drivers.length;
   const totalPartners = partners.length;
@@ -71,6 +104,9 @@ export default function AdminDashboardPage() {
 
   const ridesTrend = buildRidesTrend();
   const commissionByAgent = buildCommissionByAgent();
+  const rideStatusBreakdown = buildRideStatusBreakdown();
+  const revenueTrend = buildRevenueTrend();
+  const statusColors = ["#fdb813", "#22c55e", "#ef4444", "#3b82f6"];
 
   const recentActivity = auditLogs
     .slice(0, 8)
@@ -171,73 +207,175 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          <SectionCard
-            title="Rides trend"
-            description="Daily ride volume across your active markets."
-            className="lg:col-span-2"
-          >
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={ridesTrend}>
-                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-                  <XAxis dataKey="day" tickMargin={8} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#fdb813"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </SectionCard>
+        <SectionCard
+          title="Rides trend"
+          description="Daily ride volume across your active markets."
+          className="mt-6"
+        >
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={ridesTrend}>
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                <XAxis dataKey="day" tickMargin={8} />
+                <YAxis allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 10,
+                    border: "1px solid hsl(var(--border))"
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Rides"
+                  stroke="#fdb813"
+                  strokeWidth={3}
+                  dot={{ r: 3, strokeWidth: 1 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
 
-          <SectionCard
-            title="Commission by agent"
-            description="Top-line commission contribution per sales agent."
-          >
+        <SectionCard
+          title="Commission by agent"
+          description="Top-line commission contribution per sales agent."
+          className="mt-6"
+        >
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={commissionByAgent}>
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />
+                <XAxis dataKey="name" tickMargin={8} />
+                <YAxis />
+                <Tooltip
+                  formatter={(value: number) => currency(value)}
+                  contentStyle={{
+                    borderRadius: 10,
+                    border: "1px solid hsl(var(--border))"
+                  }}
+                />
+                <Legend />
+                <Bar
+                  dataKey="total"
+                  name="Commission"
+                  fill="#fce001"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Ride status breakdown"
+          description="Distribution of completed, cancelled, and in-progress rides."
+          className="mt-6"
+        >
+          <div className="grid gap-4 lg:grid-cols-2">
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={commissionByAgent}>
+                <BarChart data={rideStatusBreakdown}>
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />
-                  <XAxis dataKey="name" tickMargin={8} hide />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="total" fill="#fce001" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="status" tickMargin={8} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 10,
+                      border: "1px solid hsl(var(--border))"
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="count" name="Trips" radius={[6, 6, 0, 0]}>
+                    {rideStatusBreakdown.map((entry, idx) => (
+                      <Cell key={entry.status} fill={statusColors[idx % statusColors.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </SectionCard>
-        </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <SectionCard
-            title="Recent activity"
-            description="Key administrative events across drivers, partners, and agents."
-          >
-            <div className="space-y-3">
-              {recentActivity.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs"
-                >
-                  <div>
-                    <p className="font-medium">{log.action}</p>
-                    <p className="text-[0.7rem] text-muted-foreground">
-                      {log.entityType} • {log.entityId}
-                    </p>
-                  </div>
-                  <span className="text-[0.7rem] text-muted-foreground">
-                    {format(parseISO(log.createdAt), "MMM d, HH:mm")}
-                  </span>
-                </div>
-              ))}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={rideStatusBreakdown}
+                    dataKey="count"
+                    nameKey="status"
+                    innerRadius={45}
+                    outerRadius={85}
+                    paddingAngle={4}
+                  >
+                    {rideStatusBreakdown.map((entry, idx) => (
+                      <Cell key={entry.status} fill={statusColors[idx % statusColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          </SectionCard>
-        </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Revenue trend"
+          description="Daily completed-ride revenue trend."
+          className="mt-6"
+        >
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueTrend}>
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />
+                <XAxis dataKey="day" tickMargin={8} />
+                <YAxis />
+                <Tooltip
+                  formatter={(value: number) => currency(value)}
+                  contentStyle={{
+                    borderRadius: 10,
+                    border: "1px solid hsl(var(--border))"
+                  }}
+                />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  name="Revenue"
+                  stroke="#f59e0b"
+                  fill="#fce001"
+                  fillOpacity={0.35}
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Recent activity"
+          description="Key administrative events across drivers, partners, and agents."
+          className="mt-6"
+        >
+          <div className="space-y-3">
+            {recentActivity.map((log) => (
+              <div
+                key={log.id}
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs"
+              >
+                <div>
+                  <p className="font-medium">{log.action}</p>
+                  <p className="text-[0.7rem] text-muted-foreground">
+                    {log.entityType} • {log.entityId}
+                  </p>
+                </div>
+                <span className="text-[0.7rem] text-muted-foreground">
+                  {format(parseISO(log.createdAt), "MMM d, HH:mm")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
       </PageContainer>
     </AppShell>
   );

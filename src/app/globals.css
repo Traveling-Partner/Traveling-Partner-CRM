@@ -90,3 +90,13 @@ nav[aria-label="Breadcrumb"] ol {
   counter-reset: none !important;
 }
 
+@keyframes ride-route-dash {
+  to {
+    stroke-dashoffset: -360;
+  }
+}
+
+.ride-route-path-anim {
+  animation: ride-route-dash 22s linear infinite;
+}
+

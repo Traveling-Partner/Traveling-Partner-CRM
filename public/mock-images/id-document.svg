@@ -1,0 +1,11 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="#f0fdf4"/>
+  <rect x="120" y="110" width="960" height="580" rx="28" fill="#ffffff" stroke="#bbf7d0" stroke-width="8"/>
+  <text x="160" y="180" font-size="36" font-family="Arial, sans-serif" fill="#166534" font-weight="700">ID Document</text>
+  <rect x="160" y="230" width="260" height="300" rx="16" fill="#dcfce7"/>
+  <circle cx="290" cy="330" r="68" fill="#86efac"/>
+  <rect x="470" y="248" width="520" height="24" rx="9" fill="#dcfce7"/>
+  <rect x="470" y="292" width="470" height="24" rx="9" fill="#dcfce7"/>
+  <rect x="470" y="336" width="390" height="24" rx="9" fill="#dcfce7"/>
+  <rect x="160" y="566" width="840" height="28" rx="10" fill="#dcfce7"/>
+</svg>

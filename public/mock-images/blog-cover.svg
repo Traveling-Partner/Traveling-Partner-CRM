@@ -1,0 +1,18 @@
+<svg width="1400" height="700" viewBox="0 0 1400 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fce001"/>
+      <stop offset="100%" stop-color="#fdb813"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="700" fill="url(#bg)"/>
+  <rect x="90" y="110" width="520" height="480" rx="24" fill="#ffffff" fill-opacity="0.25"/>
+  <rect x="690" y="110" width="620" height="80" rx="14" fill="#0f172a" fill-opacity="0.16"/>
+  <rect x="690" y="220" width="560" height="40" rx="12" fill="#0f172a" fill-opacity="0.14"/>
+  <rect x="690" y="280" width="460" height="40" rx="12" fill="#0f172a" fill-opacity="0.14"/>
+  <rect x="690" y="360" width="620" height="18" rx="9" fill="#0f172a" fill-opacity="0.15"/>
+  <rect x="690" y="392" width="580" height="18" rx="9" fill="#0f172a" fill-opacity="0.15"/>
+  <rect x="690" y="424" width="540" height="18" rx="9" fill="#0f172a" fill-opacity="0.15"/>
+  <text x="700" y="160" font-size="46" font-family="Arial, sans-serif" fill="#0f172a" font-weight="700">Traveling Partner CRM Blog</text>
+  <text x="700" y="520" font-size="30" font-family="Arial, sans-serif" fill="#334155">Operations, Growth, Safety, Partnerships</text>
+</svg>

@@ -34,6 +34,16 @@ export interface Partner {
   createdByAgentId: string;
   approvedByAdminId?: string;
   statusHistory: StatusHistoryEntry[];
+  documents?: PartnerDocument[];
+}
+
+export interface PartnerDocument {
+  id: string;
+  type: "TRADE_LICENSE" | "VAT_CERTIFICATE" | "OWNER_ID" | "OTHER";
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: "PENDING" | "VERIFIED" | "REJECTED";
 }
 
 export interface Agent {
@@ -55,6 +65,9 @@ export interface Commission {
   createdAt: string;
 }
 
+export type RidePaymentMethod = "CARD" | "CASH" | "WALLET";
+export type RideServiceType = "STANDARD" | "PREMIUM" | "POOL";
+
 export interface Ride {
   id: string;
   driverId: string;
@@ -65,6 +78,24 @@ export interface Ride {
   commissionAmount: number;
   startedAt: string;
   completedAt?: string;
+  /** Full pickup address shown to ops / riders */
+  pickupAddress: string;
+  /** Full drop-off address */
+  dropoffAddress: string;
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  distanceKm: number;
+  durationMinutes: number;
+  passengerName: string;
+  passengerPhone: string;
+  paymentMethod: RidePaymentMethod;
+  rideType: RideServiceType;
+  bookingReference: string;
+  requestedAt: string;
+  tipAmount?: number;
+  cancellationReason?: string;
 }
 
 export interface AuditLog {
