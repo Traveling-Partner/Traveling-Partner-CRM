@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
@@ -17,16 +17,19 @@ import { FormField } from "@/components/common/FormField";
 import { BlogRichEditor } from "@/components/blog/BlogRichEditor";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { createBlogThunk, clearBlogError } from "@/store/slices/blogSlice";
 
 const schema = z.object({
-  main_title: z.string().min(4, "Main title is required"),
+  coverImage: z.string().url("Cover image must be a valid URL"),
+  mainTitle: z.string().min(4, "Main title is required"),
   description1: z.string().min(10, "Description is required"),
-  cover_image: z.string().url("Cover image must be a valid URL").optional().or(z.literal("")),
+  description2: z.string().min(10, "Detailed content is required"),
   date: z.string().min(1, "Date is required"),
   author: z.string().min(2, "Author is required"),
-  category: z.string().min(2, "Category is required"),
+  categoryId: z.coerce.number().int().positive("Category ID must be greater than 0"),
   readTime: z.string().min(3, "Read time is required"),
-  content: z.string().min(10),
+  tagsText: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"])
@@ -36,8 +39,11 @@ type FormValues = z.infer<typeof schema>;
 
 export default function AdminBlogCreatePage() {
   const router = useRouter();
-  const { success } = useToast();
-  const [content, setContent] = useState<string>("");
+  const dispatch = useAppDispatch();
+  const { success, error: showError } = useToast();
+  const { loading, error } = useAppSelector((state) => state.blog);
+  const authUser = useAppSelector((state) => state.auth.user);
+  const [description2, setDescription2] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
 
   const {
@@ -49,27 +55,61 @@ export default function AdminBlogCreatePage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      main_title: "",
+      coverImage: "",
+      mainTitle: "",
       description1: "",
-      cover_image: "",
+      description2: "",
       date: new Date().toISOString().slice(0, 10),
-      author: "",
-      category: "",
+      author: authUser?.name || "Admin",
+      categoryId: 1,
       readTime: "5 min read",
-      content: "",
+      tagsText: "",
       seoTitle: "",
       seoDescription: "",
       status: "DRAFT"
     }
   });
 
+  useEffect(() => {
+    if (error) {
+      showError(error);
+    }
+  }, [error, showError]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearBlogError());
+    };
+  }, [dispatch]);
+
   const status = watch("status");
 
-  const onSubmit = (values: FormValues) => {
-    success(
-      `Blog post "${values.main_title}" saved as ${values.status.toLowerCase()} (mock).`
-    );
-    router.push("/admin/blog");
+  const onSubmit = async (values: FormValues) => {
+    const tags = (values.tagsText ?? "")
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    try {
+      await dispatch(
+        createBlogThunk({
+          coverImage: values.coverImage,
+          mainTitle: values.mainTitle,
+          description1: values.description1,
+          description2: values.description2,
+          date: values.date,
+          author: values.author,
+          readTime: values.readTime,
+          tags,
+          categoryId: values.categoryId
+        })
+      ).unwrap();
+
+      success(`Blog "${values.mainTitle}" created successfully.`);
+      router.push("/admin/blog");
+    } catch {
+      // Error is already stored in redux and displayed through toast.
+    }
   };
 
   const onImageChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
@@ -77,7 +117,7 @@ export default function AdminBlogCreatePage() {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setImagePreview(url);
-    setValue("cover_image", url);
+    setValue("coverImage", url);
   };
 
   return (
@@ -104,19 +144,31 @@ export default function AdminBlogCreatePage() {
             >
               <div className="space-y-4">
                 <FormField
-                  label="Main Title (main_title)"
-                  htmlFor="main_title"
+                  label="Main Title"
+                  htmlFor="mainTitle"
                   required
-                  error={errors.main_title}
+                  error={errors.mainTitle}
                 >
                   <Input
-                    id="main_title"
+                    id="mainTitle"
                     placeholder="Post title"
-                    {...register("main_title")}
+                    {...register("mainTitle")}
                   />
                 </FormField>
                 <FormField
-                  label="Description (description1)"
+                  label="Cover Image URL"
+                  htmlFor="coverImage"
+                  required
+                  error={errors.coverImage}
+                >
+                  <Input
+                    id="coverImage"
+                    placeholder="https://example.com/image.jpg"
+                    {...register("coverImage")}
+                  />
+                </FormField>
+                <FormField
+                  label="Description 1 (Short intro)"
                   htmlFor="description1"
                   required
                   error={errors.description1}
@@ -130,19 +182,20 @@ export default function AdminBlogCreatePage() {
                 </FormField>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
-                    label="Category"
-                    htmlFor="category"
+                    label="Category ID"
+                    htmlFor="categoryId"
                     required
-                    error={errors.category}
+                    error={errors.categoryId}
                   >
                     <Input
-                      id="category"
-                      placeholder="Operations"
-                      {...register("category")}
+                      id="categoryId"
+                      type="number"
+                      min={1}
+                      {...register("categoryId")}
                     />
                   </FormField>
                   <FormField
-                    label="Author (author)"
+                    label="Author"
                     htmlFor="author"
                     required
                     error={errors.author}
@@ -154,6 +207,13 @@ export default function AdminBlogCreatePage() {
                     />
                   </FormField>
                 </div>
+                <FormField
+                  label="Tags (comma separated)"
+                  htmlFor="tagsText"
+                  description='Example: "travel, adventure, guide"'
+                >
+                  <Input id="tagsText" placeholder="travel, adventure, guide" {...register("tagsText")} />
+                </FormField>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     label="Read time"
@@ -169,9 +229,8 @@ export default function AdminBlogCreatePage() {
                     />
                   </FormField>
                   <FormField
-                    label="Date (date)"
+                    label="Date"
                     htmlFor="date"
-                    description="Website listing date field."
                   >
                     <Input
                       id="date"
@@ -181,16 +240,16 @@ export default function AdminBlogCreatePage() {
                   </FormField>
                 </div>
                 <FormField
-                  label="Body"
-                  htmlFor="content"
+                  label="Description 2 (Detailed content)"
+                  htmlFor="description2"
                   required
-                  error={errors.content}
+                  error={errors.description2}
                 >
                   <BlogRichEditor
-                    value={content}
+                    value={description2}
                     onChange={(html) => {
-                      setContent(html);
-                      setValue("content", html);
+                      setDescription2(html);
+                      setValue("description2", html);
                     }}
                   />
                 </FormField>
@@ -247,7 +306,7 @@ export default function AdminBlogCreatePage() {
             </SectionCard>
 
             <SectionCard
-              title="Cover Image (cover_image)"
+              title="Cover image preview"
               description="Upload a hero image (mock preview only)."
             >
               <div className="space-y-3">
@@ -268,15 +327,17 @@ export default function AdminBlogCreatePage() {
               <Button
                 type="submit"
                 variant="outline"
+                disabled={loading}
                 onClick={() => setValue("status", "DRAFT")}
               >
-                Save draft
+                {loading ? "Saving..." : "Save draft"}
               </Button>
               <Button
                 type="submit"
+                disabled={loading}
                 onClick={() => setValue("status", "PUBLISHED")}
               >
-                Publish
+                {loading ? "Publishing..." : "Publish"}
               </Button>
             </div>
           </div>
