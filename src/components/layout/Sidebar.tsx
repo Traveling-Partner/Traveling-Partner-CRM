@@ -33,11 +33,11 @@ const adminItems: SidebarItem[] = [
   { label: "Documents", href: "/admin/documents", icon: FileText },
   { label: "Partners", href: "/admin/partners", icon: Briefcase },
   { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
-  { label: "Commissions", href: "/admin/commissions", icon: BadgeDollarSign },
-  { label: "Rides", href: "/admin/rides", icon: Car },
+  // { label: "Commissions", href: "/admin/commissions", icon: BadgeDollarSign },
+  // { label: "Rides", href: "/admin/rides", icon: Car },
   { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
-  { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
-  { label: "Notifications", href: "/admin/notifications", icon: Bell },
+  // { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
+  // { label: "Notifications", href: "/admin/notifications", icon: Bell },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },
   { label: "Settings", href: "/admin/settings", icon: Settings }
 ];
