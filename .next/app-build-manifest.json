@@ -31,35 +31,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/admin/dashboard/page.js"
     ],
-    "/admin/rides/page": [
+    "/admin/drivers/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/rides/page.js"
+      "static/chunks/app/admin/drivers/page.js"
     ],
-    "/admin/rides/[id]/page": [
+    "/admin/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/rides/[id]/page.js"
+      "static/chunks/app/admin/settings/page.js"
     ],
-    "/admin/agents/page": [
+    "/admin/documents/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/agents/page.js"
+      "static/chunks/app/admin/documents/page.js"
     ],
-    "/admin/agents/[id]/page": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/agents/[id]/page.js"
-    ],
-    "/admin/vehicle-types/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/vehicle-types/page.js"
-    ],
-    "/admin/blog/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/blog/page.js"
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

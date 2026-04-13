@@ -1,7 +1,8 @@
 {
-  "/admin/agents/page": "app/admin/agents/page.js",
-  "/admin/vehicle-types/page": "app/admin/vehicle-types/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/blog/page": "app/admin/blog/page.js",
+  "/admin/drivers/page": "app/admin/drivers/page.js",
+  "/admin/settings/page": "app/admin/settings/page.js",
+  "/admin/documents/page": "app/admin/documents/page.js",
   "/(auth)/login/page": "app/(auth)/login/page.js"
 }
