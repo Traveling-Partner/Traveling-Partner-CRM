@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
+import { Download, Eye, FileText } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -29,6 +30,32 @@ interface QueueRow extends Driver {
 }
 
 const PAGE_SIZE = 8;
+const mockDocuments = [
+  {
+    id: "driver-license",
+    type: "DRIVER_LICENSE",
+    fileName: "driver-license.jpg",
+    fileUrl: "/mock-images/driver-license.svg",
+    uploadedAt: "2026-03-10T10:00:00.000Z",
+    status: "VERIFIED"
+  },
+  {
+    id: "vehicle-registration",
+    type: "VEHICLE_REGISTRATION",
+    fileName: "vehicle-registration.jpg",
+    fileUrl: "/mock-images/vehicle-registration.svg",
+    uploadedAt: "2026-03-11T10:00:00.000Z",
+    status: "VERIFIED"
+  },
+  {
+    id: "id-document",
+    type: "ID_DOCUMENT",
+    fileName: "id-document.jpg",
+    fileUrl: "/mock-images/id-document.svg",
+    uploadedAt: "2026-03-12T10:00:00.000Z",
+    status: "PENDING"
+  }
+] as const;
 
 export default function DocumentsQueuePage() {
   const { success } = useToast();
@@ -40,6 +67,10 @@ export default function DocumentsQueuePage() {
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDriver, setPreviewDriver] = useState<QueueRow | null>(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
+    mockDocuments[0].id
+  );
+  const [previewSrc, setPreviewSrc] = useState<string>(mockDocuments[0].fileUrl);
 
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
   const [decisionType, setDecisionType] = useState<"APPROVE" | "REJECT" | null>(
@@ -98,6 +129,8 @@ export default function DocumentsQueuePage() {
 
   const openPreview = (driver: QueueRow) => {
     setPreviewDriver(driver);
+    setSelectedDocumentId(mockDocuments[0].id);
+    setPreviewSrc(mockDocuments[0].fileUrl);
     setPreviewOpen(true);
   };
 
@@ -176,6 +209,13 @@ export default function DocumentsQueuePage() {
       )
     }
   ];
+
+  const selectedDocument =
+    mockDocuments.find((doc) => doc.id === selectedDocumentId) ?? mockDocuments[0];
+  const selectedIsPdf =
+    selectedDocument.fileName.toLowerCase().endsWith(".pdf") ||
+    selectedDocument.fileUrl.toLowerCase().includes(".pdf");
+  const fallbackImage = "/mock-images/document-fallback.svg";
 
   return (
     <AppShell title="Document verification">
@@ -288,39 +328,136 @@ export default function DocumentsQueuePage() {
         </SectionCard>
 
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>
                 Document preview – {previewDriver?.name}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 text-sm">
-              <p className="text-xs text-muted-foreground">
-                This is a mock preview. In production this would stream the
-                actual uploaded documents from secure storage.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {[1, 2, 3].map((index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-border/70 bg-muted/40 p-2"
+            <div className="grid gap-3 text-xs lg:grid-cols-[320px,1fr]">
+              <div className="space-y-2">
+                {mockDocuments.map((doc) => (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDocumentId(doc.id);
+                      setPreviewSrc(doc.fileUrl);
+                    }}
+                    className={`w-full rounded-xl border p-3 text-left transition-all ${
+                      selectedDocument.id === doc.id
+                        ? "border-primary/60 bg-primary/10 shadow-sm"
+                        : "border-border/60 bg-card hover:bg-muted/30"
+                    }`}
                   >
-                    <div className="aspect-video w-full overflow-hidden rounded-md bg-slate-200 dark:bg-slate-800">
-                      <img
-                        src={[
-                          "/mock-images/driver-license.svg",
-                          "/mock-images/vehicle-registration.svg",
-                          "/mock-images/id-document.svg"
-                        ][index - 1]}
-                        alt="Mock document"
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="flex items-start gap-2">
+                      <div className="h-12 w-16 overflow-hidden rounded-md border border-border/60 bg-muted/30">
+                        <img
+                          src={doc.fileUrl}
+                          alt={doc.fileName}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                          }}
+                        />
+                      </div>
+                      <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {doc.type.replaceAll("_", " ")}
+                        </p>
+                        <p className="truncate text-[0.7rem] text-muted-foreground">
+                          {doc.fileName}
+                        </p>
+                        <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
+                          Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-1 text-[0.7rem] text-muted-foreground">
-                      Sample document #{index}
+                    <div className="ml-2 mt-1">
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
+                        {doc.status}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+                <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {selectedDocument.fileName}
+                    </p>
+                    <p className="text-[0.68rem] text-muted-foreground">
+                      {selectedDocument.type.replaceAll("_", " ")}
                     </p>
                   </div>
-                ))}
+                  <div className="flex items-center gap-1">
+                    <a
+                      href={selectedDocument.fileUrl}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPreviewSrc(selectedDocument.fileUrl);
+                      }}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                    >
+                      <Eye className="h-3 w-3" />
+                      Preview
+                    </a>
+                    <a
+                      href={selectedDocument.fileUrl}
+                      download
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                    >
+                      <Download className="h-3 w-3" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+                <div className="h-[420px] bg-muted/20 p-2">
+                  {selectedIsPdf ? (
+                    <iframe
+                      src={selectedDocument.fileUrl}
+                      title={selectedDocument.fileName}
+                      className="h-full w-full rounded-md border border-border/60 bg-background"
+                    />
+                  ) : (
+                    <img
+                      src={previewSrc}
+                      alt={selectedDocument.fileName}
+                      className="h-full w-full rounded-md bg-background object-cover"
+                      onError={() => {
+                        setPreviewSrc(fallbackImage);
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-border/60 px-3 py-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!previewDriver) return;
+                      setPreviewOpen(false);
+                      openDecision(previewDriver, "APPROVE");
+                    }}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      if (!previewDriver) return;
+                      setPreviewOpen(false);
+                      openDecision(previewDriver, "REJECT");
+                    }}
+                  >
+                    Reject
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
