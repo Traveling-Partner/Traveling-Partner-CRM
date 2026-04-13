@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { fetcher } from "@/lib/fetcher";
+import { useAppSelector } from "@/store/hooks";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { FormField } from "@/components/common/FormField";
-import { VehicleTypeCard } from "@/components/vehicle-management/VehicleTypeCard";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
-import { ImageUploadField } from "@/components/vehicle-management/ImageUploadField";
 import { ManagementTable } from "@/components/vehicle-management/ManagementTable";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -37,74 +35,121 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 
-const ITEMS_PER_PAGE = 6;
 type TabValue = "vehicleTypes" | "vehicleModels" | "vehicleColors" | "vehicleBrands";
 
 interface VehicleType {
-  id: string;
+  id: number | string;
   name: string;
-  image: string;
-  passengerCapacity: number;
-  luggageCapacity: number;
-  baseFare: number;
-  serviceLevel: "Economy" | "Premium" | "XL";
-  energyType: "Petrol" | "Diesel" | "Hybrid" | "Electric";
-  hasAc: boolean;
-  createdAt: string;
+}
+
+interface VehicleTypesApiResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    content: VehicleType[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+  };
 }
 
 interface VehicleModel {
-  id: string;
+  id: number | string;
   name: string;
-  createdAt: string;
+  vehicleTypeId: number | null;
+}
+
+interface VehicleModelsApiResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    content: VehicleModel[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+  };
 }
 
 interface VehicleColor {
-  id: string;
+  id: number | string;
   name: string;
-  hex: string;
-  createdAt: string;
+  vehicleTypeId: number | null;
+  modelNumberId: number | null;
+}
+
+interface VehicleColorsApiResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    content: VehicleColor[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+  };
 }
 
 interface VehicleBrand {
-  id: string;
-  vehicleTypeId: string;
+  id: number | string;
   name: string;
-  image: string;
-  createdAt: string;
+  vehicleTypeId: number | null;
+  modelNumberId: number | null;
+  colorId: number | null;
+}
+
+interface VehicleBrandsApiResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    content: VehicleBrand[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+  };
 }
 
 type DeleteTarget =
-  | { tab: "vehicleTypes"; id: string }
-  | { tab: "vehicleModels"; id: string }
-  | { tab: "vehicleColors"; id: string }
-  | { tab: "vehicleBrands"; id: string }
+  | { tab: "vehicleTypes"; id: number | string }
+  | { tab: "vehicleModels"; id: number | string }
+  | { tab: "vehicleColors"; id: number | string }
+  | { tab: "vehicleBrands"; id: number | string }
   | null;
 
 const vehicleTypeSchema = z.object({
-  name: z.string().trim().min(1, "Vehicle type name is required."),
-  image: z.string().trim().url("Please provide a valid image URL or upload an image."),
-  passengerCapacity: z.coerce.number().min(1, "Passenger capacity is required."),
-  luggageCapacity: z.coerce.number().min(0, "Luggage capacity cannot be negative."),
-  baseFare: z.coerce.number().min(1, "Base fare is required."),
-  serviceLevel: z.enum(["Economy", "Premium", "XL"]),
-  energyType: z.enum(["Petrol", "Diesel", "Hybrid", "Electric"]),
-  hasAc: z.boolean()
+  name: z.string().trim().min(1, "Vehicle type name is required.")
 });
 
 const modelSchema = z.object({
-  name: z.string().trim().min(1, "Model year is required.")
+  name: z.string().trim().min(1, "Model name is required."),
+  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required.")
 });
 
 const colorSchema = z.object({
   name: z.string().trim().min(1, "Color name is required."),
-  hex: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Use a valid HEX color.")
+  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
+  modelNumberId: z.coerce.number().min(1, "Model number is required.")
 });
 
 const brandSchema = z.object({
-  vehicleTypeId: z.string().min(1, "Vehicle type is required."),
   name: z.string().trim().min(1, "Brand name is required."),
-  image: z.string().trim().url("Please provide a valid image URL or upload an image.")
+  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
+  modelNumberId: z.coerce.number().min(1, "Model number is required."),
+  colorId: z.coerce.number().min(1, "Color is required.")
 });
 
 type VehicleTypeForm = z.infer<typeof vehicleTypeSchema>;
@@ -112,202 +157,47 @@ type ModelForm = z.infer<typeof modelSchema>;
 type ColorForm = z.infer<typeof colorSchema>;
 type BrandForm = z.infer<typeof brandSchema>;
 
-const createId = () => `${Date.now()}-${Math.floor(Math.random() * 999999)}`;
-const now = () => new Date().toISOString();
+const VEHICLE_TYPE_PAGE_SIZE = 6;
 
-const initialVehicleTypes: VehicleType[] = [
-  {
-    id: "type-car",
-    name: "Car",
-    image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 4,
-    luggageCapacity: 2,
-    baseFare: 8,
-    serviceLevel: "Economy",
-    energyType: "Petrol",
-    hasAc: true,
-    createdAt: "2026-04-01T09:00:00.000Z"
-  },
-  {
-    id: "type-suv",
-    name: "SUV",
-    image: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 6,
-    luggageCapacity: 4,
-    baseFare: 12,
-    serviceLevel: "Premium",
-    energyType: "Hybrid",
-    hasAc: true,
-    createdAt: "2026-04-01T09:01:00.000Z"
-  },
-  {
-    id: "type-van",
-    name: "Van",
-    image: "https://images.unsplash.com/photo-1609520505218-7426a9d1c71d?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 8,
-    luggageCapacity: 6,
-    baseFare: 14,
-    serviceLevel: "XL",
-    energyType: "Diesel",
-    hasAc: true,
-    createdAt: "2026-04-01T09:02:00.000Z"
-  },
-  {
-    id: "type-motorcycle",
-    name: "Motorcycle",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 1,
-    luggageCapacity: 0,
-    baseFare: 4,
-    serviceLevel: "Economy",
-    energyType: "Petrol",
-    hasAc: false,
-    createdAt: "2026-04-01T09:03:00.000Z"
-  },
-  {
-    id: "type-ev-bike",
-    name: "Electric Bike (EV Bike)",
-    image: "https://images.unsplash.com/photo-1595433562696-77c52f5c4f07?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 1,
-    luggageCapacity: 0,
-    baseFare: 3,
-    serviceLevel: "Economy",
-    energyType: "Electric",
-    hasAc: false,
-    createdAt: "2026-04-01T09:04:00.000Z"
-  },
-  {
-    id: "type-truck",
-    name: "Truck",
-    image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 2,
-    luggageCapacity: 20,
-    baseFare: 18,
-    serviceLevel: "XL",
-    energyType: "Diesel",
-    hasAc: true,
-    createdAt: "2026-04-01T09:05:00.000Z"
-  },
-  {
-    id: "type-rickshaw",
-    name: "Rickshaw",
-    image: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 3,
-    luggageCapacity: 1,
-    baseFare: 5,
-    serviceLevel: "Economy",
-    energyType: "Petrol",
-    hasAc: false,
-    createdAt: "2026-04-01T09:06:00.000Z"
-  },
-  {
-    id: "type-tuktuk",
-    name: "Auto Rickshaw (Tuk Tuk)",
-    image: "https://images.unsplash.com/photo-1593697821252-0c9137d9fc45?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 3,
-    luggageCapacity: 1,
-    baseFare: 5,
-    serviceLevel: "Economy",
-    energyType: "Petrol",
-    hasAc: false,
-    createdAt: "2026-04-01T09:07:00.000Z"
-  },
-  {
-    id: "type-bus",
-    name: "Bus",
-    image: "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 28,
-    luggageCapacity: 12,
-    baseFare: 25,
-    serviceLevel: "XL",
-    energyType: "Diesel",
-    hasAc: true,
-    createdAt: "2026-04-01T09:08:00.000Z"
-  },
-  {
-    id: "type-minivan",
-    name: "Mini Van / Hiace",
-    image: "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=80",
-    passengerCapacity: 11,
-    luggageCapacity: 8,
-    baseFare: 17,
-    serviceLevel: "XL",
-    energyType: "Diesel",
-    hasAc: true,
-    createdAt: "2026-04-01T09:09:00.000Z"
-  }
-];
+const MODEL_PAGE_SIZE = 6;
 
-const initialVehicleModels: VehicleModel[] = Array.from({ length: 16 }, (_, index) => {
-  const year = String(2010 + index);
-  return {
-    id: `model-${year}`,
-    name: year,
-    createdAt: `2026-04-${String((index % 8) + 2).padStart(2, "0")}T10:00:00.000Z`
-  };
-});
+const COLOR_PAGE_SIZE = 6;
 
-const initialVehicleColors: VehicleColor[] = [
-  { id: "color-red", name: "Red", hex: "#EF4444", createdAt: "2026-04-03T10:00:00.000Z" },
-  { id: "color-blue", name: "Blue", hex: "#3B82F6", createdAt: "2026-04-03T10:01:00.000Z" },
-  { id: "color-black", name: "Black", hex: "#111827", createdAt: "2026-04-03T10:02:00.000Z" },
-  { id: "color-white", name: "White", hex: "#FFFFFF", createdAt: "2026-04-03T10:03:00.000Z" },
-  { id: "color-silver", name: "Silver", hex: "#94A3B8", createdAt: "2026-04-03T10:04:00.000Z" },
-  { id: "color-gray", name: "Gray", hex: "#6B7280", createdAt: "2026-04-03T10:05:00.000Z" },
-  { id: "color-yellow", name: "Yellow", hex: "#EAB308", createdAt: "2026-04-03T10:06:00.000Z" },
-  { id: "color-green", name: "Green", hex: "#22C55E", createdAt: "2026-04-03T10:07:00.000Z" }
-];
-
-const initialVehicleBrands: VehicleBrand[] = [
-  { id: "brand-cultus", vehicleTypeId: "type-car", name: "Suzuki Cultus", image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:00:00.000Z" },
-  { id: "brand-city", vehicleTypeId: "type-car", name: "Honda City", image: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:01:00.000Z" },
-  { id: "brand-corolla", vehicleTypeId: "type-car", name: "Toyota Corolla", image: "https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:02:00.000Z" },
-  { id: "brand-aqua", vehicleTypeId: "type-car", name: "Toyota Aqua", image: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:03:00.000Z" },
-  { id: "brand-civic", vehicleTypeId: "type-car", name: "Honda Civic", image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:04:00.000Z" },
-  { id: "brand-ybr", vehicleTypeId: "type-motorcycle", name: "Yamaha YBR", image: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:05:00.000Z" },
-  { id: "brand-cg125", vehicleTypeId: "type-motorcycle", name: "Honda CG125", image: "https://images.unsplash.com/photo-1515777315835-281b94c9589b?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:06:00.000Z" },
-  { id: "brand-hino", vehicleTypeId: "type-truck", name: "Hino Truck", image: "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:07:00.000Z" },
-  { id: "brand-mazda-truck", vehicleTypeId: "type-truck", name: "Mazda Truck", image: "https://images.unsplash.com/photo-1594484208280-efa00f96fc21?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:08:00.000Z" },
-  { id: "brand-bajaj", vehicleTypeId: "type-rickshaw", name: "Bajaj Rickshaw", image: "https://images.unsplash.com/photo-1593697821252-0c9137d9fc45?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:09:00.000Z" },
-  { id: "brand-qingqi", vehicleTypeId: "type-rickshaw", name: "Qingqi Rickshaw", image: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:10:00.000Z" },
-  { id: "brand-prado", vehicleTypeId: "type-suv", name: "Toyota Prado", image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:11:00.000Z" },
-  { id: "brand-sportage", vehicleTypeId: "type-suv", name: "Kia Sportage", image: "https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:12:00.000Z" },
-  { id: "brand-hiace", vehicleTypeId: "type-van", name: "Toyota Hiace", image: "https://images.unsplash.com/photo-1609520505218-7426a9d1c71d?auto=format&fit=crop&w=1000&q=80", createdAt: "2026-04-04T09:13:00.000Z" }
-];
-
-function paginateRows<T>(rows: T[], page: number) {
-  const totalPages = Math.max(1, Math.ceil(rows.length / ITEMS_PER_PAGE));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * ITEMS_PER_PAGE;
-  return { rows: rows.slice(start, start + ITEMS_PER_PAGE), safePage, totalPages };
-}
+const BRAND_PAGE_SIZE = 6;
 
 export default function VehicleTypesPage() {
   const { success, error } = useToast();
 
+  const token = useAppSelector((state) => state.auth.token);
   const [tab, setTab] = useState<TabValue>("vehicleTypes");
-  const [isLoading, setIsLoading] = useState(true);
 
-  const [vehicleTypes, setVehicleTypes] = useState(initialVehicleTypes);
-  const [vehicleModels, setVehicleModels] = useState(initialVehicleModels);
-  const [vehicleColors, setVehicleColors] = useState(initialVehicleColors);
-  const [vehicleBrands, setVehicleBrands] = useState(initialVehicleBrands);
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [typeTotalPages, setTypeTotalPages] = useState(1);
+  const [typeLoading, setTypeLoading] = useState(false);
+  const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
+  const [modelTotalPages, setModelTotalPages] = useState(1);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [vehicleColors, setVehicleColors] = useState<VehicleColor[]>([]);
+  const [colorTotalPages, setColorTotalPages] = useState(1);
+  const [colorLoading, setColorLoading] = useState(false);
+  const [vehicleBrands, setVehicleBrands] = useState<VehicleBrand[]>([]);
+  const [brandTotalPages, setBrandTotalPages] = useState(1);
+  const [brandLoading, setBrandLoading] = useState(false);
 
   const [typeSearch, setTypeSearch] = useState("");
   const [modelSearch, setModelSearch] = useState("");
   const [colorSearch, setColorSearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
-  const [brandTypeFilter, setBrandTypeFilter] = useState("all");
 
   const [typePage, setTypePage] = useState(1);
   const [modelPage, setModelPage] = useState(1);
   const [colorPage, setColorPage] = useState(1);
   const [brandPage, setBrandPage] = useState(1);
 
-  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
-  const [editingModelId, setEditingModelId] = useState<string | null>(null);
-  const [editingColorId, setEditingColorId] = useState<string | null>(null);
-  const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
+  const [editingTypeId, setEditingTypeId] = useState<number | string | null>(null);
+  const [editingModelId, setEditingModelId] = useState<number | string | null>(null);
+  const [editingColorId, setEditingColorId] = useState<number | string | null>(null);
+  const [editingBrandId, setEditingBrandId] = useState<number | string | null>(null);
 
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [showModelModal, setShowModelModal] = useState(false);
@@ -317,223 +207,367 @@ export default function VehicleTypesPage() {
 
   const typeForm = useForm<VehicleTypeForm>({
     resolver: zodResolver(vehicleTypeSchema),
-    defaultValues: {
-      name: "",
-      image: "",
-      passengerCapacity: 4,
-      luggageCapacity: 1,
-      baseFare: 8,
-      serviceLevel: "Economy",
-      energyType: "Petrol",
-      hasAc: true
-    }
+    defaultValues: { name: "" }
   });
 
   const modelForm = useForm<ModelForm>({
     resolver: zodResolver(modelSchema),
-    defaultValues: { name: "2026" }
+    defaultValues: { name: "", vehicleTypeId: 0 }
   });
 
   const colorForm = useForm<ColorForm>({
     resolver: zodResolver(colorSchema),
-    defaultValues: { name: "", hex: "#3B82F6" }
+    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0 }
   });
 
   const brandForm = useForm<BrandForm>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { vehicleTypeId: "", name: "", image: "" }
+    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0 }
   });
 
+  const fetchVehicleTypes = async (page: number, search: string) => {
+    setTypeLoading(true);
+    try {
+      const apiPage = page - 1;
+      const res = await fetcher<VehicleTypesApiResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/getAll?page=${apiPage}&size=${VEHICLE_TYPE_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        { token }
+      );
+      setVehicleTypes(res.data.content);
+      setTypeTotalPages(Math.max(1, res.data.totalPages));
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to load vehicle types.");
+    } finally {
+      setTypeLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const timer = window.setTimeout(() => setIsLoading(false), 700);
-    return () => window.clearTimeout(timer);
-  }, []);
+    if (token) {
+      fetchVehicleTypes(typePage, typeSearch);
+    }
+  }, [token, typePage, typeSearch]);
 
-  const filteredTypes = useMemo(
-    () => vehicleTypes.filter((item) => item.name.toLowerCase().includes(typeSearch.toLowerCase().trim())),
-    [vehicleTypes, typeSearch]
-  );
+  const fetchVehicleModels = async (page: number, search: string) => {
+    setModelLoading(true);
+    try {
+      const apiPage = page - 1;
+      const res = await fetcher<VehicleModelsApiResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/getAll?page=${apiPage}&size=${MODEL_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        { token }
+      );
+      setVehicleModels(res.data.content);
+      setModelTotalPages(Math.max(1, res.data.totalPages));
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to load vehicle models.");
+    } finally {
+      setModelLoading(false);
+    }
+  };
 
-  const filteredModels = useMemo(
-    () => vehicleModels.filter((item) => item.name.toLowerCase().includes(modelSearch.toLowerCase().trim())),
-    [vehicleModels, modelSearch]
-  );
+  useEffect(() => {
+    if (token) {
+      fetchVehicleModels(modelPage, modelSearch);
+    }
+  }, [token, modelPage, modelSearch]);
 
-  const filteredColors = useMemo(
-    () =>
-      vehicleColors.filter(
-        (item) =>
-          item.name.toLowerCase().includes(colorSearch.toLowerCase().trim()) ||
-          item.hex.toLowerCase().includes(colorSearch.toLowerCase().trim())
-      ),
-    [vehicleColors, colorSearch]
-  );
+  const fetchVehicleColors = async (page: number, search: string) => {
+    setColorLoading(true);
+    try {
+      const apiPage = page - 1;
+      const res = await fetcher<VehicleColorsApiResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/colors/getAll?page=${apiPage}&size=${COLOR_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        { token }
+      );
+      setVehicleColors(res.data.content);
+      setColorTotalPages(Math.max(1, res.data.totalPages));
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to load vehicle colors.");
+    } finally {
+      setColorLoading(false);
+    }
+  };
 
-  const filteredBrands = useMemo(
-    () =>
-      vehicleBrands.filter((item) => {
-        const byName = item.name.toLowerCase().includes(brandSearch.toLowerCase().trim());
-        const byType = brandTypeFilter === "all" || item.vehicleTypeId === brandTypeFilter;
-        return byName && byType;
-      }),
-    [vehicleBrands, brandSearch, brandTypeFilter]
-  );
+  useEffect(() => {
+    if (token) {
+      fetchVehicleColors(colorPage, colorSearch);
+    }
+  }, [token, colorPage, colorSearch]);
 
-  const typeResult = paginateRows(filteredTypes, typePage);
-  const modelResult = paginateRows(filteredModels, modelPage);
-  const colorResult = paginateRows(filteredColors, colorPage);
-  const brandResult = paginateRows(filteredBrands, brandPage);
+  const fetchVehicleBrands = async (page: number, search: string) => {
+    setBrandLoading(true);
+    try {
+      const apiPage = page - 1;
+      const res = await fetcher<VehicleBrandsApiResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/brands/getAll?page=${apiPage}&size=${BRAND_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        { token }
+      );
+      setVehicleBrands(res.data.content);
+      setBrandTotalPages(Math.max(1, res.data.totalPages));
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to load vehicle brands.");
+    } finally {
+      setBrandLoading(false);
+    }
+  };
 
-  useEffect(() => setTypePage(1), [typeSearch]);
-  useEffect(() => setModelPage(1), [modelSearch]);
-  useEffect(() => setColorPage(1), [colorSearch]);
-  useEffect(() => setBrandPage(1), [brandSearch, brandTypeFilter]);
-
-  useEffect(() => setTypePage(typeResult.safePage), [typeResult.safePage]);
-  useEffect(() => setModelPage(modelResult.safePage), [modelResult.safePage]);
-  useEffect(() => setColorPage(colorResult.safePage), [colorResult.safePage]);
-  useEffect(() => setBrandPage(brandResult.safePage), [brandResult.safePage]);
-
-  const getTypeName = (id: string) => vehicleTypes.find((item) => item.id === id)?.name ?? "Unknown";
+  useEffect(() => {
+    if (token) {
+      fetchVehicleBrands(brandPage, brandSearch);
+    }
+  }, [token, brandPage, brandSearch]);
 
   const openAddType = () => {
     setEditingTypeId(null);
-    typeForm.reset({
-      name: "",
-      image: "",
-      passengerCapacity: 4,
-      luggageCapacity: 1,
-      baseFare: 8,
-      serviceLevel: "Economy",
-      energyType: "Petrol",
-      hasAc: true
-    });
+    typeForm.reset({ name: "" });
     setShowTypeModal(true);
   };
 
   const openEditType = (type: VehicleType) => {
     setEditingTypeId(type.id);
-    typeForm.reset({
-      name: type.name,
-      image: type.image,
-      passengerCapacity: type.passengerCapacity,
-      luggageCapacity: type.luggageCapacity,
-      baseFare: type.baseFare,
-      serviceLevel: type.serviceLevel,
-      energyType: type.energyType,
-      hasAc: type.hasAc
-    });
+    typeForm.reset({ name: type.name });
     setShowTypeModal(true);
   };
 
   const openAddModel = () => {
     setEditingModelId(null);
-    modelForm.reset({ name: "2026" });
+    modelForm.reset({ name: "", vehicleTypeId: 0 });
     setShowModelModal(true);
   };
 
   const openEditModel = (model: VehicleModel) => {
     setEditingModelId(model.id);
-    modelForm.reset({ name: model.name });
+    modelForm.reset({ name: model.name, vehicleTypeId: Number(model.vehicleTypeId) || 0 });
     setShowModelModal(true);
   };
 
   const openAddColor = () => {
     setEditingColorId(null);
-    colorForm.reset({ name: "", hex: "#3B82F6" });
+    colorForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0 });
     setShowColorModal(true);
   };
 
   const openEditColor = (color: VehicleColor) => {
     setEditingColorId(color.id);
-    colorForm.reset({ name: color.name, hex: color.hex });
+    colorForm.reset({
+      name: color.name,
+      vehicleTypeId: color.vehicleTypeId ?? 0,
+      modelNumberId: color.modelNumberId ?? 0
+    });
     setShowColorModal(true);
   };
 
   const openAddBrand = () => {
     setEditingBrandId(null);
-    brandForm.reset({ vehicleTypeId: "", name: "", image: "" });
+    brandForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0 });
     setShowBrandModal(true);
   };
 
   const openEditBrand = (brand: VehicleBrand) => {
     setEditingBrandId(brand.id);
     brandForm.reset({
-      vehicleTypeId: brand.vehicleTypeId,
       name: brand.name,
-      image: brand.image
+      vehicleTypeId: brand.vehicleTypeId ?? 0,
+      modelNumberId: brand.modelNumberId ?? 0,
+      colorId: brand.colorId ?? 0
     });
     setShowBrandModal(true);
   };
 
-  const submitType = (values: VehicleTypeForm) => {
-    if (editingTypeId) {
-      setVehicleTypes((prev) => prev.map((item) => (item.id === editingTypeId ? { ...item, ...values } : item)));
-      success("Vehicle type updated.");
-    } else {
-      setVehicleTypes((prev) => [{ id: createId(), createdAt: now(), ...values }, ...prev]);
-      success("Vehicle type added and listed.");
+  const [typeSubmitting, setTypeSubmitting] = useState(false);
+
+  const submitType = async (values: VehicleTypeForm) => {
+    setTypeSubmitting(true);
+    try {
+      if (editingTypeId) {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/update/${editingTypeId}`,
+          { method: "PUT", token, body: JSON.stringify({ name: values.name }) }
+        );
+        success("Vehicle type updated successfully.");
+      } else {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/create`,
+          { method: "POST", token, body: JSON.stringify({ name: values.name }) }
+        );
+        success("Vehicle type created successfully.");
+      }
+      setShowTypeModal(false);
+      await fetchVehicleTypes(typePage, typeSearch);
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to save vehicle type.");
+    } finally {
+      setTypeSubmitting(false);
     }
-    setShowTypeModal(false);
   };
 
-  const submitModel = (values: ModelForm) => {
-    if (editingModelId) {
-      setVehicleModels((prev) => prev.map((item) => (item.id === editingModelId ? { ...item, ...values } : item)));
-      success("Vehicle model updated.");
-    } else {
-      setVehicleModels((prev) => [{ id: createId(), createdAt: now(), ...values }, ...prev]);
-      success("Vehicle model added and listed.");
+  const [modelSubmitting, setModelSubmitting] = useState(false);
+
+  const submitModel = async (values: ModelForm) => {
+    setModelSubmitting(true);
+    try {
+      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId };
+      if (editingModelId) {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/update/${editingModelId}`,
+          { method: "PUT", token, body: JSON.stringify(payload) }
+        );
+        success("Vehicle model updated successfully.");
+      } else {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/create`,
+          { method: "POST", token, body: JSON.stringify(payload) }
+        );
+        success("Vehicle model created successfully.");
+      }
+      setShowModelModal(false);
+      await fetchVehicleModels(modelPage, modelSearch);
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to save vehicle model.");
+    } finally {
+      setModelSubmitting(false);
     }
-    setShowModelModal(false);
   };
 
-  const submitColor = (values: ColorForm) => {
-    if (editingColorId) {
-      setVehicleColors((prev) => prev.map((item) => (item.id === editingColorId ? { ...item, ...values } : item)));
-      success("Vehicle color updated.");
-    } else {
-      setVehicleColors((prev) => [{ id: createId(), createdAt: now(), ...values }, ...prev]);
-      success("Vehicle color added and listed.");
+  const [colorSubmitting, setColorSubmitting] = useState(false);
+
+  const submitColor = async (values: ColorForm) => {
+    setColorSubmitting(true);
+    try {
+      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId, modelNumberId: values.modelNumberId };
+      if (editingColorId) {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/colors/update/${editingColorId}`,
+          { method: "PUT", token, body: JSON.stringify(payload) }
+        );
+        success("Vehicle color updated successfully.");
+      } else {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/colors/create`,
+          { method: "POST", token, body: JSON.stringify(payload) }
+        );
+        success("Vehicle color created successfully.");
+      }
+      setShowColorModal(false);
+      await fetchVehicleColors(colorPage, colorSearch);
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to save vehicle color.");
+    } finally {
+      setColorSubmitting(false);
     }
-    setShowColorModal(false);
   };
 
-  const submitBrand = (values: BrandForm) => {
-    if (!vehicleTypes.some((item) => item.id === values.vehicleTypeId)) {
-      error("Please choose a valid vehicle type.");
-      return;
-    }
+  const [brandSubmitting, setBrandSubmitting] = useState(false);
 
-    if (editingBrandId) {
-      setVehicleBrands((prev) => prev.map((item) => (item.id === editingBrandId ? { ...item, ...values } : item)));
-      success("Vehicle brand updated.");
-    } else {
-      setVehicleBrands((prev) => [{ id: createId(), createdAt: now(), ...values }, ...prev]);
-      success("Vehicle brand added and listed.");
+  const submitBrand = async (values: BrandForm) => {
+    setBrandSubmitting(true);
+    try {
+      const payload = {
+        name: values.name,
+        vehicleTypeId: values.vehicleTypeId,
+        modelNumberId: values.modelNumberId,
+        colorId: values.colorId
+      };
+      if (editingBrandId) {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/brands/update/${editingBrandId}`,
+          { method: "PUT", token, body: JSON.stringify(payload) }
+        );
+        success("Vehicle brand updated successfully.");
+      } else {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/brands/create`,
+          { method: "POST", token, body: JSON.stringify(payload) }
+        );
+        success("Vehicle brand created successfully.");
+      }
+      setShowBrandModal(false);
+      await fetchVehicleBrands(brandPage, brandSearch);
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to save vehicle brand.");
+    } finally {
+      setBrandSubmitting(false);
     }
-    setShowBrandModal(false);
   };
 
-  const handleDelete = () => {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.tab === "vehicleTypes") {
-      setVehicleTypes((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-      setVehicleBrands((prev) => prev.filter((item) => item.vehicleTypeId !== deleteTarget.id));
-      success("Vehicle type removed. Related brands were also removed.");
+      setDeleting(true);
+      try {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/delete/${deleteTarget.id}`,
+          { method: "DELETE", token }
+        );
+        success("Vehicle type deleted successfully.");
+        setDeleteTarget(null);
+        await fetchVehicleTypes(typePage, typeSearch);
+      } catch (err) {
+        error(err instanceof Error ? err.message : "Failed to delete vehicle type.");
+        setDeleteTarget(null);
+      } finally {
+        setDeleting(false);
+      }
+      return;
     }
+
     if (deleteTarget.tab === "vehicleModels") {
-      setVehicleModels((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-      success("Vehicle model removed.");
+      setDeleting(true);
+      try {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/delete/${deleteTarget.id}`,
+          { method: "DELETE", token }
+        );
+        success("Vehicle model deleted successfully.");
+        setDeleteTarget(null);
+        await fetchVehicleModels(modelPage, modelSearch);
+      } catch (err) {
+        error(err instanceof Error ? err.message : "Failed to delete vehicle model.");
+        setDeleteTarget(null);
+      } finally {
+        setDeleting(false);
+      }
+      return;
     }
+
     if (deleteTarget.tab === "vehicleColors") {
-      setVehicleColors((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-      success("Vehicle color removed.");
+      setDeleting(true);
+      try {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/colors/delete/${deleteTarget.id}`,
+          { method: "DELETE", token }
+        );
+        success("Vehicle color deleted successfully.");
+        setDeleteTarget(null);
+        await fetchVehicleColors(colorPage, colorSearch);
+      } catch (err) {
+        error(err instanceof Error ? err.message : "Failed to delete vehicle color.");
+        setDeleteTarget(null);
+      } finally {
+        setDeleting(false);
+      }
+      return;
     }
     if (deleteTarget.tab === "vehicleBrands") {
-      setVehicleBrands((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-      success("Vehicle brand removed.");
+      setDeleting(true);
+      try {
+        await fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/brands/delete/${deleteTarget.id}`,
+          { method: "DELETE", token }
+        );
+        success("Vehicle brand deleted successfully.");
+        setDeleteTarget(null);
+        await fetchVehicleBrands(brandPage, brandSearch);
+      } catch (err) {
+        error(err instanceof Error ? err.message : "Failed to delete vehicle brand.");
+        setDeleteTarget(null);
+      } finally {
+        setDeleting(false);
+      }
+      return;
     }
     setDeleteTarget(null);
   };
@@ -573,44 +607,49 @@ export default function VehicleTypesPage() {
                   <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={typeSearch}
-                    onChange={(event) => setTypeSearch(event.target.value)}
+                    onChange={(event) => {
+                      setTypeSearch(event.target.value);
+                      setTypePage(1);
+                    }}
                     placeholder="Search vehicle type..."
                     className="pl-9"
                   />
                 </div>
 
-                {isLoading ? (
+                {typeLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <div key={`type-skeleton-${index}`} className="space-y-3 rounded-xl border border-border/70 p-3">
-                        <Skeleton className="h-40 w-full rounded-lg" />
+                    {Array.from({ length: VEHICLE_TYPE_PAGE_SIZE }).map((_, index) => (
+                      <div key={`type-skeleton-${index}`} className="rounded-xl border border-border/70 p-4">
                         <Skeleton className="h-5 w-2/3" />
-                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="mt-2 h-4 w-1/3" />
                       </div>
                     ))}
                   </div>
-                ) : typeResult.rows.length === 0 ? (
+                ) : vehicleTypes.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/80 px-4 py-12 text-center text-sm text-muted-foreground">
                     No vehicle types found.
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {typeResult.rows.map((type) => (
-                      <VehicleTypeCard
+                    {vehicleTypes.map((type) => (
+                      <div
                         key={type.id}
-                        name={type.name}
-                        image={type.image}
-                        passengerCapacity={type.passengerCapacity}
-                        luggageCapacity={type.luggageCapacity}
-                        serviceLevel={type.serviceLevel}
-                        energyType={type.energyType}
-                        onEdit={() => openEditType(type)}
-                        onDelete={() => setDeleteTarget({ tab: "vehicleTypes", id: type.id })}
-                      />
+                        className="group flex items-center justify-between rounded-xl border border-border/70 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <p className="text-sm font-heading font-semibold">{type.name}</p>
+                        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Button size="icon" variant="ghost" onClick={() => openEditType(type)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => setDeleteTarget({ tab: "vehicleTypes", id: type.id })}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
-                <PaginationControls currentPage={typePage} totalPages={typeResult.totalPages} onPageChange={setTypePage} />
+                <PaginationControls currentPage={typePage} totalPages={typeTotalPages} onPageChange={setTypePage} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -630,15 +669,30 @@ export default function VehicleTypesPage() {
               <CardContent className="space-y-4 pt-4">
                 <div className="relative max-w-sm">
                   <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input value={modelSearch} onChange={(event) => setModelSearch(event.target.value)} placeholder="Search model year..." className="pl-9" />
+                  <Input
+                    value={modelSearch}
+                    onChange={(event) => {
+                      setModelSearch(event.target.value);
+                      setModelPage(1);
+                    }}
+                    placeholder="Search model..."
+                    className="pl-9"
+                  />
                 </div>
                 <ManagementTable
-                  isLoading={isLoading}
-                  rows={modelResult.rows}
+                  isLoading={modelLoading}
+                  rows={vehicleModels}
                   emptyLabel="No models found."
                   columns={[
                     { key: "name", header: "Name", render: (item: VehicleModel) => <span className="font-medium">{item.name}</span> },
-                    { key: "createdAt", header: "Created At", render: (item: VehicleModel) => format(new Date(item.createdAt), "MMM d, yyyy") },
+                    {
+                      key: "vehicleType",
+                      header: "Vehicle Type",
+                      render: (item: VehicleModel) => {
+                        const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
+                        return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
+                      }
+                    },
                     {
                       key: "actions",
                       header: "Actions",
@@ -652,7 +706,7 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <PaginationControls currentPage={modelPage} totalPages={modelResult.totalPages} onPageChange={setModelPage} />
+                <PaginationControls currentPage={modelPage} totalPages={modelTotalPages} onPageChange={setModelPage} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -662,7 +716,7 @@ export default function VehicleTypesPage() {
               <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-lg font-heading">Vehicle Colors</CardTitle>
-                  <p className="text-sm text-muted-foreground">Maintain standardized color palette and HEX values.</p>
+                  <p className="text-sm text-muted-foreground">Manage vehicle colors mapped to types and models.</p>
                 </div>
                 <Button onClick={openAddColor}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -672,25 +726,35 @@ export default function VehicleTypesPage() {
               <CardContent className="space-y-4 pt-4">
                 <div className="relative max-w-sm">
                   <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input value={colorSearch} onChange={(event) => setColorSearch(event.target.value)} placeholder="Search by color or HEX..." className="pl-9" />
+                  <Input
+                    value={colorSearch}
+                    onChange={(event) => { setColorSearch(event.target.value); setColorPage(1); }}
+                    placeholder="Search color..."
+                    className="pl-9"
+                  />
                 </div>
                 <ManagementTable
-                  isLoading={isLoading}
-                  rows={colorResult.rows}
+                  isLoading={colorLoading}
+                  rows={vehicleColors}
                   emptyLabel="No colors found."
                   columns={[
+                    { key: "name", header: "Name", render: (item: VehicleColor) => <span className="font-medium">{item.name}</span> },
                     {
-                      key: "color",
-                      header: "Color",
-                      render: (item: VehicleColor) => (
-                        <div className="flex items-center gap-3">
-                          <span className="h-5 w-5 rounded-full border border-border/70" style={{ backgroundColor: item.hex }} />
-                          <span className="font-medium">{item.name}</span>
-                        </div>
-                      )
+                      key: "vehicleType",
+                      header: "Vehicle Type",
+                      render: (item: VehicleColor) => {
+                        const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
+                        return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
+                      }
                     },
-                    { key: "hex", header: "HEX", render: (item: VehicleColor) => <span className="font-mono text-xs">{item.hex}</span> },
-                    { key: "createdAt", header: "Created At", render: (item: VehicleColor) => format(new Date(item.createdAt), "MMM d, yyyy") },
+                    {
+                      key: "modelNumber",
+                      header: "Model Number",
+                      render: (item: VehicleColor) => {
+                        const modelName = vehicleModels.find((m) => Number(m.id) === Number(item.modelNumberId))?.name;
+                        return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
+                      }
+                    },
                     {
                       key: "actions",
                       header: "Actions",
@@ -704,7 +768,7 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <PaginationControls currentPage={colorPage} totalPages={colorResult.totalPages} onPageChange={setColorPage} />
+                <PaginationControls currentPage={colorPage} totalPages={colorTotalPages} onPageChange={setColorPage} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -714,7 +778,7 @@ export default function VehicleTypesPage() {
               <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-lg font-heading">Vehicle Brands</CardTitle>
-                  <p className="text-sm text-muted-foreground">Type-mapped production brand catalog.</p>
+                  <p className="text-sm text-muted-foreground">Manage vehicle brands mapped to types, models, and colors.</p>
                 </div>
                 <Button onClick={openAddBrand}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -722,44 +786,45 @@ export default function VehicleTypesPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input value={brandSearch} onChange={(event) => setBrandSearch(event.target.value)} placeholder="Search by brand..." className="pl-9" />
-                  </div>
-                  <Select value={brandTypeFilter} onValueChange={setBrandTypeFilter}>
-                    <SelectTrigger><SelectValue placeholder="Filter by type" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All vehicle types</SelectItem>
-                      {vehicleTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="relative max-w-sm">
+                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={brandSearch}
+                    onChange={(event) => { setBrandSearch(event.target.value); setBrandPage(1); }}
+                    placeholder="Search brand..."
+                    className="pl-9"
+                  />
                 </div>
                 <ManagementTable
-                  isLoading={isLoading}
-                  rows={brandResult.rows}
+                  isLoading={brandLoading}
+                  rows={vehicleBrands}
                   emptyLabel="No brands found."
                   columns={[
-                    {
-                      key: "image",
-                      header: "Image",
-                      className: "w-[110px]",
-                      render: (item: VehicleBrand) => (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="h-12 w-20 rounded-md border border-border/70 object-cover"
-                          onError={(event) => {
-                            event.currentTarget.src = "https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1200";
-                          }}
-                        />
-                      )
-                    },
                     { key: "name", header: "Brand Name", render: (item: VehicleBrand) => <span className="font-medium">{item.name}</span> },
-                    { key: "type", header: "Vehicle Type", render: (item: VehicleBrand) => getTypeName(item.vehicleTypeId) },
-                    { key: "createdAt", header: "Created At", render: (item: VehicleBrand) => format(new Date(item.createdAt), "MMM d, yyyy") },
+                    {
+                      key: "vehicleType",
+                      header: "Vehicle Type",
+                      render: (item: VehicleBrand) => {
+                        const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
+                        return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
+                      }
+                    },
+                    {
+                      key: "modelNumber",
+                      header: "Model Number",
+                      render: (item: VehicleBrand) => {
+                        const modelName = vehicleModels.find((m) => Number(m.id) === Number(item.modelNumberId))?.name;
+                        return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
+                      }
+                    },
+                    {
+                      key: "color",
+                      header: "Color",
+                      render: (item: VehicleBrand) => {
+                        const colorName = vehicleColors.find((c) => Number(c.id) === Number(item.colorId))?.name;
+                        return <span className="text-xs text-muted-foreground">{colorName ?? "—"}</span>;
+                      }
+                    },
                     {
                       key: "actions",
                       header: "Actions",
@@ -773,7 +838,7 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <PaginationControls currentPage={brandPage} totalPages={brandResult.totalPages} onPageChange={setBrandPage} />
+                <PaginationControls currentPage={brandPage} totalPages={brandTotalPages} onPageChange={setBrandPage} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -784,91 +849,45 @@ export default function VehicleTypesPage() {
         open={showTypeModal}
         onOpenChange={setShowTypeModal}
         title={editingTypeId ? "Edit Vehicle Type" : "Add Vehicle Type"}
-        description="Capture all important operational fields for production-ready vehicle onboarding."
-        submitLabel={editingTypeId ? "Update Vehicle Type" : "Create Vehicle Type"}
+        description="Enter the vehicle type name to register it in the system."
+        submitLabel={typeSubmitting ? (editingTypeId ? "Updating…" : "Creating…") : editingTypeId ? "Update Vehicle Type" : "Create Vehicle Type"}
+        isSubmitting={typeSubmitting}
         onCancel={() => setShowTypeModal(false)}
         onSubmit={() => void typeForm.handleSubmit(submitType)()}
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Vehicle Name" required error={typeForm.formState.errors.name}>
-            <Input placeholder="e.g., Sedan" {...typeForm.register("name")} />
-          </FormField>
-          <FormField label="Base Fare ($)" required error={typeForm.formState.errors.baseFare}>
-            <Input type="number" min={1} step="0.1" {...typeForm.register("baseFare")} />
-          </FormField>
-          <FormField label="Passenger Capacity" required error={typeForm.formState.errors.passengerCapacity}>
-            <Input type="number" min={1} {...typeForm.register("passengerCapacity")} />
-          </FormField>
-          <FormField label="Luggage Capacity" required error={typeForm.formState.errors.luggageCapacity}>
-            <Input type="number" min={0} {...typeForm.register("luggageCapacity")} />
-          </FormField>
-          <FormField label="Service Level" required error={typeForm.formState.errors.serviceLevel}>
-            <Controller
-              name="serviceLevel"
-              control={typeForm.control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger><SelectValue placeholder="Select service level" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Economy">Economy</SelectItem>
-                    <SelectItem value="Premium">Premium</SelectItem>
-                    <SelectItem value="XL">XL</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-          <FormField label="Energy Type" required error={typeForm.formState.errors.energyType}>
-            <Controller
-              name="energyType"
-              control={typeForm.control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger><SelectValue placeholder="Select energy type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Petrol">Petrol</SelectItem>
-                    <SelectItem value="Diesel">Diesel</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
-                    <SelectItem value="Electric">Electric</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-        </div>
-
-        <FormField label="Image URL" required error={typeForm.formState.errors.image}>
-          <Input placeholder="Paste Unsplash/Pexels/Pixabay image URL..." {...typeForm.register("image")} />
+        <FormField label="Vehicle Name" required error={typeForm.formState.errors.name}>
+          <Input placeholder="e.g., Sedan" {...typeForm.register("name")} />
         </FormField>
-        <FormField label="Image Upload (optional override)">
-          <ImageUploadField
-            id="vehicle-type-upload"
-            value={typeForm.watch("image")}
-            onChange={(value) => typeForm.setValue("image", value, { shouldValidate: true })}
-          />
-        </FormField>
-
-        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-          <p className="text-sm font-medium">Air Conditioning Available</p>
-          <Controller
-            name="hasAc"
-            control={typeForm.control}
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
-          />
-        </div>
       </EntityModal>
 
       <EntityModal
         open={showModelModal}
         onOpenChange={setShowModelModal}
         title={editingModelId ? "Edit Vehicle Model" : "Add Vehicle Model"}
-        description="Add or update model year entries."
-        submitLabel={editingModelId ? "Update Model" : "Create Model"}
+        description="Add or update model entries."
+        submitLabel={modelSubmitting ? (editingModelId ? "Updating…" : "Creating…") : editingModelId ? "Update Model" : "Create Model"}
+        isSubmitting={modelSubmitting}
         onCancel={() => setShowModelModal(false)}
         onSubmit={() => void modelForm.handleSubmit(submitModel)()}
       >
-        <FormField label="Model Year" required error={modelForm.formState.errors.name}>
-          <Input placeholder="e.g., 2025" {...modelForm.register("name")} />
+        <FormField label="Model Name" required error={modelForm.formState.errors.name}>
+          <Input placeholder="e.g., Corolla 2022" {...modelForm.register("name")} />
+        </FormField>
+        <FormField label="Vehicle Type" required error={modelForm.formState.errors.vehicleTypeId}>
+          <Controller
+            name="vehicleTypeId"
+            control={modelForm.control}
+            render={({ field }) => (
+              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
+                <SelectContent>
+                  {vehicleTypes.map((type) => (
+                    <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </FormField>
       </EntityModal>
 
@@ -876,21 +895,46 @@ export default function VehicleTypesPage() {
         open={showColorModal}
         onOpenChange={setShowColorModal}
         title={editingColorId ? "Edit Vehicle Color" : "Add Vehicle Color"}
-        description="Set both the display name and HEX value."
-        submitLabel={editingColorId ? "Update Color" : "Create Color"}
+        description="Map a color to a vehicle type and model."
+        submitLabel={colorSubmitting ? (editingColorId ? "Updating…" : "Creating…") : editingColorId ? "Update Color" : "Create Color"}
+        isSubmitting={colorSubmitting}
         onCancel={() => setShowColorModal(false)}
         onSubmit={() => void colorForm.handleSubmit(submitColor)()}
       >
-        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-          <FormField label="Color Name" required error={colorForm.formState.errors.name}>
-            <Input placeholder="e.g., Midnight Black" {...colorForm.register("name")} />
-          </FormField>
-          <FormField label="HEX" required error={colorForm.formState.errors.hex}>
-            <Input type="color" className="h-10 w-16 p-1" {...colorForm.register("hex")} />
-          </FormField>
-        </div>
-        <FormField label="HEX Value" required error={colorForm.formState.errors.hex}>
-          <Input placeholder="#000000" {...colorForm.register("hex")} />
+        <FormField label="Color Name" required error={colorForm.formState.errors.name}>
+          <Input placeholder="e.g., White" {...colorForm.register("name")} />
+        </FormField>
+        <FormField label="Vehicle Type" required error={colorForm.formState.errors.vehicleTypeId}>
+          <Controller
+            name="vehicleTypeId"
+            control={colorForm.control}
+            render={({ field }) => (
+              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
+                <SelectContent>
+                  {vehicleTypes.map((type) => (
+                    <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Model Number" required error={colorForm.formState.errors.modelNumberId}>
+          <Controller
+            name="modelNumberId"
+            control={colorForm.control}
+            render={({ field }) => (
+              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="Select model number" /></SelectTrigger>
+                <SelectContent>
+                  {vehicleModels.map((model) => (
+                    <SelectItem key={model.id} value={String(model.id)}>{model.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </FormField>
       </EntityModal>
 
@@ -898,38 +942,61 @@ export default function VehicleTypesPage() {
         open={showBrandModal}
         onOpenChange={setShowBrandModal}
         title={editingBrandId ? "Edit Vehicle Brand" : "Add Vehicle Brand"}
-        description="Map brand to a vehicle type and image."
-        submitLabel={editingBrandId ? "Update Brand" : "Create Brand"}
+        description="Map a brand to a vehicle type, model, and color."
+        submitLabel={brandSubmitting ? (editingBrandId ? "Updating…" : "Creating…") : editingBrandId ? "Update Brand" : "Create Brand"}
+        isSubmitting={brandSubmitting}
         onCancel={() => setShowBrandModal(false)}
         onSubmit={() => void brandForm.handleSubmit(submitBrand)()}
       >
+        <FormField label="Brand Name" required error={brandForm.formState.errors.name}>
+          <Input placeholder="e.g., Toyota" {...brandForm.register("name")} />
+        </FormField>
         <FormField label="Vehicle Type" required error={brandForm.formState.errors.vehicleTypeId}>
           <Controller
-            control={brandForm.control}
             name="vehicleTypeId"
+            control={brandForm.control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
                 <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
                 <SelectContent>
                   {vehicleTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                    <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
           />
         </FormField>
-        <FormField label="Brand Name" required error={brandForm.formState.errors.name}>
-          <Input placeholder="e.g., Toyota Corolla" {...brandForm.register("name")} />
+        <FormField label="Model Number" required error={brandForm.formState.errors.modelNumberId}>
+          <Controller
+            name="modelNumberId"
+            control={brandForm.control}
+            render={({ field }) => (
+              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="Select model number" /></SelectTrigger>
+                <SelectContent>
+                  {vehicleModels.map((model) => (
+                    <SelectItem key={model.id} value={String(model.id)}>{model.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </FormField>
-        <FormField label="Image URL" required error={brandForm.formState.errors.image}>
-          <Input placeholder="Paste Unsplash/Pexels/Pixabay URL..." {...brandForm.register("image")} />
-        </FormField>
-        <FormField label="Image Upload (optional override)">
-          <ImageUploadField
-            id="vehicle-brand-upload"
-            value={brandForm.watch("image")}
-            onChange={(value) => brandForm.setValue("image", value, { shouldValidate: true })}
+        <FormField label="Color" required error={brandForm.formState.errors.colorId}>
+          <Controller
+            name="colorId"
+            control={brandForm.control}
+            render={({ field }) => (
+              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="Select color" /></SelectTrigger>
+                <SelectContent>
+                  {vehicleColors.map((color) => (
+                    <SelectItem key={color.id} value={String(color.id)}>{color.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           />
         </FormField>
       </EntityModal>
@@ -943,8 +1010,10 @@ export default function VehicleTypesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting…" : "Delete"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

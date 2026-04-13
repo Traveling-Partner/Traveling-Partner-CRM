@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText, Pencil } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -137,11 +137,17 @@ export default function AdminAgentDetailPage() {
   return (
     <AppShell title={`Agent • ${agent.name}`}>
       <PageContainer>
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin/agents" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to agents
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href={`/admin/agents/${params.id}/edit`} className="gap-1.5">
+              <Pencil className="h-4 w-4" />
+              Edit agent
             </Link>
           </Button>
         </div>
