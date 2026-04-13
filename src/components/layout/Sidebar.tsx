@@ -70,23 +70,23 @@ export function Sidebar({
   const sidebarContent = (
     <div
       className={cn(
-        "flex h-screen flex-col border-r border-slate-800 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100 shadow-2xl",
+        "flex h-screen flex-col border-r border-border/80 bg-card text-foreground shadow-lg",
         "overflow-y-auto overflow-x-hidden transition-[width] duration-200 ease-out",
-        "[scrollbar-color:#fdb813_#0f172a] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-900 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#fdb813] [&::-webkit-scrollbar-thumb]:hover:bg-[#fce001]",
+        "[scrollbar-color:#fdb813_hsl(var(--muted))] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#fdb813] [&::-webkit-scrollbar-thumb]:hover:bg-[#fce001]",
         mobileOpen ? "w-full" : collapsed ? "w-[4.25rem]" : "w-64"
       )}
     >
-      <div className="flex h-16 shrink-0 items-center gap-1 border-b border-slate-800/90 px-3">
+      <div className="flex h-16 shrink-0 items-center gap-1 border-b border-border/60 px-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#fce001] to-[#f59e0b] shadow-md ring-1 ring-yellow-300/70">
             <span className="text-xs font-bold text-slate-900">TP</span>
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-heading font-semibold text-slate-100">
+              <p className="truncate text-sm font-heading font-semibold">
                 Traveling Partner
               </p>
-              <p className="truncate text-[0.68rem] text-slate-400">Admin command center</p>
+              <p className="truncate text-[0.68rem] text-muted-foreground">Admin command center</p>
             </div>
           )}
         </div>
@@ -102,7 +102,7 @@ export function Sidebar({
               className={cn(
                 "group flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
                 collapsed && "justify-center px-0",
-                "text-slate-300 hover:bg-slate-800/90 hover:text-slate-100",
+                "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                 isActive
                   ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 shadow-md ring-1 ring-yellow-300/60"
                   : ""
@@ -112,7 +112,7 @@ export function Sidebar({
               <item.icon
                 className={cn(
                   "h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110",
-                  isActive ? "text-slate-900" : "text-slate-400 group-hover:text-slate-100"
+                  isActive ? "text-slate-900" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               {!collapsed && <span className="truncate">{item.label}</span>}
@@ -125,13 +125,13 @@ export function Sidebar({
         <Button
           variant="ghost"
           size="sm"
-          className="hidden w-full justify-center rounded-lg border border-slate-800 bg-slate-800/40 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:inline-flex"
+          className="hidden w-full justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground md:inline-flex"
           onClick={onToggleCollapsed}
           aria-label="Collapse sidebar"
         >
           <div
             className={cn(
-              "h-3 w-3 border-b-2 border-l-2 border-slate-400 transition-transform",
+              "h-3 w-3 border-b-2 border-l-2 border-muted-foreground transition-transform",
               collapsed ? "rotate-45" : "-rotate-[135deg]"
             )}
           />

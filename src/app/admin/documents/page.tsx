@@ -24,6 +24,7 @@ import { drivers } from "@/mock-data/drivers";
 import { agents } from "@/mock-data/agents";
 import type { Driver } from "@/types/domain";
 import { useToast } from "@/components/ui/toast";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
 interface QueueRow extends Driver {
   agentName: string;
@@ -302,7 +303,7 @@ export default function DocumentsQueuePage() {
 
               <DataTable columns={columns} data={paginated} />
 
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <div className="mt-3 space-y-2 text-xs text-muted-foreground">
                 <span>
                   Showing{" "}
                   <span className="font-medium">
@@ -315,29 +316,11 @@ export default function DocumentsQueuePage() {
                   of <span className="font-medium">{filtered.length}</span>{" "}
                   pending submissions
                 </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <span>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page + 1 >= totalPages}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages - 1, p + 1))
-                    }
-                  >
-                    Next
-                  </Button>
-                </div>
+                <PaginationControls
+                  currentPage={page + 1}
+                  totalPages={totalPages}
+                  onPageChange={(nextPage) => setPage(Math.max(0, nextPage - 1))}
+                />
               </div>
             </>
           )}

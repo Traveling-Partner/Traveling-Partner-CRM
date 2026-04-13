@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { drivers } from "@/mock-data/drivers";
 import type { Driver } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
 interface DriverRow extends Driver {}
 
@@ -49,6 +50,10 @@ export default function AdminDriversPage() {
   }, [filtered, page]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
 
   const columns: ColumnDef<DriverRow>[] = [
     {
@@ -155,7 +160,7 @@ export default function AdminDriversPage() {
 
           <DataTable columns={columns} data={paginated} />
 
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="mt-3 space-y-2 text-xs text-muted-foreground">
             <span>
               Showing{" "}
               <span className="font-medium">
@@ -168,27 +173,11 @@ export default function AdminDriversPage() {
               of <span className="font-medium">{filtered.length}</span>{" "}
               drivers
             </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span>
-                Page {page + 1} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => setPage(Math.max(0, nextPage - 1))}
+            />
           </div>
         </SectionCard>
       </PageContainer>
