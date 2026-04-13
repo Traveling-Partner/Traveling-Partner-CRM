@@ -1,7 +1,6 @@
 {
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
   "/admin/rides/page": "app/admin/rides/page.js",
-  "/admin/agents/page": "app/admin/agents/page.js",
   "/admin/rides/[id]/page": "app/admin/rides/[id]/page.js",
-  "/admin/agents/[id]/page": "app/admin/agents/[id]/page.js"
+  "/admin/agents/page": "app/admin/agents/page.js"
 }
