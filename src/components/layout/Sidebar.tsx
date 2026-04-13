@@ -35,6 +35,7 @@ const adminItems: SidebarItem[] = [
   { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
   { label: "Commissions", href: "/admin/commissions", icon: BadgeDollarSign },
   { label: "Rides", href: "/admin/rides", icon: Car },
+  { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
   { label: "Notifications", href: "/admin/notifications", icon: Bell },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },

@@ -1,6 +1,7 @@
 {
+  "/admin/agents/page": "app/admin/agents/page.js",
+  "/admin/vehicle-types/page": "app/admin/vehicle-types/page.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/rides/page": "app/admin/rides/page.js",
-  "/admin/rides/[id]/page": "app/admin/rides/[id]/page.js",
-  "/admin/agents/page": "app/admin/agents/page.js"
+  "/admin/blog/page": "app/admin/blog/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
 }
