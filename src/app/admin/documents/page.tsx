@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Download, Eye, FileText } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -79,7 +79,7 @@ export default function DocumentsQueuePage() {
   const [decisionDriver, setDecisionDriver] = useState<QueueRow | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  const pendingDrivers: QueueRow[] = useMemo(
+  const basePendingDrivers: QueueRow[] = useMemo(
     () =>
       drivers
         .filter((d) => d.status === "PENDING")
@@ -92,32 +92,35 @@ export default function DocumentsQueuePage() {
     []
   );
 
+  const [queueRows, setQueueRows] = useState<QueueRow[]>(basePendingDrivers);
+
   const cities = useMemo(
-    () => Array.from(new Set(pendingDrivers.map((d) => d.city))),
-    [pendingDrivers]
+    () => Array.from(new Set(queueRows.map((d) => d.city))),
+    [queueRows]
   );
 
   const agentOptions = useMemo(
     () =>
       Array.from(
-        new Set(pendingDrivers.map((d) => d.agentName))
+        new Set(queueRows.map((d) => d.agentName))
       ),
-    [pendingDrivers]
+    [queueRows]
   );
 
   const filtered = useMemo(
     () =>
-      pendingDrivers.filter((driver) => {
-        const matchesSearch = driver.name
-          .toLowerCase()
-          .includes(search.toLowerCase());
+      queueRows.filter((driver) => {
+        const normalizedSearch = search.toLowerCase().trim();
+        const matchesSearch =
+          driver.name.toLowerCase().includes(normalizedSearch) ||
+          driver.phone.toLowerCase().includes(normalizedSearch);
         const matchesCity =
           cityFilter === "all" || driver.city === cityFilter;
         const matchesAgent =
           agentFilter === "all" || driver.agentName === agentFilter;
         return matchesSearch && matchesCity && matchesAgent;
       }),
-    [pendingDrivers, search, cityFilter, agentFilter]
+    [queueRows, search, cityFilter, agentFilter]
   );
 
   const paginated = useMemo(() => {
@@ -126,6 +129,10 @@ export default function DocumentsQueuePage() {
   }, [filtered, page]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
 
   const openPreview = (driver: QueueRow) => {
     setPreviewDriver(driver);
@@ -143,6 +150,11 @@ export default function DocumentsQueuePage() {
 
   const onDecisionConfirm = () => {
     if (!decisionDriver || !decisionType) return;
+
+    setQueueRows((prev) => prev.filter((driver) => driver.id !== decisionDriver.id));
+    setDecisionDialogOpen(false);
+    setPreviewOpen(false);
+
     if (decisionType === "APPROVE") {
       success(`Documents for ${decisionDriver.name} approved (mock).`);
     } else {
@@ -152,6 +164,10 @@ export default function DocumentsQueuePage() {
         }`
       );
     }
+
+    setDecisionDriver(null);
+    setDecisionType(null);
+    setRejectReason("");
   };
 
   const columns: ColumnDef<QueueRow>[] = [
@@ -224,7 +240,7 @@ export default function DocumentsQueuePage() {
           title="Verification queue"
           description="Review and act on pending driver documents before they go live."
         >
-          {pendingDrivers.length === 0 ? (
+          {queueRows.length === 0 ? (
             <EmptyState
               title="No documents pending"
               description="As new drivers sign up, their documentation will appear here."

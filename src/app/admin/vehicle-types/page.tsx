@@ -39,6 +39,14 @@ import {
 
 const ITEMS_PER_PAGE = 6;
 type TabValue = "vehicleTypes" | "vehicleModels" | "vehicleColors" | "vehicleBrands";
+const imageFieldSchema = z
+  .string()
+  .trim()
+  .min(1, "Image is required.")
+  .refine(
+    (value) => value.startsWith("data:image/") || /^https?:\/\//.test(value),
+    "Please provide a valid image URL or upload an image."
+  );
 
 interface VehicleType {
   id: string;
@@ -83,7 +91,7 @@ type DeleteTarget =
 
 const vehicleTypeSchema = z.object({
   name: z.string().trim().min(1, "Vehicle type name is required."),
-  image: z.string().trim().url("Please provide a valid image URL or upload an image."),
+  image: imageFieldSchema,
   passengerCapacity: z.coerce.number().min(1, "Passenger capacity is required."),
   luggageCapacity: z.coerce.number().min(0, "Luggage capacity cannot be negative."),
   baseFare: z.coerce.number().min(1, "Base fare is required."),
@@ -104,7 +112,7 @@ const colorSchema = z.object({
 const brandSchema = z.object({
   vehicleTypeId: z.string().min(1, "Vehicle type is required."),
   name: z.string().trim().min(1, "Brand name is required."),
-  image: z.string().trim().url("Please provide a valid image URL or upload an image.")
+  image: imageFieldSchema
 });
 
 type VehicleTypeForm = z.infer<typeof vehicleTypeSchema>;
