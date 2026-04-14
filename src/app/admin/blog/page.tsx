@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { blogPosts } from "@/mock-data/blog-posts";
 import type { BlogPost } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +37,10 @@ export default function AdminBlogPage() {
   }, [filtered, page]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
 
   const columns: ColumnDef<BlogPost>[] = [
     {
@@ -142,30 +147,16 @@ export default function AdminBlogPage() {
             </select>
           </div>
           <DataTable columns={columns} data={paginated} />
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="mt-3 space-y-2 text-xs text-muted-foreground">
             <span>
               Showing {paginated.length ? page * PAGE_SIZE + 1 : 0} – {page * PAGE_SIZE + paginated.length} of{" "}
               {filtered.length}
             </span>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => setPage(Math.max(0, nextPage - 1))}
+            />
           </div>
         </SectionCard>
       </PageContainer>

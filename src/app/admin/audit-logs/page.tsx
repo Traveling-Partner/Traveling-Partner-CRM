@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
@@ -17,6 +17,7 @@ import {
 import { auditLogs } from "@/mock-data/audit-logs";
 import { allUsers } from "@/mock-data/users";
 import type { AuditLog } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
 const PAGE_SIZE = 15;
 const actions = Array.from(new Set(auditLogs.map((a) => a.action)));
@@ -56,6 +57,10 @@ export default function AdminAuditLogsPage() {
   }, [filtered, page]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
 
   const columns: ColumnDef<Row>[] = [
     { accessorKey: "action", header: "Action" },
@@ -112,27 +117,13 @@ export default function AdminAuditLogsPage() {
             </Select>
           </div>
           <DataTable columns={columns} data={paginated} />
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="mt-3 space-y-2 text-xs text-muted-foreground">
             <span>Showing {paginated.length ? page * PAGE_SIZE + 1 : 0} – {page * PAGE_SIZE + paginated.length} of {filtered.length}</span>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                className="rounded border border-border/60 bg-background px-2 py-1 text-xs disabled:opacity-50"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <button
-                type="button"
-                className="rounded border border-border/60 bg-background px-2 py-1 text-xs disabled:opacity-50"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </button>
-            </div>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => setPage(Math.max(0, nextPage - 1))}
+            />
           </div>
         </SectionCard>
       </PageContainer>

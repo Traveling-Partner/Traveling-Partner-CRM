@@ -14,7 +14,8 @@ import {
   Bell,
   Newspaper,
   Settings,
-  UserCircle2
+  UserCircle2,
+  Images
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -36,6 +37,7 @@ const adminItems: SidebarItem[] = [
   // { label: "Commissions", href: "/admin/commissions", icon: BadgeDollarSign },
   // { label: "Rides", href: "/admin/rides", icon: Car },
   { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
+  { label: "App Carousel", href: "/admin/app-carousel", icon: Images },
   // { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
   // { label: "Notifications", href: "/admin/notifications", icon: Bell },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },

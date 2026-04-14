@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
@@ -19,6 +19,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuthStore } from "@/store/auth.store";
 import { commissions } from "@/mock-data/commissions";
 import type { Commission } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
 type CommissionRow = Commission & { statusLabel: "PENDING" | "PAID" };
 
@@ -68,6 +69,10 @@ export default function AgentCommissionsPage() {
   }, [filtered, page]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
 
   const columns: ColumnDef<CommissionRow>[] = [
     {
@@ -183,7 +188,7 @@ export default function AgentCommissionsPage() {
                 emptyDescription="Try changing the month or status filter."
               />
 
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <div className="mt-3 space-y-2 text-xs text-muted-foreground">
                 <span>
                   Showing{" "}
                   <span className="font-medium">
@@ -195,29 +200,11 @@ export default function AgentCommissionsPage() {
                   </span>{" "}
                   of <span className="font-medium">{filtered.length}</span>
                 </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <span>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page + 1 >= totalPages}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages - 1, p + 1))
-                    }
-                  >
-                    Next
-                  </Button>
-                </div>
+                <PaginationControls
+                  currentPage={page + 1}
+                  totalPages={totalPages}
+                  onPageChange={(nextPage) => setPage(Math.max(0, nextPage - 1))}
+                />
               </div>
             </>
           )}
