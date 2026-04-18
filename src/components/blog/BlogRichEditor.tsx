@@ -12,6 +12,7 @@ interface BlogRichEditorProps {
 
 export function BlogRichEditor({ value, onChange }: BlogRichEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [StarterKit],
     content: value || "<p>Start writing your post...</p>",
     editorProps: {

@@ -24,7 +24,6 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { agents } from "@/mock-data/agents";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
@@ -33,11 +32,26 @@ const schema = z.object({
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
   password: z.string().min(4, "Password must be at least 4 characters"),
   gender: z.enum(["Male", "Female", "Other", "MALE", "FEMALE", "OTHER"], { required_error: "Gender is required" }),
-  status: z.enum(["PENDING", "ACTIVE", "RESTRICTED", "SUSPENDED"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"]),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits")
 });
 
 type FormValues = z.infer<typeof schema>;
+
+interface AgentDetailResponse {
+  id: number;
+  email: string | null;
+  username: string | null;
+  mobileNumber: string | null;
+  name: string | null;
+  gender?: string | null;
+  cnicNumber?: string | null;
+  status: string | null;
+}
+
+interface ApiEnvelope<T> {
+  data?: T;
+}
 
 export default function AdminEditAgentPage() {
   const params = useParams<{ id: string }>();
@@ -63,23 +77,57 @@ export default function AdminEditAgentPage() {
   });
 
   useEffect(() => {
-    const agent = agents.find((a) => a.id === params.id);
-    if (agent) {
-      reset({
-        name: agent.name,
-        email: agent.email,
-        username: agent.email.split("@")[0],
-        mobileNumber: agent.phone,
-        password: "",
-        gender: "Male",
-        status: agent.status === "APPROVED" ? "ACTIVE" : (agent.status as FormValues["status"]),
-        cnicNumber: ""
-      });
-    } else {
-      setNotFound(true);
-    }
-    setLoading(false);
-  }, [params.id, reset]);
+    let active = true;
+    const loadAgent = async () => {
+      setLoading(true);
+      try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents/${params.id}`;
+        const response = await fetcher<AgentDetailResponse | ApiEnvelope<AgentDetailResponse>>(url, { token });
+        const payload =
+          response && typeof response === "object" && "data" in response && response.data
+            ? response.data
+            : (response as AgentDetailResponse);
+
+        if (!active || !payload) return;
+
+        const normalizedGender = (() => {
+          const g = (payload.gender || "").toUpperCase();
+          if (g === "MALE") return "Male";
+          if (g === "FEMALE") return "Female";
+          if (g === "OTHER") return "Other";
+          return "Male";
+        })();
+
+        const normalizedStatus = (() => {
+          const s = (payload.status || "").toUpperCase();
+          if (s === "ACTIVE" || s === "INACTIVE" || s === "BLOCKED" || s === "PENDING" || s === "APPROVED") {
+            return s as FormValues["status"];
+          }
+          return "PENDING";
+        })();
+
+        reset({
+          name: payload.name || "",
+          email: payload.email || "",
+          username: payload.username || "",
+          mobileNumber: payload.mobileNumber || "",
+          password: "",
+          gender: normalizedGender,
+          status: normalizedStatus,
+          cnicNumber: payload.cnicNumber || ""
+        });
+        setNotFound(false);
+      } catch {
+        if (active) setNotFound(true);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void loadAgent();
+    return () => {
+      active = false;
+    };
+  }, [params.id, reset, token]);
 
   const onSubmit = async (values: FormValues) => {
     setSaving(true);
@@ -206,10 +254,11 @@ export default function AdminEditAgentPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
                         <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="RESTRICTED">Restricted</SelectItem>
-                        <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        <SelectItem value="BLOCKED">Blocked</SelectItem>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="APPROVED">Approved</SelectItem>
                       </SelectContent>
                     </Select>
                   )}

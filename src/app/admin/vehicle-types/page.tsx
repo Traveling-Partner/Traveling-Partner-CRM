@@ -11,6 +11,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { FormField } from "@/components/common/FormField";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
+import { ImageUploadField } from "@/components/vehicle-management/ImageUploadField";
 import { ManagementTable } from "@/components/vehicle-management/ManagementTable";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,8 @@ type TabValue = "vehicleTypes" | "vehicleModels" | "vehicleColors" | "vehicleBra
 interface VehicleType {
   id: number | string;
   name: string;
+  status: string | null;
+  image: string | null;
 }
 
 interface VehicleTypesApiResponse {
@@ -61,6 +64,8 @@ interface VehicleModel {
   id: number | string;
   name: string;
   vehicleTypeId: number | null;
+  status: string | null;
+  image: string | null;
 }
 
 interface VehicleModelsApiResponse {
@@ -83,6 +88,8 @@ interface VehicleColor {
   name: string;
   vehicleTypeId: number | null;
   modelNumberId: number | null;
+  status: string | null;
+  image: string | null;
 }
 
 interface VehicleColorsApiResponse {
@@ -106,6 +113,8 @@ interface VehicleBrand {
   vehicleTypeId: number | null;
   modelNumberId: number | null;
   colorId: number | null;
+  status: string | null;
+  image: string | null;
 }
 
 interface VehicleBrandsApiResponse {
@@ -130,26 +139,36 @@ type DeleteTarget =
   | { tab: "vehicleBrands"; id: number | string }
   | null;
 
+const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"] as const;
+
 const vehicleTypeSchema = z.object({
-  name: z.string().trim().min(1, "Vehicle type name is required.")
+  name: z.string().trim().min(1, "Vehicle type name is required."),
+  status: z.enum(STATUS_OPTIONS),
+  image: z.string().trim().min(1, "Image is required.")
 });
 
 const modelSchema = z.object({
   name: z.string().trim().min(1, "Model name is required."),
-  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required.")
+  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
+  status: z.enum(STATUS_OPTIONS),
+  image: z.string().trim().min(1, "Image is required.")
 });
 
 const colorSchema = z.object({
   name: z.string().trim().min(1, "Color name is required."),
   vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
-  modelNumberId: z.coerce.number().min(1, "Model number is required.")
+  modelNumberId: z.coerce.number().min(1, "Model number is required."),
+  status: z.enum(STATUS_OPTIONS),
+  image: z.string().trim().min(1, "Image is required.")
 });
 
 const brandSchema = z.object({
   name: z.string().trim().min(1, "Brand name is required."),
   vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
   modelNumberId: z.coerce.number().min(1, "Model number is required."),
-  colorId: z.coerce.number().min(1, "Color is required.")
+  colorId: z.coerce.number().min(1, "Color is required."),
+  status: z.enum(STATUS_OPTIONS),
+  image: z.string().trim().min(1, "Image is required.")
 });
 
 type VehicleTypeForm = z.infer<typeof vehicleTypeSchema>;
@@ -207,22 +226,22 @@ export default function VehicleTypesPage() {
 
   const typeForm = useForm<VehicleTypeForm>({
     resolver: zodResolver(vehicleTypeSchema),
-    defaultValues: { name: "" }
+    defaultValues: { name: "", status: "PENDING", image: "" }
   });
 
   const modelForm = useForm<ModelForm>({
     resolver: zodResolver(modelSchema),
-    defaultValues: { name: "", vehicleTypeId: 0 }
+    defaultValues: { name: "", vehicleTypeId: 0, status: "PENDING", image: "" }
   });
 
   const colorForm = useForm<ColorForm>({
     resolver: zodResolver(colorSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0 }
+    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0, status: "PENDING", image: "" }
   });
 
   const brandForm = useForm<BrandForm>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0 }
+    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0, status: "PENDING", image: "" }
   });
 
   const fetchVehicleTypes = async (page: number, search: string) => {
@@ -319,31 +338,31 @@ export default function VehicleTypesPage() {
 
   const openAddType = () => {
     setEditingTypeId(null);
-    typeForm.reset({ name: "" });
+    typeForm.reset({ name: "", status: "PENDING", image: "" });
     setShowTypeModal(true);
   };
 
   const openEditType = (type: VehicleType) => {
     setEditingTypeId(type.id);
-    typeForm.reset({ name: type.name });
+    typeForm.reset({ name: type.name, status: (type.status as VehicleTypeForm["status"]) ?? "PENDING", image: type.image ?? "" });
     setShowTypeModal(true);
   };
 
   const openAddModel = () => {
     setEditingModelId(null);
-    modelForm.reset({ name: "", vehicleTypeId: 0 });
+    modelForm.reset({ name: "", vehicleTypeId: 0, status: "PENDING", image: "" });
     setShowModelModal(true);
   };
 
   const openEditModel = (model: VehicleModel) => {
     setEditingModelId(model.id);
-    modelForm.reset({ name: model.name, vehicleTypeId: Number(model.vehicleTypeId) || 0 });
+    modelForm.reset({ name: model.name, vehicleTypeId: Number(model.vehicleTypeId) || 0, status: (model.status as ModelForm["status"]) ?? "PENDING", image: model.image ?? "" });
     setShowModelModal(true);
   };
 
   const openAddColor = () => {
     setEditingColorId(null);
-    colorForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0 });
+    colorForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0, status: "PENDING", image: "" });
     setShowColorModal(true);
   };
 
@@ -352,14 +371,16 @@ export default function VehicleTypesPage() {
     colorForm.reset({
       name: color.name,
       vehicleTypeId: color.vehicleTypeId ?? 0,
-      modelNumberId: color.modelNumberId ?? 0
+      modelNumberId: color.modelNumberId ?? 0,
+      status: (color.status as ColorForm["status"]) ?? "PENDING",
+      image: color.image ?? ""
     });
     setShowColorModal(true);
   };
 
   const openAddBrand = () => {
     setEditingBrandId(null);
-    brandForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0 });
+    brandForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0, status: "PENDING", image: "" });
     setShowBrandModal(true);
   };
 
@@ -369,7 +390,9 @@ export default function VehicleTypesPage() {
       name: brand.name,
       vehicleTypeId: brand.vehicleTypeId ?? 0,
       modelNumberId: brand.modelNumberId ?? 0,
-      colorId: brand.colorId ?? 0
+      colorId: brand.colorId ?? 0,
+      status: (brand.status as BrandForm["status"]) ?? "PENDING",
+      image: brand.image ?? ""
     });
     setShowBrandModal(true);
   };
@@ -379,16 +402,17 @@ export default function VehicleTypesPage() {
   const submitType = async (values: VehicleTypeForm) => {
     setTypeSubmitting(true);
     try {
+      const typePayload = { name: values.name, status: values.status, image: values.image };
       if (editingTypeId) {
         await fetcher(
           `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/update/${editingTypeId}`,
-          { method: "PUT", token, body: JSON.stringify({ name: values.name }) }
+          { method: "PUT", token, body: JSON.stringify(typePayload) }
         );
         success("Vehicle type updated successfully.");
       } else {
         await fetcher(
           `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/create`,
-          { method: "POST", token, body: JSON.stringify({ name: values.name }) }
+          { method: "POST", token, body: JSON.stringify(typePayload) }
         );
         success("Vehicle type created successfully.");
       }
@@ -406,7 +430,7 @@ export default function VehicleTypesPage() {
   const submitModel = async (values: ModelForm) => {
     setModelSubmitting(true);
     try {
-      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId };
+      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId, status: values.status, image: values.image };
       if (editingModelId) {
         await fetcher(
           `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/update/${editingModelId}`,
@@ -434,7 +458,7 @@ export default function VehicleTypesPage() {
   const submitColor = async (values: ColorForm) => {
     setColorSubmitting(true);
     try {
-      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId, modelNumberId: values.modelNumberId };
+      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId, modelNumberId: values.modelNumberId, status: values.status, image: values.image };
       if (editingColorId) {
         await fetcher(
           `${process.env.NEXT_PUBLIC_API_URL}/colors/update/${editingColorId}`,
@@ -466,7 +490,9 @@ export default function VehicleTypesPage() {
         name: values.name,
         vehicleTypeId: values.vehicleTypeId,
         modelNumberId: values.modelNumberId,
-        colorId: values.colorId
+        colorId: values.colorId,
+        status: values.status,
+        image: values.image
       };
       if (editingBrandId) {
         await fetcher(
@@ -634,16 +660,28 @@ export default function VehicleTypesPage() {
                     {vehicleTypes.map((type) => (
                       <div
                         key={type.id}
-                        className="group flex items-center justify-between rounded-xl border border-border/70 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                        className="group rounded-xl border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md overflow-hidden"
                       >
-                        <p className="text-sm font-heading font-semibold">{type.name}</p>
-                        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          <Button size="icon" variant="ghost" onClick={() => openEditType(type)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setDeleteTarget({ tab: "vehicleTypes", id: type.id })}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                        <div className="aspect-video w-full overflow-hidden bg-muted/20">
+                          {type.image ? (
+                            <img src={type.image} alt={type.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">No image</div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between p-4">
+                          <div className="space-y-1">
+                            <p className="text-sm font-heading font-semibold">{type.name}</p>
+                            <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">{type.status ?? "—"}</span>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <Button size="icon" variant="ghost" onClick={() => openEditType(type)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => setDeleteTarget({ tab: "vehicleTypes", id: type.id })}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -684,6 +722,12 @@ export default function VehicleTypesPage() {
                   rows={vehicleModels}
                   emptyLabel="No models found."
                   columns={[
+                    {
+                      key: "image",
+                      header: "Image",
+                      className: "w-[80px]",
+                      render: (item: VehicleModel) => item.image ? <img src={item.image} alt={item.name} className="h-10 w-16 rounded object-contain" /> : <span className="text-xs text-muted-foreground">—</span>
+                    },
                     { key: "name", header: "Name", render: (item: VehicleModel) => <span className="font-medium">{item.name}</span> },
                     {
                       key: "vehicleType",
@@ -692,6 +736,11 @@ export default function VehicleTypesPage() {
                         const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
                         return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
                       }
+                    },
+                    {
+                      key: "status",
+                      header: "Status",
+                      render: (item: VehicleModel) => <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">{item.status ?? "—"}</span>
                     },
                     {
                       key: "actions",
@@ -738,6 +787,12 @@ export default function VehicleTypesPage() {
                   rows={vehicleColors}
                   emptyLabel="No colors found."
                   columns={[
+                    {
+                      key: "image",
+                      header: "Image",
+                      className: "w-[80px]",
+                      render: (item: VehicleColor) => item.image ? <img src={item.image} alt={item.name} className="h-10 w-16 rounded object-contain" /> : <span className="text-xs text-muted-foreground">—</span>
+                    },
                     { key: "name", header: "Name", render: (item: VehicleColor) => <span className="font-medium">{item.name}</span> },
                     {
                       key: "vehicleType",
@@ -754,6 +809,11 @@ export default function VehicleTypesPage() {
                         const modelName = vehicleModels.find((m) => Number(m.id) === Number(item.modelNumberId))?.name;
                         return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
                       }
+                    },
+                    {
+                      key: "status",
+                      header: "Status",
+                      render: (item: VehicleColor) => <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">{item.status ?? "—"}</span>
                     },
                     {
                       key: "actions",
@@ -800,6 +860,12 @@ export default function VehicleTypesPage() {
                   rows={vehicleBrands}
                   emptyLabel="No brands found."
                   columns={[
+                    {
+                      key: "image",
+                      header: "Image",
+                      className: "w-[80px]",
+                      render: (item: VehicleBrand) => item.image ? <img src={item.image} alt={item.name} className="h-10 w-16 rounded object-contain" /> : <span className="text-xs text-muted-foreground">—</span>
+                    },
                     { key: "name", header: "Brand Name", render: (item: VehicleBrand) => <span className="font-medium">{item.name}</span> },
                     {
                       key: "vehicleType",
@@ -826,6 +892,11 @@ export default function VehicleTypesPage() {
                       }
                     },
                     {
+                      key: "status",
+                      header: "Status",
+                      render: (item: VehicleBrand) => <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">{item.status ?? "—"}</span>
+                    },
+                    {
                       key: "actions",
                       header: "Actions",
                       className: "w-[140px]",
@@ -849,7 +920,7 @@ export default function VehicleTypesPage() {
         open={showTypeModal}
         onOpenChange={setShowTypeModal}
         title={editingTypeId ? "Edit Vehicle Type" : "Add Vehicle Type"}
-        description="Enter the vehicle type name to register it in the system."
+        description="Enter the vehicle type details."
         submitLabel={typeSubmitting ? (editingTypeId ? "Updating…" : "Creating…") : editingTypeId ? "Update Vehicle Type" : "Create Vehicle Type"}
         isSubmitting={typeSubmitting}
         onCancel={() => setShowTypeModal(false)}
@@ -857,6 +928,28 @@ export default function VehicleTypesPage() {
       >
         <FormField label="Vehicle Name" required error={typeForm.formState.errors.name}>
           <Input placeholder="e.g., Sedan" {...typeForm.register("name")} />
+        </FormField>
+        <FormField label="Status" required error={typeForm.formState.errors.status}>
+          <Controller
+            name="status"
+            control={typeForm.control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Image" required error={typeForm.formState.errors.image}>
+          <ImageUploadField
+            id="type-image-upload"
+            value={typeForm.watch("image")}
+            onChange={(url) => typeForm.setValue("image", url, { shouldValidate: true })}
+            token={token}
+          />
         </FormField>
       </EntityModal>
 
@@ -887,6 +980,28 @@ export default function VehicleTypesPage() {
                 </SelectContent>
               </Select>
             )}
+          />
+        </FormField>
+        <FormField label="Status" required error={modelForm.formState.errors.status}>
+          <Controller
+            name="status"
+            control={modelForm.control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Image" required error={modelForm.formState.errors.image}>
+          <ImageUploadField
+            id="model-image-upload"
+            value={modelForm.watch("image")}
+            onChange={(url) => modelForm.setValue("image", url, { shouldValidate: true })}
+            token={token}
           />
         </FormField>
       </EntityModal>
@@ -934,6 +1049,28 @@ export default function VehicleTypesPage() {
                 </SelectContent>
               </Select>
             )}
+          />
+        </FormField>
+        <FormField label="Status" required error={colorForm.formState.errors.status}>
+          <Controller
+            name="status"
+            control={colorForm.control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Image" required error={colorForm.formState.errors.image}>
+          <ImageUploadField
+            id="color-image-upload"
+            value={colorForm.watch("image")}
+            onChange={(url) => colorForm.setValue("image", url, { shouldValidate: true })}
+            token={token}
           />
         </FormField>
       </EntityModal>
@@ -997,6 +1134,28 @@ export default function VehicleTypesPage() {
                 </SelectContent>
               </Select>
             )}
+          />
+        </FormField>
+        <FormField label="Status" required error={brandForm.formState.errors.status}>
+          <Controller
+            name="status"
+            control={brandForm.control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Image" required error={brandForm.formState.errors.image}>
+          <ImageUploadField
+            id="brand-image-upload"
+            value={brandForm.watch("image")}
+            onChange={(url) => brandForm.setValue("image", url, { shouldValidate: true })}
+            token={token}
           />
         </FormField>
       </EntityModal>

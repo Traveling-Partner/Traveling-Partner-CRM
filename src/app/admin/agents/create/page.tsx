@@ -31,7 +31,7 @@ const schema = z.object({
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
   password: z.string().min(4, "Password must be at least 4 characters"),
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
-  status: z.enum(["PENDING", "ACTIVE", "RESTRICTED", "SUSPENDED"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"]),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits")
 });
 
@@ -155,10 +155,11 @@ export default function AdminCreateAgentPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
                         <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="RESTRICTED">Restricted</SelectItem>
-                        <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        <SelectItem value="BLOCKED">Blocked</SelectItem>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="APPROVED">Approved</SelectItem>
                       </SelectContent>
                     </Select>
                   )}

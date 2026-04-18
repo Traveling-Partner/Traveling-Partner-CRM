@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -11,59 +11,123 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { drivers } from "@/mock-data/drivers";
-import type { Driver } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { useAppSelector } from "@/store/hooks";
+import { fetcher } from "@/lib/fetcher";
 
-interface DriverRow extends Driver {}
+interface DriverRow {
+  id: number;
+  email: string | null;
+  name: string | null;
+  username: string | null;
+  mobileNumber: string;
+  status: string;
+  city: string | null;
+  createdAt: string | null;
+}
 
-const PAGE_SIZE = 10;
+interface DriversApiResponse {
+  content: DriverRow[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+}
+
+const PAGE_SIZE = 6;
 
 export default function AdminDriversPage() {
   const router = useRouter();
+  const token = useAppSelector((state) => state.auth.token);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [drivers, setDrivers] = useState<DriverRow[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [cities, setCities] = useState<string[]>([]);
 
-  const cities = useMemo(
-    () => Array.from(new Set(drivers.map((d) => d.city))),
-    []
-  );
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const filtered = useMemo(() => {
-    return drivers.filter((driver) => {
-      const matchesSearch =
-        driver.name.toLowerCase().includes(search.toLowerCase()) ||
-        driver.phone.includes(search);
-      const matchesStatus =
-        statusFilter === "all" || driver.status === statusFilter;
-      const matchesCity =
-        cityFilter === "all" || driver.city === cityFilter;
-      return matchesSearch && matchesStatus && matchesCity;
-    });
-  }, [search, statusFilter, cityFilter]);
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setPage(0);
+      setDebouncedSearch(value);
+    }, 400);
+  };
 
-  const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCities() {
+      try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=0&size=500`;
+        const res = await fetcher<DriversApiResponse>(url, { token });
+        if (!cancelled) {
+          const unique = Array.from(
+            new Set(res.content.map((d) => d.city).filter(Boolean) as string[])
+          ).sort();
+          setCities(unique);
+        }
+      } catch { /* ignore */ }
+    }
+    loadCities();
+    return () => { cancelled = true; };
+  }, [token]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const fetchDrivers = useCallback(async () => {
+    setLoading(true);
+    try {
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${PAGE_SIZE}`;
+      if (statusFilter !== "all") url += `&status=${statusFilter}`;
+      if (cityFilter !== "all") url += `&city=${encodeURIComponent(cityFilter)}`;
+      if (debouncedSearch.trim()) url += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
+
+      const res = await fetcher<DriversApiResponse>(url, { token });
+      setDrivers(res.content);
+      setTotalPages(res.totalPages || 1);
+    } catch {
+      setDrivers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, statusFilter, cityFilter, debouncedSearch, token]);
+
+  useEffect(() => {
+    fetchDrivers();
+  }, [fetchDrivers]);
 
   const columns: ColumnDef<DriverRow>[] = [
     {
       accessorKey: "name",
       header: "Driver",
+      cell: ({ row }) => {
+        const d = row.original;
+        const displayName = d.name || d.username || "—";
+        return (
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-xs text-muted-foreground">{d.mobileNumber}</p>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
       cell: ({ row }) => (
-        <div className="space-y-0.5">
-          <p className="text-sm font-medium">{row.original.name}</p>
-          <p className="text-xs text-muted-foreground">{row.original.phone}</p>
-        </div>
+        <span className="text-sm">{row.original.email || "—"}</span>
       )
     },
     {
       accessorKey: "city",
-      header: "City"
+      header: "City",
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.city || "—"}</span>
+      )
     },
     {
       accessorKey: "status",
@@ -75,7 +139,9 @@ export default function AdminDriversPage() {
       header: "Created",
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString()}
+          {row.original.createdAt
+            ? new Date(row.original.createdAt).toLocaleDateString()
+            : "—"}
         </span>
       )
     },
@@ -105,19 +171,13 @@ export default function AdminDriversPage() {
             <Input
               placeholder="Search by name or phone…"
               value={search}
-              onChange={(event) => {
-                setPage(0);
-                setSearch(event.target.value);
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="max-w-xs"
             />
             <div className="flex flex-wrap items-center gap-2">
               <Select
                 value={statusFilter}
-                onValueChange={(value) => {
-                  setPage(0);
-                  setStatusFilter(value);
-                }}
+                onValueChange={(v) => { setPage(0); setStatusFilter(v); }}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
@@ -126,17 +186,15 @@ export default function AdminDriversPage() {
                   <SelectItem value="all">All status</SelectItem>
                   <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="APPROVED">Approved</SelectItem>
-                  <SelectItem value="RESTRICTED">Restricted</SelectItem>
-                  <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="BLOCKED">Blocked</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select
                 value={cityFilter}
-                onValueChange={(value) => {
-                  setPage(0);
-                  setCityFilter(value);
-                }}
+                onValueChange={(v) => { setPage(0); setCityFilter(v); }}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="City" />
@@ -153,46 +211,21 @@ export default function AdminDriversPage() {
             </div>
           </div>
 
-          <DataTable columns={columns} data={paginated} />
-
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Showing{" "}
-              <span className="font-medium">
-                {paginated.length ? page * PAGE_SIZE + 1 : 0}
-              </span>{" "}
-              –{" "}
-              <span className="font-medium">
-                {page * PAGE_SIZE + paginated.length}
-              </span>{" "}
-              of <span className="font-medium">{filtered.length}</span>{" "}
-              drivers
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span>
-                Page {page + 1} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Loading…
             </div>
-          </div>
+          ) : (
+            <DataTable columns={columns} data={drivers} />
+          )}
+
+          <PaginationControls
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </SectionCard>
       </PageContainer>
     </AppShell>
   );
 }
-

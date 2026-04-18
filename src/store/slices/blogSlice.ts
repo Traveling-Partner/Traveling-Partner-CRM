@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { createBlog, type CreateBlogPayload } from "@/services/blog";
+import { createBlog, type BlogUpsertPayload } from "@/services/blog";
 import type { RootState } from "@/store/store";
 
 interface BlogState {
@@ -16,7 +16,7 @@ const initialState: BlogState = {
 
 export const createBlogThunk = createAsyncThunk(
   "blog/createBlog",
-  async (blogData: CreateBlogPayload, thunkApi) => {
+  async (blogData: BlogUpsertPayload, thunkApi) => {
     try {
       const state = thunkApi.getState() as RootState;
       const token = state.auth.token;
