@@ -22,6 +22,8 @@ interface DataTableProps<TData, TValue> {
   emptyTitle?: string;
   emptyDescription?: string;
   className?: string;
+  /** Stable row id (e.g. database id) so cells stay aligned when data updates. */
+  getRowId?: (originalRow: TData, index: number) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -29,12 +31,14 @@ export function DataTable<TData, TValue>({
   data,
   emptyTitle = "No data yet",
   emptyDescription = "Once records are available, they will appear here.",
-  className
+  className,
+  getRowId
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel()
+    getCoreRowModel: getCoreRowModel(),
+    ...(getRowId ? { getRowId } : {})
   });
 
   if (!data.length) {

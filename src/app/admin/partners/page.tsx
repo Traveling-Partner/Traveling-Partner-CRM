@@ -17,23 +17,43 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { partners } from "@/mock-data/partners";
-import type { Partner } from "@/types/domain";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { useAppSelector } from "@/store/hooks";
+import { fetcher } from "@/lib/fetcher";
 
-interface PartnerRow extends Partner {}
+interface PartnerRow {
+  id: number;
+  name: string | null;
+  email: string | null;
+  mobileNumber: string | null;
+  status: string;
+  city: string | null;
+  profilePicture?: string | null;
+  createdAt?: string | null;
+}
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
+
+interface PartnersResponse {
+  content: PartnerRow[];
+  totalPages: number;
+  totalElements: number;
+}
 
 export default function AdminPartnersPage() {
   const router = useRouter();
   const { success } = useToast();
+  const token = useAppSelector((state) => state.auth.token);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
-  const [partnerRows, setPartnerRows] = useState<PartnerRow[]>(partners);
+  const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmPartner, setConfirmPartner] = useState<PartnerRow | null>(
     null
@@ -45,6 +65,9 @@ export default function AdminPartnersPage() {
     partner: PartnerRow;
     type: "ACTIVE" | "INACTIVE";
   } | null>(null);
+
+  const [cities, setCities] = useState<string[]>([]);
+  const fetchPartnersRef = useRef<() => Promise<void>>(async () => {});
 
   const openActiveConfirm = useCallback((partner: PartnerRow) => {
     confirmSnapshotRef.current = { partner, type: "ACTIVE" };
@@ -60,71 +83,108 @@ export default function AdminPartnersPage() {
     setConfirmOpen(true);
   }, []);
 
-  const handleStatusConfirm = useCallback(() => {
+  const handleStatusConfirm = useCallback(async () => {
     const snap = confirmSnapshotRef.current;
     if (!snap) return;
-    const nextStatus = snap.type === "ACTIVE" ? "APPROVED" : "SUSPENDED";
-    setPartnerRows((current) =>
-      current.map((partner) =>
-        partner.id === snap.partner.id
-          ? { ...partner, status: nextStatus }
-          : partner
-      )
-    );
-    if (snap.type === "ACTIVE") {
-      success(`Partner "${snap.partner.name}" marked active.`);
-    } else {
-      success(`Partner "${snap.partner.name}" marked inactive.`);
+    const nextStatus = snap.type === "ACTIVE" ? "ACTIVE" : "INACTIVE";
+    try {
+      await fetcher(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/status/${snap.partner.id}`,
+        {
+          method: "PUT",
+          token,
+          body: JSON.stringify({ status: nextStatus })
+        }
+      );
+      success(
+        snap.type === "ACTIVE" ? "Partner marked active." : "Partner marked inactive."
+      );
+      // Re-fetch list so backend-persisted status is reflected
+      await fetchPartnersRef.current();
+    } catch {
+      // Keep the UI consistent if API fails
+      success("Failed to update partner status."); // fallback toast
     }
     confirmSnapshotRef.current = null;
     setConfirmPartner(null);
     setConfirmType(null);
-  }, [success]);
+  }, [success, token]);
 
-  const cities = useMemo(
-    () => Array.from(new Set(partnerRows.map((p) => p.city))),
-    [partnerRows]
-  );
+  // Load city options from backend
+  useEffect(() => {
+    let cancelled = false;
+    const loadCities = async () => {
+      try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=0&size=500&status=&city=&search=`;
+        const res = await fetcher<PartnersResponse>(url, { token });
+        if (cancelled) return;
+        const unique = Array.from(
+          new Set(
+            res.content
+              .map((p) => p.city)
+              .filter((c): c is string => Boolean(c))
+          )
+        ).sort();
+        setCities(unique);
+      } catch {
+        // ignore city load error
+      }
+    };
+    void loadCities();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
-  const filtered = useMemo(() => {
-    return partnerRows.filter((partner) => {
-      const matchesSearch = partner.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" || partner.status === statusFilter;
-      const matchesCity =
-        cityFilter === "all" || partner.city === cityFilter;
-      return matchesSearch && matchesStatus && matchesCity;
-    });
-  }, [partnerRows, search, statusFilter, cityFilter]);
+  // Fetch partners from backend with filters + pagination
+  const fetchPartners = useCallback(async () => {
+    setLoading(true);
+    try {
+      const statusParam = statusFilter === "all" ? "" : statusFilter;
+      const cityParam = cityFilter === "all" ? "" : cityFilter;
+      const searchParam = search.trim();
 
-  const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=${page}&size=${PAGE_SIZE}&status=${encodeURIComponent(
+        statusParam
+      )}&city=${encodeURIComponent(cityParam)}&search=${encodeURIComponent(searchParam)}`;
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      const res = await fetcher<PartnersResponse>(url, { token });
+      setPartnerRows(res.content);
+      setTotalPages(res.totalPages || 1);
+      setTotalElements(res.totalElements || 0);
+    } catch {
+      setPartnerRows([]);
+      setTotalPages(1);
+      setTotalElements(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, statusFilter, cityFilter, search, token]);
 
   useEffect(() => {
-    if (page + 1 > totalPages) {
-      setPage(Math.max(0, totalPages - 1));
-    }
-  }, [page, totalPages]);
+    fetchPartnersRef.current = fetchPartners;
+  }, [fetchPartners]);
+
+  useEffect(() => {
+    void fetchPartners();
+  }, [fetchPartners]);
 
   const columns: ColumnDef<PartnerRow>[] = useMemo(
     () => [
     {
       accessorKey: "name",
       header: "Partner",
-      cell: ({ row }) => (
-        <div className="space-y-0.5">
-          <p className="text-sm font-medium">{row.original.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {row.original.city}
-          </p>
-        </div>
-      )
+      cell: ({ row }) => {
+        const displayName = row.original.name || "—";
+        return (
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-xs text-muted-foreground">
+              {row.original.city || "—"}
+            </p>
+          </div>
+        );
+      }
     },
     {
       accessorKey: "status",
@@ -136,7 +196,7 @@ export default function AdminPartnersPage() {
       header: "Created",
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString()}
+          {row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : "—"}
         </span>
       )
     },
@@ -152,7 +212,7 @@ export default function AdminPartnersPage() {
           >
             View
           </Button>
-          {row.original.status === "APPROVED" ? (
+          {row.original.status === "ACTIVE" || row.original.status === "APPROVED" ? (
             <Button
               size="sm"
               variant="destructive"
@@ -205,10 +265,11 @@ export default function AdminPartnersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="BLOCKED">Blocked</SelectItem>
                   <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="APPROVED">Approved</SelectItem>
-                  <SelectItem value="RESTRICTED">Restricted</SelectItem>
-                  <SelectItem value="SUSPENDED">Suspended</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -234,43 +295,31 @@ export default function AdminPartnersPage() {
             </div>
           </div>
 
-          <DataTable columns={columns} data={paginated} />
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+          ) : (
+            <DataTable columns={columns} data={partnerRows} />
+          )}
 
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="mt-3 text-xs text-muted-foreground">
             <span>
               Showing{" "}
               <span className="font-medium">
-                {paginated.length ? page * PAGE_SIZE + 1 : 0}
+                {totalElements ? page * PAGE_SIZE + 1 : 0}
               </span>{" "}
               –{" "}
               <span className="font-medium">
-                {page * PAGE_SIZE + paginated.length}
+                {Math.min((page + 1) * PAGE_SIZE, totalElements)}
               </span>{" "}
-              of <span className="font-medium">{filtered.length}</span>{" "}
-              partners
+              of <span className="font-medium">{totalElements}</span> partners
             </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span>
-                Page {page + 1} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
           </div>
+
+          <PaginationControls
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </SectionCard>
 
         <ConfirmDialog

@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppShell } from "@/components/layout/AppShell";
@@ -17,101 +16,149 @@ import { FormField } from "@/components/common/FormField";
 import { BlogRichEditor } from "@/components/blog/BlogRichEditor";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
-import { blogPosts } from "@/mock-data/blog-posts";
-import type { BlogPost } from "@/types/domain";
-
-const schema = z.object({
-  main_title: z.string().min(4, "Main title is required"),
-  description1: z.string().min(10, "Description is required"),
-  cover_image: z.string().url("Cover image must be a valid URL").optional().or(z.literal("")),
-  date: z.string().min(1, "Date is required"),
-  author: z.string().min(2, "Author is required"),
-  category: z.string().min(2, "Category is required"),
-  readTime: z.string().min(3, "Read time is required"),
-  content: z.string().min(10),
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED"])
-});
-
-type FormValues = z.infer<typeof schema>;
+import { useAppSelector } from "@/store/hooks";
+import { getBlogById, updateBlog } from "@/services/blog";
+import {
+  blogEditorSchema,
+  type BlogEditorFormValues,
+  buildBlogUpsertPayload,
+  normalizeBlogStatusForForm
+} from "@/app/admin/blog/_blog-form-shared";
 
 export default function AdminBlogEditPage() {
   const params = useParams<{ id: string }>();
+  const idNum = Number(params?.id);
   const router = useRouter();
-  const { success } = useToast();
+  const token = useAppSelector((state) => state.auth.token);
+  const { success, error: showError } = useToast();
 
-  const post: BlogPost | undefined = useMemo(
-    () => blogPosts.find((p) => p.id === params.id),
-    [params.id]
-  );
-
-  const [content, setContent] = useState<string>(post?.content ?? "");
-  const [imagePreview, setImagePreview] = useState<string>(
-    post?.featuredImageUrl ?? ""
-  );
+  const [description2, setDescription2] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors }
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: post
-      ? {
-          main_title: post.title,
-          description1: post.excerpt,
-          cover_image: post.featuredImageUrl ?? "",
-          date: (post.publishedAt ?? post.createdAt).slice(0, 10),
-          author: post.authorName,
-          category: post.category,
-          readTime: post.readTime,
-          content: post.content,
-          seoTitle: post.seoTitle ?? "",
-          seoDescription: post.seoDescription ?? "",
-          status: post.status
-        }
-      : {
-          main_title: "",
-          description1: "",
-          cover_image: "",
-          date: new Date().toISOString().slice(0, 10),
-          author: "",
-          category: "",
-          readTime: "5 min read",
-          content: "",
-          seoTitle: "",
-          seoDescription: "",
-          status: "DRAFT"
-        }
+  } = useForm<BlogEditorFormValues>({
+    resolver: zodResolver(blogEditorSchema),
+    defaultValues: {
+      coverImage: "/mock-images/blog-cover.svg",
+      mainTitle: "",
+      description1: "",
+      description2: "",
+      date: new Date().toISOString().slice(0, 10),
+      author: "Admin",
+      categoryId: 1,
+      readTime: "5 min",
+      tagsText: "",
+      seoTitle: "",
+      seoDescription: "",
+      status: "DRAFT"
+    }
   });
 
   const status = watch("status");
+  const mainTitle = watch("mainTitle");
 
-  const onSubmit = (values: FormValues) => {
-    success(
-      `Blog post "${values.main_title}" updated as ${values.status.toLowerCase()} (mock).`
-    );
-    router.push("/admin/blog");
+  useEffect(() => {
+    if (!Number.isFinite(idNum)) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const row = await getBlogById(idNum, token);
+        if (cancelled) return;
+        if (!row) {
+          setNotFound(true);
+          return;
+        }
+
+        const desc2 = row.description2 ?? "";
+        const dateStr =
+          typeof row.date === "string" && row.date.trim()
+            ? row.date.trim().slice(0, 10)
+            : new Date().toISOString().slice(0, 10);
+
+        reset({
+          coverImage: row.coverImage?.trim() || "/mock-images/blog-cover.svg",
+          mainTitle: row.mainTitle ?? "",
+          description1: row.description1 ?? "",
+          description2: desc2,
+          date: dateStr,
+          author: row.author ?? "Admin",
+          categoryId: row.categoryId ?? 1,
+          readTime: row.readTime ?? "5 min",
+          tagsText: (row.tags ?? []).join(", "),
+          seoTitle: row.seoTitle ?? "",
+          seoDescription: row.seoDescription ?? "",
+          status: normalizeBlogStatusForForm(row.status)
+        });
+        setDescription2(desc2);
+        setImagePreview(row.coverImage?.trim() || "/mock-images/blog-cover.svg");
+      } catch {
+        setNotFound(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [idNum, token, reset]);
+
+  const submitWithStatus = async (values: BlogEditorFormValues, nextStatus: "DRAFT" | "PUBLISHED") => {
+    setSubmitting(true);
+    try {
+      const payload = buildBlogUpsertPayload(values, nextStatus);
+      await updateBlog(idNum, payload, token);
+      success(`Blog "${values.mainTitle.trim()}" updated.`);
+      router.push("/admin/blog");
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to update blog.");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const saveDraft = handleSubmit((vals) => void submitWithStatus(vals, "DRAFT"));
+  const publish = handleSubmit((vals) => void submitWithStatus(vals, "PUBLISHED"));
 
   const onImageChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     setImagePreview(url);
-    setValue("cover_image", url);
+    setValue("coverImage", url);
   };
 
-  if (!post) {
+  if (loading) {
+    return (
+      <AppShell title="Edit Post">
+        <PageContainer>
+          <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+        </PageContainer>
+      </AppShell>
+    );
+  }
+
+  if (notFound || !Number.isFinite(idNum)) {
     return (
       <AppShell title="Edit Post">
         <PageContainer>
           <SectionCard
             title="Post not found"
-            description="This blog id does not exist in the mock dataset."
+            description="This blog could not be loaded. Check the id or try again from the list."
           >
             <Button asChild>
               <Link href="/admin/blog">Back to blog</Link>
@@ -123,7 +170,7 @@ export default function AdminBlogEditPage() {
   }
 
   return (
-    <AppShell title={`Edit • ${post.title}`}>
+    <AppShell title={mainTitle ? `Edit • ${mainTitle}` : "Edit Post"}>
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
@@ -134,11 +181,7 @@ export default function AdminBlogEditPage() {
           </Button>
         </div>
 
-        <form
-          className="grid gap-6 lg:grid-cols-[2fr,1fr]"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-        >
+        <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-4">
             <SectionCard
               title="Post content"
@@ -146,67 +189,70 @@ export default function AdminBlogEditPage() {
             >
               <div className="space-y-4">
                 <FormField
-                  label="Main Title (main_title)"
-                  htmlFor="main_title"
+                  label="Main Title"
+                  htmlFor="mainTitle"
                   required
-                  error={errors.main_title}
+                  error={errors.mainTitle}
                 >
-                  <Input id="main_title" {...register("main_title")} />
+                  <Input id="mainTitle" placeholder="Post title" {...register("mainTitle")} />
                 </FormField>
                 <FormField
-                  label="Description (description1)"
+                  label="Cover Image URL"
+                  htmlFor="coverImage"
+                  required
+                  error={errors.coverImage}
+                >
+                  <Input id="coverImage" placeholder="https://…" {...register("coverImage")} />
+                </FormField>
+                <FormField
+                  label="Description 1 (Short intro)"
                   htmlFor="description1"
                   required
                   error={errors.description1}
+                  description="Short summary shown in the blog list."
                 >
                   <Textarea id="description1" rows={3} {...register("description1")} />
                 </FormField>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
-                    label="Category"
-                    htmlFor="category"
+                    label="Category ID"
+                    htmlFor="categoryId"
                     required
-                    error={errors.category}
+                    error={errors.categoryId}
                   >
-                    <Input id="category" {...register("category")} />
+                    <Input id="categoryId" type="number" min={1} {...register("categoryId")} />
                   </FormField>
-                  <FormField
-                    label="Author (author)"
-                    htmlFor="author"
-                    required
-                    error={errors.author}
-                  >
+                  <FormField label="Author" htmlFor="author" required error={errors.author}>
                     <Input id="author" {...register("author")} />
                   </FormField>
                 </div>
+                <FormField
+                  label="Tags (comma separated)"
+                  htmlFor="tagsText"
+                  description='Example: "travel, adventure, guide"'
+                >
+                  <Input id="tagsText" placeholder="travel, adventure, guide" {...register("tagsText")} />
+                </FormField>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    label="Read time"
-                    htmlFor="readTime"
-                    required
-                    error={errors.readTime}
-                  >
+                  <FormField label="Read time" htmlFor="readTime" required error={errors.readTime}>
                     <Input id="readTime" {...register("readTime")} />
                   </FormField>
-                  <FormField
-                    label="Date (date)"
-                    htmlFor="date"
-                    description="Website listing date field."
-                  >
+                  <FormField label="Date" htmlFor="date">
                     <Input id="date" type="date" {...register("date")} />
                   </FormField>
                 </div>
                 <FormField
-                  label="Body"
-                  htmlFor="content"
+                  label="Description 2 (Detailed content)"
+                  htmlFor="description2"
                   required
-                  error={errors.content}
+                  error={errors.description2}
                 >
                   <BlogRichEditor
-                    value={content}
+                    key={idNum}
+                    value={description2}
                     onChange={(html) => {
-                      setContent(html);
-                      setValue("content", html);
+                      setDescription2(html);
+                      setValue("description2", html);
                     }}
                   />
                 </FormField>
@@ -215,10 +261,7 @@ export default function AdminBlogEditPage() {
           </div>
 
           <div className="space-y-4">
-            <SectionCard
-              title="Meta & publishing"
-              description="Visibility and SEO (mock)."
-            >
+            <SectionCard title="Meta & publishing" description="SEO and visibility.">
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
                   <div>
@@ -226,7 +269,7 @@ export default function AdminBlogEditPage() {
                       Publish
                     </p>
                     <p className="text-[0.7rem] text-muted-foreground">
-                      Toggle to mark as published.
+                      Toggle to mark as published (same as Publish button).
                     </p>
                   </div>
                   <Switch
@@ -237,34 +280,22 @@ export default function AdminBlogEditPage() {
                   />
                 </div>
 
-                <FormField
-                  label="SEO title"
-                  htmlFor="seoTitle"
-                  error={errors.seoTitle as any}
-                >
-                  <Input
-                    id="seoTitle"
-                    placeholder="Custom title for search engines"
-                    {...register("seoTitle")}
-                  />
+                <FormField label="SEO title" htmlFor="seoTitle" error={errors.seoTitle}>
+                  <Input id="seoTitle" {...register("seoTitle")} />
                 </FormField>
                 <FormField
                   label="SEO description"
                   htmlFor="seoDescription"
-                  error={errors.seoDescription as any}
+                  error={errors.seoDescription}
                 >
-                  <Textarea
-                    id="seoDescription"
-                    rows={2}
-                    {...register("seoDescription")}
-                  />
+                  <Textarea id="seoDescription" rows={2} {...register("seoDescription")} />
                 </FormField>
               </div>
             </SectionCard>
 
             <SectionCard
-              title="Cover image (cover_image)"
-              description="Upload a hero image (mock preview only)."
+              title="Cover image preview"
+              description="Upload a hero image or paste a public URL above."
             >
               <div className="space-y-3">
                 <input type="file" accept="image/*" onChange={onImageChange} />
@@ -282,23 +313,20 @@ export default function AdminBlogEditPage() {
 
             <div className="flex gap-2">
               <Button
-                type="submit"
+                type="button"
                 variant="outline"
-                onClick={() => setValue("status", "DRAFT")}
+                disabled={submitting}
+                onClick={() => void saveDraft()}
               >
-                Save draft
+                {submitting ? "Saving..." : "Save draft"}
               </Button>
-              <Button
-                type="submit"
-                onClick={() => setValue("status", "PUBLISHED")}
-              >
-                Publish
+              <Button type="button" disabled={submitting} onClick={() => void publish()}>
+                {submitting ? "Publishing..." : "Publish"}
               </Button>
             </div>
           </div>
-        </form>
+        </div>
       </PageContainer>
     </AppShell>
   );
 }
-

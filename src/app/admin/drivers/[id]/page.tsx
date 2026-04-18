@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
@@ -13,78 +13,187 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { drivers } from "@/mock-data/drivers";
-import { rides } from "@/mock-data/rides";
-import type { Driver } from "@/types/domain";
 import { useToast } from "@/components/ui/toast";
+import { useAppSelector } from "@/store/hooks";
+import { fetcher } from "@/lib/fetcher";
 
-type DriverStatus = Driver["status"];
-const driverDocumentImages = [
-  "/mock-images/driver-license.svg",
-  "/mock-images/vehicle-registration.svg",
-  "/mock-images/id-document.svg"
-];
+type DriverStatus = "PENDING" | "APPROVED" | "RESTRICTED" | "SUSPENDED";
 
-const driverDocuments = [
-  {
-    id: "driver-license",
-    type: "DRIVER_LICENSE",
-    fileName: "driver-license.jpg",
-    fileUrl: driverDocumentImages[0],
-    uploadedAt: "2026-03-10T10:00:00.000Z",
-    status: "VERIFIED"
-  },
-  {
-    id: "vehicle-registration",
-    type: "VEHICLE_REGISTRATION",
-    fileName: "vehicle-registration.jpg",
-    fileUrl: driverDocumentImages[1],
-    uploadedAt: "2026-03-11T10:00:00.000Z",
-    status: "VERIFIED"
-  },
-  {
-    id: "id-document",
-    type: "ID_DOCUMENT",
-    fileName: "id-document.jpg",
-    fileUrl: driverDocumentImages[2],
-    uploadedAt: "2026-03-12T10:00:00.000Z",
-    status: "PENDING"
-  }
-] as const;
+interface DriverDetailResponse {
+  id: number;
+  email: string | null;
+  username: string | null;
+  mobileNumber: string | null;
+  status: string;
+  platform: string | null;
+  roles: string[];
+  otp: string | null;
+  token: string | null;
+  referralCode: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  basicInformation?: {
+    userId: number;
+    firstName: string | null;
+    lastName: string | null;
+    gender: string | null;
+    whatsApp: string | null;
+    email: string | null;
+    cnicNumber: string | null;
+    cnicFront: string | null;
+    cnicBack: string | null;
+    profilePicture: string | null;
+    referralCode: string | null;
+    acceptTerm: boolean | null;
+    city: string | null;
+    filterDeleted: boolean | null;
+  } | null;
+  license?: {
+    userId: number;
+    licenseNo: string | null;
+    licenseFront: string | null;
+    licenseBack: string | null;
+    licenseVerified: boolean | null;
+    filterVerified: boolean | null;
+  } | null;
+  vehicle?: {
+    id: number;
+    modelNumberId: number | null;
+    colorId: number | null;
+    registrationNo: string | null;
+    registrationFront: string | null;
+    registrationBack: string | null;
+    outdoorImages: string | null;
+    indoorImages: string | null;
+    ac: boolean | null;
+    petsAllowed: boolean | null;
+    smokingAllowed: boolean | null;
+    vehicleVerified: boolean | null;
+    brandId: number | null;
+    userId: number;
+  } | null;
+}
+
+interface DriverDocument {
+  id: string;
+  type: string;
+  fileName: string;
+  frontUrl: string;
+  backUrl: string;
+  status: string;
+}
+
+const fallbackImage = "/mock-images/document-fallback.svg";
+const fallbackByType: Record<string, string> = {
+  DRIVER_LICENSE: "/mock-images/driver-license.svg",
+  VEHICLE_REGISTRATION: "/mock-images/vehicle-registration.svg",
+  ID_DOCUMENT: "/mock-images/id-document.svg"
+};
+
+function prettyDate(value?: string | null) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString();
+}
+
+const statusPayloadMap: Record<DriverStatus, "ACTIVE" | "INACTIVE" | "BLOCKED"> = {
+  APPROVED: "ACTIVE",
+  RESTRICTED: "INACTIVE",
+  SUSPENDED: "BLOCKED",
+  PENDING: "INACTIVE"
+};
 
 export default function AdminDriverDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { success } = useToast();
+  const { success, error } = useToast();
+  const token = useAppSelector((state) => state.auth.token);
 
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [driver, setDriver] = useState<DriverDetailResponse | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<
-    DriverStatus | null
-  >(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
-    driverDocuments[0].id
-  );
+  const [pendingAction, setPendingAction] = useState<DriverStatus | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>("driver-license");
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewSrc, setPreviewSrc] = useState<string>(driverDocuments[0].fileUrl);
+  const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
 
-  const driver = useMemo(
-    () => drivers.find((d) => d.id === params.id),
-    [params.id]
-  );
+  useEffect(() => {
+    let active = true;
+    const loadDriver = async () => {
+      setLoading(true);
+      try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers/${params.id}`;
+        const response = await fetcher<DriverDetailResponse>(url, { token });
+        if (active) {
+          setDriver(response);
+        }
+      } catch {
+        if (active) {
+          setDriver(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
 
-  const driverRides = useMemo(
-    () => rides.filter((r) => r.driverId === params.id),
-    [params.id]
-  );
+    loadDriver();
 
-  if (!driver) {
+    return () => {
+      active = false;
+    };
+  }, [params.id, token]);
+
+  const documents = useMemo<DriverDocument[]>(() => {
+    if (!driver) return [];
+
+    return [
+      {
+        id: "driver-license",
+        type: "DRIVER_LICENSE",
+        fileName: "driver-license.jpg",
+        frontUrl: driver.license?.licenseFront || fallbackByType.DRIVER_LICENSE,
+        backUrl: driver.license?.licenseBack || fallbackByType.DRIVER_LICENSE,
+        status: driver.license?.licenseVerified ? "VERIFIED" : "PENDING"
+      },
+      {
+        id: "vehicle-registration",
+        type: "VEHICLE_REGISTRATION",
+        fileName: "vehicle-registration.jpg",
+        frontUrl: driver.vehicle?.registrationFront || fallbackByType.VEHICLE_REGISTRATION,
+        backUrl: driver.vehicle?.registrationBack || fallbackByType.VEHICLE_REGISTRATION,
+        status: driver.vehicle?.vehicleVerified ? "VERIFIED" : "PENDING"
+      },
+      {
+        id: "id-document",
+        type: "ID_DOCUMENT",
+        fileName: "id-document.jpg",
+        frontUrl: driver.basicInformation?.cnicFront || fallbackByType.ID_DOCUMENT,
+        backUrl: driver.basicInformation?.cnicBack || fallbackByType.ID_DOCUMENT,
+        status: "PENDING"
+      }
+    ];
+  }, [driver]);
+
+  useEffect(() => {
+    if (documents.length > 0 && !documents.some((doc) => doc.id === selectedDocumentId)) {
+      setSelectedDocumentId(documents[0].id);
+    }
+  }, [documents, selectedDocumentId]);
+
+  const selectedDocument = documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
+  const displayName = driver?.username || driver?.basicInformation?.firstName || "Driver";
+
+  if (!loading && !driver) {
     return (
       <AppShell title="Driver detail">
         <PageContainer>
           <EmptyState
             title="Driver not found"
-            description="This driver id does not exist in the mock dataset."
+            description="Unable to load this driver from backend."
             actionLabel="Back to drivers"
             onActionClick={() => router.push("/admin/drivers")}
           />
@@ -93,36 +202,40 @@ export default function AdminDriverDetailPage() {
     );
   }
 
-  const completedRides = driverRides.filter(
-    (r) => r.status === "COMPLETED"
-  );
-  const totalFare = completedRides.reduce((acc, r) => acc + r.fare, 0);
-  const totalCommission = completedRides.reduce(
-    (acc, r) => acc + r.commissionAmount,
-    0
-  );
-
   const handleStatusChange = (status: DriverStatus) => {
     setPendingAction(status);
     setDialogOpen(true);
   };
 
   const confirmStatusChange = () => {
-    if (!pendingAction) return;
-    success(`Driver would be marked as ${pendingAction.toLowerCase()} (mock).`);
-    setDialogOpen(false);
+    if (!pendingAction || !driver?.id) return;
+
+    const updateStatus = async () => {
+      setUpdatingStatus(true);
+      try {
+        const payloadStatus = statusPayloadMap[pendingAction];
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/status/${driver.id}`;
+        await fetcher(url, {
+          method: "PUT",
+          token,
+          body: JSON.stringify({ status: payloadStatus })
+        });
+
+        setDriver((prev) => (prev ? { ...prev, status: payloadStatus } : prev));
+        success(`Driver status updated to ${payloadStatus}.`);
+        setDialogOpen(false);
+      } catch (err) {
+        error(err instanceof Error ? err.message : "Failed to update driver status.");
+      } finally {
+        setUpdatingStatus(false);
+      }
+    };
+
+    void updateStatus();
   };
 
-  const selectedDocument =
-    driverDocuments.find((doc) => doc.id === selectedDocumentId) ??
-    driverDocuments[0];
-  const selectedIsPdf =
-    selectedDocument.fileName.toLowerCase().endsWith(".pdf") ||
-    selectedDocument.fileUrl.toLowerCase().includes(".pdf");
-  const fallbackImage = "/mock-images/document-fallback.svg";
-
   return (
-    <AppShell title={`Driver • ${driver.name}`}>
+    <AppShell title={`Driver • ${displayName}`}>
       <PageContainer>
         <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
@@ -132,6 +245,7 @@ export default function AdminDriverDetailPage() {
             </Link>
           </Button>
         </div>
+
         <div className="grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Personal information"
@@ -144,20 +258,20 @@ export default function AdminDriverDetailPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Full name</p>
-                  <p className="mt-0.5 font-heading font-medium">{driver.name}</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.username || "—"}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
-                  <p className="mt-0.5 font-heading font-medium">{driver.phone}</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.mobileNumber || "—"}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">City</p>
-                  <p className="mt-0.5 font-heading font-medium">{driver.city}</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.basicInformation?.city || "—"}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
                   <div className="mt-0.5">
-                    <StatusBadge status={driver.status} />
+                    <StatusBadge status={driver?.status || "PENDING"} />
                   </div>
                 </div>
               </div>
@@ -173,6 +287,7 @@ export default function AdminDriverDetailPage() {
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
+                  disabled={updatingStatus}
                   onClick={() => handleStatusChange("APPROVED")}
                 >
                   Approve
@@ -180,6 +295,7 @@ export default function AdminDriverDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
+                  disabled={updatingStatus}
                   onClick={() => handleStatusChange("RESTRICTED")}
                 >
                   Restrict
@@ -187,6 +303,7 @@ export default function AdminDriverDetailPage() {
                 <Button
                   size="sm"
                   variant="destructive"
+                  disabled={updatingStatus}
                   onClick={() => handleStatusChange("SUSPENDED")}
                 >
                   Suspend
@@ -199,21 +316,18 @@ export default function AdminDriverDetailPage() {
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Documents"
-            description="Mock preview of the driver's identity and vehicle documents."
+            description="Driver identity and vehicle documents."
             className="lg:col-span-3"
           >
             <div className="grid gap-3 text-xs lg:grid-cols-[360px,1fr]">
               <div className="space-y-2">
-                {driverDocuments.map((doc) => (
+                {documents.map((doc) => (
                   <button
                     key={doc.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedDocumentId(doc.id);
-                      setPreviewSrc(doc.fileUrl);
-                    }}
+                    onClick={() => setSelectedDocumentId(doc.id)}
                     className={`w-full rounded-xl border p-3 text-left transition-all ${
-                      selectedDocument.id === doc.id
+                      selectedDocument?.id === doc.id
                         ? "border-primary/60 bg-primary/10 shadow-sm"
                         : "border-border/60 bg-card hover:bg-muted/30"
                     }`}
@@ -221,7 +335,7 @@ export default function AdminDriverDetailPage() {
                     <div className="flex items-start gap-2">
                       <div className="h-12 w-16 overflow-hidden rounded-md border border-border/60 bg-muted/30">
                         <img
-                          src={doc.fileUrl}
+                          src={doc.frontUrl}
                           alt={doc.fileName}
                           className="h-full w-full object-cover"
                           onError={(e) => {
@@ -239,9 +353,6 @@ export default function AdminDriverDetailPage() {
                         <p className="truncate text-[0.7rem] text-muted-foreground">
                           {doc.fileName}
                         </p>
-                        <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
-                          Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
-                        </p>
                       </div>
                     </div>
                     <div className="ml-2 mt-1">
@@ -257,51 +368,88 @@ export default function AdminDriverDetailPage() {
                 <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">
-                      {selectedDocument.fileName}
+                      {selectedDocument?.fileName || "document.jpg"}
                     </p>
                     <p className="text-[0.68rem] text-muted-foreground">
-                      {selectedDocument.type.replaceAll("_", " ")}
+                      {(selectedDocument?.type || "DOCUMENT").replaceAll("_", " ")}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <a
-                      href={selectedDocument.fileUrl}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setPreviewOpen(true);
-                      }}
-                      className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                    >
-                      <Eye className="h-3 w-3" />
-                      Preview
-                    </a>
-                    <a
-                      href={selectedDocument.fileUrl}
-                      download
-                      className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                    >
-                      <Download className="h-3 w-3" />
-                      Download
-                    </a>
-                  </div>
                 </div>
-                <div className="h-[360px] bg-muted/20 p-2">
-                  {selectedIsPdf ? (
-                    <iframe
-                      src={selectedDocument.fileUrl}
-                      title={selectedDocument.fileName}
-                      className="h-full w-full rounded-md border border-border/60 bg-background"
-                    />
-                  ) : (
-                    <img
-                      src={previewSrc}
-                      alt={selectedDocument.fileName}
-                      className="h-full w-full rounded-md bg-background object-cover"
-                      onError={() => {
-                        setPreviewSrc(fallbackImage);
-                      }}
-                    />
-                  )}
+
+                <div className="grid gap-3 p-3 md:grid-cols-2">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-[0.7rem] font-medium text-muted-foreground">Front</p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewSrc(selectedDocument?.frontUrl || fallbackImage);
+                            setPreviewOpen(true);
+                          }}
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Preview
+                        </button>
+                        <a
+                          href={selectedDocument?.frontUrl || fallbackImage}
+                          download
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                        >
+                          <Download className="h-3 w-3" />
+                          Download
+                        </a>
+                      </div>
+                    </div>
+                    <div className="h-[220px] overflow-hidden rounded-md border border-border/60 bg-muted/20 p-1">
+                      <img
+                        src={selectedDocument?.frontUrl || fallbackImage}
+                        alt="Document front"
+                        className="h-full w-full rounded-sm bg-background object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-[0.7rem] font-medium text-muted-foreground">Back</p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewSrc(selectedDocument?.backUrl || fallbackImage);
+                            setPreviewOpen(true);
+                          }}
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Preview
+                        </button>
+                        <a
+                          href={selectedDocument?.backUrl || fallbackImage}
+                          download
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                        >
+                          <Download className="h-3 w-3" />
+                          Download
+                        </a>
+                      </div>
+                    </div>
+                    <div className="h-[220px] overflow-hidden rounded-md border border-border/60 bg-muted/20 p-1">
+                      <img
+                        src={selectedDocument?.backUrl || fallbackImage}
+                        alt="Document back"
+                        className="h-full w-full rounded-sm bg-background object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -309,33 +457,32 @@ export default function AdminDriverDetailPage() {
 
           <SectionCard
             title="Vehicle"
-            description="Mock vehicle information associated with this driver."
+            description="Vehicle information associated with this driver."
             className="lg:col-span-3"
           >
             <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
               <div className="overflow-hidden rounded-lg border border-border/60">
                 <img
-                  src="/mock-images/vehicle-profile.svg"
+                  src={driver?.vehicle?.outdoorImages || driver?.vehicle?.indoorImages || "/mock-images/vehicle-profile.svg"}
                   alt="Vehicle profile"
                   className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "/mock-images/vehicle-profile.svg";
+                  }}
                 />
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Make / Model</span>
-                  <span className="font-medium">
-                    Toyota Camry {driver.id.slice(-1)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Plate</span>
-                  <span className="font-medium">
-                    TP-{driver.id.slice(-3).toUpperCase()}
-                  </span>
+                  <span className="text-muted-foreground">Model</span>
+                  <span className="font-medium">{driver?.vehicle?.modelNumberId ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Color</span>
-                  <span className="font-medium">White</span>
+                  <span className="font-medium">{driver?.vehicle?.colorId ?? "—"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Plate</span>
+                  <span className="font-medium">{driver?.vehicle?.registrationNo || "—"}</span>
                 </div>
               </div>
             </div>
@@ -348,41 +495,20 @@ export default function AdminDriverDetailPage() {
             description="Aggregated performance across all rides completed by this driver."
             className="lg:col-span-2"
           >
-            {driverRides.length === 0 ? (
-              <EmptyState
-                title="No rides yet"
-                description="Once this driver starts accepting trips, their ride metrics will show up here."
-              />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-3 text-sm">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
-                    Completed rides
-                  </p>
-                  <p className="text-xl font-heading font-semibold">
-                    {completedRides.length}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
-                    Gross earnings (mock)
-                  </p>
-                  <p className="text-xl font-heading font-semibold">
-                    $
-                    {Math.round(totalFare)}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
-                    Platform commission
-                  </p>
-                  <p className="text-xl font-heading font-semibold">
-                    $
-                    {Math.round(totalCommission)}
-                  </p>
-                </div>
+            <div className="grid gap-4 sm:grid-cols-3 text-sm">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Completed rides</p>
+                <p className="text-xl font-heading font-semibold">—</p>
               </div>
-            )}
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Gross earnings</p>
+                <p className="text-xl font-heading font-semibold">—</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Platform commission</p>
+                <p className="text-xl font-heading font-semibold">—</p>
+              </div>
+            </div>
           </SectionCard>
 
           <SectionCard
@@ -390,20 +516,17 @@ export default function AdminDriverDetailPage() {
             description="Historical status changes for this driver."
           >
             <ol className="space-y-3 text-xs">
-              {driver.statusHistory.map((entry) => (
-                <li key={entry.changedAt} className="flex gap-2">
-                  <div className="mt-0.5 h-2 w-2 rounded-full bg-emerald-500" />
-                  <div>
-                    <p className="font-medium">
-                      {entry.status} •{" "}
-                      {new Date(entry.changedAt).toLocaleDateString()}
-                    </p>
-                    <p className="text-[0.7rem] text-muted-foreground">
-                      by user {entry.changedByUserId}
-                    </p>
-                  </div>
-                </li>
-              ))}
+              <li className="flex gap-2">
+                <div className="mt-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+                <div>
+                  <p className="font-medium">
+                    {driver?.status || "—"} • {prettyDate(driver?.updatedAt)}
+                  </p>
+                  <p className="text-[0.7rem] text-muted-foreground">
+                    by system
+                  </p>
+                </div>
+              </li>
             </ol>
           </SectionCard>
         </div>
@@ -415,51 +538,27 @@ export default function AdminDriverDetailPage() {
           title="Confirm status change"
           description={
             pendingAction
-              ? `This will mark the driver as ${pendingAction.toLowerCase()} in a real environment. This demo does not persist data.`
+              ? `This will mark the driver as ${statusPayloadMap[pendingAction]}.`
               : undefined
           }
-          confirmLabel="Confirm"
+          confirmLabel={updatingStatus ? "Updating..." : "Confirm"}
           cancelLabel="Cancel"
           destructive={pendingAction === "SUSPENDED"}
         />
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>{selectedDocument.fileName}</DialogTitle>
+              <DialogTitle>Document preview</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <p className="text-xs text-muted-foreground">
-                  {selectedDocument.type.replaceAll("_", " ")} • Uploaded{" "}
-                  {new Date(selectedDocument.uploadedAt).toLocaleDateString()}
-                </p>
-                <a
-                  href={selectedDocument.fileUrl}
-                  download
-                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                >
-                  <Download className="h-3 w-3" />
-                  Download
-                </a>
-              </div>
-              <div className="h-[65vh] overflow-hidden rounded-lg border border-border/70 bg-muted/20 p-2">
-                {selectedIsPdf ? (
-                  <iframe
-                    src={selectedDocument.fileUrl}
-                    title={selectedDocument.fileName}
-                    className="h-full w-full rounded-md border border-border/60 bg-background"
-                  />
-                ) : (
-                  <img
-                    src={previewSrc}
-                    alt={selectedDocument.fileName}
-                    className="h-full w-full rounded-md bg-background object-cover"
-                    onError={() => {
-                      setPreviewSrc(fallbackImage);
-                    }}
-                  />
-                )}
-              </div>
+            <div className="h-[65vh] overflow-hidden rounded-lg border border-border/70 bg-muted/20 p-2">
+              <img
+                src={previewSrc}
+                alt="Document preview"
+                className="h-full w-full rounded-md bg-background object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                }}
+              />
             </div>
           </DialogContent>
         </Dialog>

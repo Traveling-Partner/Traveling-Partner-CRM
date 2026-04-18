@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -10,60 +10,91 @@ import { DataTable } from "@/components/common/DataTable";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { agents } from "@/mock-data/agents";
-import { drivers } from "@/mock-data/drivers";
-import { partners } from "@/mock-data/partners";
-import type { Agent } from "@/types/domain";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue
+} from "@/components/ui/select";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { useAppSelector } from "@/store/hooks";
+import { fetcher } from "@/lib/fetcher";
 
-const PAGE_SIZE = 10;
+interface AgentRow {
+  id: number;
+  name: string | null;
+  email: string | null;
+  mobileNumber: string | null;
+  status: string;
+}
+
+interface AgentsResponse {
+  content: AgentRow[];
+  totalPages: number;
+  totalElements: number;
+}
+
+const PAGE_SIZE = 6;
 
 export default function AdminAgentsPage() {
   const router = useRouter();
+  const token = useAppSelector((state) => state.auth.token);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [agentRows, setAgentRows] = useState<AgentRow[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const filtered = useMemo(() => {
-    return agents.filter((a) => {
-      const matchesSearch =
-        a.name.toLowerCase().includes(search.toLowerCase()) ||
-        a.email.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" || a.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [search, statusFilter]);
+  const fetchAgents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const statusParam = statusFilter === "all" ? "" : statusFilter;
+      const searchParam = search.trim();
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents?page=${page}&size=${PAGE_SIZE}&search=${encodeURIComponent(searchParam)}&status=${encodeURIComponent(statusParam)}`;
 
-  const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+      const res = await fetcher<AgentsResponse>(url, { token });
+      setAgentRows(res.content ?? []);
+      setTotalPages(res.totalPages || 1);
+      setTotalElements(res.totalElements || 0);
+    } catch {
+      setAgentRows([]);
+      setTotalPages(1);
+      setTotalElements(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, statusFilter, token]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  useEffect(() => {
+    void fetchAgents();
+  }, [fetchAgents]);
 
-  const columns: ColumnDef<Agent>[] = [
+  const columns: ColumnDef<AgentRow>[] = [
     {
       accessorKey: "name",
       header: "Agent",
       cell: ({ row }) => (
         <div className="space-y-0.5">
-          <p className="text-sm font-medium">{row.original.name}</p>
-          <p className="text-xs text-muted-foreground">{row.original.email}</p>
+          <p className="text-sm font-medium">{row.original.name || "—"}</p>
+          <p className="text-xs text-muted-foreground">{row.original.email || "—"}</p>
         </div>
       )
     },
     {
-      accessorKey: "phone",
+      accessorKey: "mobileNumber",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-xs">{row.original.phone}</span>
+        <span className="text-xs">{row.original.mobileNumber || "—"}</span>
       )
     },
     {
       accessorKey: "commissionRate",
       header: "Commission %",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.commissionRate}%</span>
+        <span className="font-medium">—</span>
       )
     },
     {
@@ -74,19 +105,7 @@ export default function AdminAgentsPage() {
     {
       id: "metrics",
       header: "Onboarded",
-      cell: ({ row }) => {
-        const driversCount = drivers.filter(
-          (d) => d.createdByAgentId === row.original.id
-        ).length;
-        const partnersCount = partners.filter(
-          (p) => p.createdByAgentId === row.original.id
-        ).length;
-        return (
-          <span className="text-xs text-muted-foreground">
-            {driversCount} drivers, {partnersCount} partners
-          </span>
-        );
-      }
+      cell: () => <span className="text-xs text-muted-foreground">—</span>
     },
     {
       id: "actions",
@@ -127,47 +146,42 @@ export default function AdminAgentsPage() {
               }}
               className="max-w-xs"
             />
-            <select
+            <Select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              onValueChange={(value) => {
+                setStatusFilter(value);
                 setPage(0);
               }}
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="all">All status</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="RESTRICTED">Restricted</option>
-              <option value="SUSPENDED">Suspended</option>
-            </select>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="BLOCKED">Blocked</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <DataTable columns={columns} data={paginated} />
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+          ) : (
+            <DataTable columns={columns} data={agentRows} />
+          )}
+          <div className="mt-3 text-xs text-muted-foreground">
             <span>
-              Showing {paginated.length ? page * PAGE_SIZE + 1 : 0} –{" "}
-              {page * PAGE_SIZE + paginated.length} of {filtered.length}
+              Showing {totalElements ? page * PAGE_SIZE + 1 : 0} –{" "}
+              {Math.min((page + 1) * PAGE_SIZE, totalElements)} of {totalElements}
             </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
           </div>
+          <PaginationControls
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </SectionCard>
       </PageContainer>
     </AppShell>
