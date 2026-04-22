@@ -91,7 +91,7 @@ function formatBlogDate(value: string | null | undefined): string {
  * Supports `views`, `viewCount`, `totalViews`, `view_count`.
  */
 function extractViews(row: BlogRow): number | undefined {
-  const r = row as Record<string, unknown>;
+  const r = row as unknown as Record<string, unknown>;
   const keys = ["views", "viewCount", "totalViews", "view_count"] as const;
   for (const key of keys) {
     const v = r[key];
