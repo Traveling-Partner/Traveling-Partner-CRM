@@ -13,6 +13,7 @@ import {
   ListChecks,
   Bell,
   Newspaper,
+  Images,
   Settings,
   UserCircle2
 } from "lucide-react";
@@ -39,6 +40,7 @@ const adminItems: SidebarItem[] = [
   // { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
   // { label: "Notifications", href: "/admin/notifications", icon: Bell },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },
+  { label: "Carousel", href: "/admin/carousel", icon: Images },
   { label: "Settings", href: "/admin/settings", icon: Settings }
 ];
 
