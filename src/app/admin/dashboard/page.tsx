@@ -1,16 +1,14 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { drivers } from "@/mock-data/drivers";
-import { partners } from "@/mock-data/partners";
-import { agents } from "@/mock-data/agents";
-import { rides } from "@/mock-data/rides";
-import { commissions } from "@/mock-data/commissions";
 import { auditLogs } from "@/mock-data/audit-logs";
+import { fetcher } from "@/lib/fetcher";
+import { useAppSelector } from "@/store/hooks";
 import {
   LineChart,
   Line,
@@ -22,91 +20,140 @@ import {
   Bar,
   CartesianGrid,
   Legend,
-  AreaChart,
-  Area,
   PieChart,
   Pie,
   Cell
 } from "recharts";
 import { format, parseISO } from "date-fns";
 
-const currency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0
-  }).format(value);
-
-function buildRidesTrend() {
-  const grouped = new Map<string, number>();
-  rides.forEach((ride) => {
-    const day = format(parseISO(ride.startedAt), "MMM d");
-    grouped.set(day, (grouped.get(day) ?? 0) + 1);
-  });
-  return Array.from(grouped.entries()).map(([day, count]) => ({
-    day,
-    count
-  }));
+interface CountsResponse {
+  totalDrivers: number;
+  totalPartners: number;
+  totalSalesAgents: number;
+  totalRidePlans: number;
 }
 
-function buildCommissionByAgent() {
-  const grouped = new Map<string, number>();
-  commissions.forEach((c) => {
-    grouped.set(c.agentId, (grouped.get(c.agentId) ?? 0) + c.amount);
-  });
-  return agents.map((agent) => ({
-    name: agent.name,
-    total: Math.round(grouped.get(agent.id) ?? 0)
-  }));
+interface DriverStatusCountsResponse {
+  active: number;
+  inactive: number;
+  blocked: number;
+  pending: number;
+  approved: number;
 }
 
-function buildRideStatusBreakdown() {
-  const grouped = new Map<string, number>();
-  rides.forEach((ride) => {
-    grouped.set(ride.status, (grouped.get(ride.status) ?? 0) + 1);
-  });
-
-  return Array.from(grouped.entries()).map(([status, count]) => ({
-    status,
-    count
-  }));
+interface Last14DaysGraphResponse {
+  dates: string[];
+  counts: number[];
 }
 
-function buildRevenueTrend() {
-  const grouped = new Map<string, number>();
-  rides
-    .filter((ride) => ride.status === "COMPLETED")
-    .forEach((ride) => {
-      const day = format(parseISO(ride.startedAt), "MMM d");
-      grouped.set(day, (grouped.get(day) ?? 0) + ride.fare);
-    });
-
-  return Array.from(grouped.entries()).map(([day, revenue]) => ({
-    day,
-    revenue: Math.round(revenue)
-  }));
+interface RideStatusCountResponse {
+  requested: number;
+  accepted: number;
+  started: number;
+  completed: number;
+  canceled: number;
 }
 
 export default function AdminDashboardPage() {
-  const totalDrivers = drivers.length;
-  const totalPartners = partners.length;
-  const totalAgents = agents.length;
-  const totalRides = rides.length;
-  const totalRevenue = rides.reduce((acc, r) => acc + r.fare, 0);
-  const totalCommission = rides.reduce(
-    (acc, r) => acc + r.commissionAmount,
-    0
-  );
-  const activeDrivers = drivers.filter((d) => d.status === "APPROVED").length;
-  const suspendedDrivers = drivers.filter(
-    (d) => d.status === "SUSPENDED"
-  ).length;
+  const token = useAppSelector((state) => state.auth.token);
+  const [counts, setCounts] = useState<CountsResponse>({
+    totalDrivers: 0,
+    totalPartners: 0,
+    totalSalesAgents: 0,
+    totalRidePlans: 0
+  });
+  const [driverStatusCounts, setDriverStatusCounts] = useState<DriverStatusCountsResponse>({
+    active: 0,
+    inactive: 0,
+    blocked: 0,
+    pending: 0,
+    approved: 0
+  });
+  const [ridesTrend, setRidesTrend] = useState<Array<{ day: string; count: number }>>([]);
+  const [rideStatusBreakdown, setRideStatusBreakdown] = useState<
+    Array<{ status: "ACCEPTED" | "CANCELED" | "COMPLETED"; count: number }>
+  >([
+    { status: "ACCEPTED", count: 0 },
+    { status: "CANCELED", count: 0 },
+    { status: "COMPLETED", count: 0 }
+  ]);
 
-  const ridesTrend = buildRidesTrend();
-  const commissionByAgent = buildCommissionByAgent();
-  const rideStatusBreakdown = buildRideStatusBreakdown();
-  const revenueTrend = buildRevenueTrend();
-  const statusColors = ["#fdb813", "#22c55e", "#ef4444", "#3b82f6"];
+  useEffect(() => {
+    let active = true;
+    const loadDashboard = async () => {
+      try {
+        const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes] = await Promise.all([
+          fetcher<CountsResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/counts`, { token }),
+          fetcher<DriverStatusCountsResponse>(
+            `${process.env.NEXT_PUBLIC_API_URL}/users/driver-status-counts`,
+            { token }
+          ),
+          fetcher<Last14DaysGraphResponse>(
+            `${process.env.NEXT_PUBLIC_API_URL}/users/graph/last-14-days`,
+            { token }
+          ),
+          fetcher<RideStatusCountResponse>(
+            `${process.env.NEXT_PUBLIC_API_URL}/users/ride-status-count`,
+            { token }
+          )
+        ]);
+
+        if (!active) return;
+
+        setCounts(countsRes);
+        setDriverStatusCounts(driverStatusRes);
+        setRidesTrend(
+          (ridesTrendRes.dates ?? []).map((date, idx) => ({
+            day: format(parseISO(date), "MMM d"),
+            count: ridesTrendRes.counts?.[idx] ?? 0
+          }))
+        );
+        setRideStatusBreakdown([
+          { status: "ACCEPTED", count: rideStatusRes.accepted ?? 0 },
+          { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
+          { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
+        ]);
+      } catch {
+        if (!active) return;
+        setCounts({
+          totalDrivers: 0,
+          totalPartners: 0,
+          totalSalesAgents: 0,
+          totalRidePlans: 0
+        });
+        setDriverStatusCounts({
+          active: 0,
+          inactive: 0,
+          blocked: 0,
+          pending: 0,
+          approved: 0
+        });
+        setRidesTrend([]);
+        setRideStatusBreakdown([
+          { status: "ACCEPTED", count: 0 },
+          { status: "CANCELED", count: 0 },
+          { status: "COMPLETED", count: 0 }
+        ]);
+      }
+    };
+    void loadDashboard();
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  const statusRows = useMemo(
+    () => [
+      { label: "Active drivers", badge: "ACTIVE", count: driverStatusCounts.active },
+      { label: "Approved drivers", badge: "APPROVED", count: driverStatusCounts.approved },
+      { label: "Inactive drivers", badge: "INACTIVE", count: driverStatusCounts.inactive },
+      { label: "Blocked drivers", badge: "BLOCKED", count: driverStatusCounts.blocked },
+      { label: "Pending drivers", badge: "PENDING", count: driverStatusCounts.pending }
+    ],
+    [driverStatusCounts]
+  );
+
+  const statusColors = ["#fdb813", "#ef4444", "#22c55e", "#3b82f6"];
 
   const recentActivity = auditLogs
     .slice(0, 8)
@@ -125,7 +172,7 @@ export default function AdminDashboardPage() {
                 Total Drivers
               </p>
               <p className="text-2xl font-heading font-semibold">
-                {totalDrivers}
+                {counts.totalDrivers}
               </p>
             </CardContent>
           </Card>
@@ -135,7 +182,7 @@ export default function AdminDashboardPage() {
                 Total Partners
               </p>
               <p className="text-2xl font-heading font-semibold">
-                {totalPartners}
+                {counts.totalPartners}
               </p>
             </CardContent>
           </Card>
@@ -145,7 +192,7 @@ export default function AdminDashboardPage() {
                 Total Agents
               </p>
               <p className="text-2xl font-heading font-semibold">
-                {totalAgents}
+                {counts.totalSalesAgents}
               </p>
             </CardContent>
           </Card>
@@ -155,54 +202,25 @@ export default function AdminDashboardPage() {
                 Total Rides
               </p>
               <p className="text-2xl font-heading font-semibold">
-                {totalRides}
+                {counts.totalRidePlans}
               </p>
             </CardContent>
           </Card>
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="space-y-1 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Revenue
-              </p>
-              <p className="text-xl font-heading font-semibold">
-                {currency(totalRevenue)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Gross fares across all completed rides.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="space-y-1 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Commissions
-              </p>
-              <p className="text-xl font-heading font-semibold">
-                {currency(totalCommission)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Estimated commission captured by the platform.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
+          <Card className="md:col-span-3">
             <CardContent className="space-y-3 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Active vs Suspended
               </p>
-              <div className="flex items-center justify-between text-sm">
-                <span>Active drivers</span>
-                <StatusBadge status="APPROVED" />
-                <span className="font-semibold">{activeDrivers}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Suspended drivers</span>
-                <StatusBadge status="SUSPENDED" />
-                <span className="font-semibold">{suspendedDrivers}</span>
-              </div>
+              {statusRows.map((row) => (
+                <div key={row.label} className="flex items-center justify-between text-sm">
+                  <span>{row.label}</span>
+                  <StatusBadge status={row.badge} />
+                  <span className="font-semibold">{row.count}</span>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>
@@ -240,38 +258,8 @@ export default function AdminDashboardPage() {
         </SectionCard>
 
         <SectionCard
-          title="Commission by agent"
-          description="Top-line commission contribution per sales agent."
-          className="mt-6"
-        >
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={commissionByAgent}>
-                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />
-                <XAxis dataKey="name" tickMargin={8} />
-                <YAxis />
-                <Tooltip
-                  formatter={(value: number) => currency(value)}
-                  contentStyle={{
-                    borderRadius: 10,
-                    border: "1px solid hsl(var(--border))"
-                  }}
-                />
-                <Legend />
-                <Bar
-                  dataKey="total"
-                  name="Commission"
-                  fill="#fce001"
-                  radius={[6, 6, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </SectionCard>
-
-        <SectionCard
           title="Ride status breakdown"
-          description="Distribution of completed, cancelled, and in-progress rides."
+          description="Distribution of accepted, canceled, and completed rides."
           className="mt-6"
         >
           <div className="grid gap-4 lg:grid-cols-2">
@@ -316,39 +304,6 @@ export default function AdminDashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Revenue trend"
-          description="Daily completed-ride revenue trend."
-          className="mt-6"
-        >
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueTrend}>
-                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />
-                <XAxis dataKey="day" tickMargin={8} />
-                <YAxis />
-                <Tooltip
-                  formatter={(value: number) => currency(value)}
-                  contentStyle={{
-                    borderRadius: 10,
-                    border: "1px solid hsl(var(--border))"
-                  }}
-                />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  name="Revenue"
-                  stroke="#f59e0b"
-                  fill="#fce001"
-                  fillOpacity={0.35}
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
           </div>
         </SectionCard>
 

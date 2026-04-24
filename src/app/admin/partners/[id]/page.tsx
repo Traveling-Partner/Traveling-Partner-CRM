@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
@@ -10,10 +10,12 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppSelector } from "@/store/hooks";
 import { fetcher } from "@/lib/fetcher";
+import { useToast } from "@/components/ui/toast";
 
 interface PartnerDetailResponse {
   id: number;
@@ -57,12 +59,15 @@ export default function AdminPartnerDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const token = useAppSelector((state) => state.auth.token);
+  const { success, error: showError } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState<PartnerDetailResponse | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("id-document");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -116,6 +121,27 @@ export default function AdminPartnerDetailPage() {
 
   const fullName = `${partner?.basicInformation?.firstName || ""} ${partner?.basicInformation?.lastName || ""}`.trim() || "—";
   const city = partner?.basicInformation?.city || "—";
+  const isActiveStatus = partner?.status === "ACTIVE" || partner?.status === "APPROVED";
+  const nextStatus: "ACTIVE" | "INACTIVE" = isActiveStatus ? "INACTIVE" : "ACTIVE";
+
+  const handleStatusConfirm = useCallback(async () => {
+    if (!partner) return;
+    setStatusUpdating(true);
+    try {
+      await fetcher(`${process.env.NEXT_PUBLIC_API_URL}/users/status/${partner.id}`, {
+        method: "PUT",
+        token,
+        body: JSON.stringify({ status: nextStatus })
+      });
+      setPartner((prev) => (prev ? { ...prev, status: nextStatus } : prev));
+      success(nextStatus === "ACTIVE" ? "Partner marked active." : "Partner marked inactive.");
+      setStatusConfirmOpen(false);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to update partner status.");
+    } finally {
+      setStatusUpdating(false);
+    }
+  }, [nextStatus, partner, showError, success, token]);
 
   if (!loading && !partner) {
     return (
@@ -173,6 +199,19 @@ export default function AdminPartnerDetailPage() {
                 </div>
               </div>
             )}
+            {!loading && partner ? (
+              <div className="mt-4 flex justify-end">
+                {isActiveStatus ? (
+                  <Button variant="destructive" onClick={() => setStatusConfirmOpen(true)}>
+                    Inactive
+                  </Button>
+                ) : (
+                  <Button onClick={() => setStatusConfirmOpen(true)}>
+                    Active
+                  </Button>
+                )}
+              </div>
+            ) : null}
           </SectionCard>
 
           <SectionCard
@@ -399,6 +438,22 @@ export default function AdminPartnerDetailPage() {
             ) : null}
           </DialogContent>
         </Dialog>
+        <ConfirmDialog
+          open={statusConfirmOpen}
+          onOpenChange={setStatusConfirmOpen}
+          onConfirm={handleStatusConfirm}
+          title={nextStatus === "ACTIVE" ? "Activate partner?" : "Set partner inactive?"}
+          description={
+            partner
+              ? nextStatus === "ACTIVE"
+                ? `Mark "${fullName}" as active?`
+                : `Mark "${fullName}" as inactive?`
+              : undefined
+          }
+          confirmLabel={statusUpdating ? "Updating..." : nextStatus === "ACTIVE" ? "Activate" : "Set inactive"}
+          cancelLabel="Cancel"
+          destructive={nextStatus === "INACTIVE"}
+        />
       </PageContainer>
     </AppShell>
   );

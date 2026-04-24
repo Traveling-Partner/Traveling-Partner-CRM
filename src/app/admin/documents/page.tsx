@@ -71,12 +71,13 @@ interface PreviewDocument {
 }
 
 type DecisionType = "APPROVE" | "REJECT";
-type ApiDocStatus = "APPROVED" | "REJECTED" | "PENDING";
+type ApiDocStatus = "APPROVED" | "REJECTED" | "REJECT" | "PENDING";
 
 interface DocumentStatusPayload {
   cnicStatus: ApiDocStatus;
   licenseStatus: ApiDocStatus;
   vehicleStatus: ApiDocStatus;
+  rejectionReason?: string;
 }
 
 const PAGE_SIZE = 6;
@@ -101,13 +102,38 @@ function normalizeDocumentStatus(value: unknown): string {
   if (normalized === "APPROVED" || normalized === "REJECTED" || normalized === "PENDING") {
     return normalized;
   }
+  if (normalized === "REJECT") return "REJECTED";
   return normalized;
 }
 
 function mapRawStatus(value: unknown): ApiDocStatus {
   if (value === null || value === undefined) return "PENDING";
   const s = String(value).trim().toUpperCase();
-  if (s === "APPROVED" || s === "REJECTED" || s === "PENDING") return s;
+  if (s === "APPROVED" || s === "REJECTED" || s === "REJECT" || s === "PENDING") return s;
+  return "PENDING";
+}
+
+function normalizeApiDocStatus(value: unknown): ApiDocStatus {
+  const mapped = mapRawStatus(value);
+  return mapped === "REJECT" ? "REJECTED" : mapped;
+}
+
+function isFinalDecisionStatus(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toUpperCase();
+  return normalized === "APPROVED" || normalized === "REJECTED" || normalized === "REJECT";
+}
+
+function summarizeDocumentVerificationStatus(payload: DriverDocumentsResponse): ApiDocStatus {
+  const vehicleStatusRaw = pickVehicleStatus(payload as unknown as Record<string, unknown>);
+  const statuses: ApiDocStatus[] = [
+    normalizeApiDocStatus(payload.cnicStatus),
+    normalizeApiDocStatus(payload.licenseStatus),
+    normalizeApiDocStatus(vehicleStatusRaw)
+  ];
+
+  if (statuses.some((s) => s === "REJECTED")) return "REJECTED";
+  if (statuses.every((s) => s === "APPROVED")) return "APPROVED";
   return "PENDING";
 }
 
@@ -149,6 +175,7 @@ export default function DocumentsQueuePage() {
   const [page, setPage] = useState(0);
 
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
+  const [documentStatusByDriverId, setDocumentStatusByDriverId] = useState<Record<number, ApiDocStatus>>({});
   const [cities, setCities] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -204,8 +231,32 @@ export default function DocumentsQueuePage() {
       const response = await fetcher<DriversResponse>(url, { token });
       setDrivers(response.content);
       setTotalPages(response.totalPages || 1);
+
+      const statusEntries = await Promise.all(
+        response.content.map(async (driver) => {
+          try {
+            const docUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/${driver.id}`;
+            const docResponse = await fetcher<
+              DriverDocumentsResponse | ApiEnvelope<DriverDocumentsResponse>
+            >(docUrl, { token });
+            const docPayload =
+              docResponse &&
+              typeof docResponse === "object" &&
+              "data" in docResponse &&
+              docResponse.data
+                ? docResponse.data
+                : (docResponse as DriverDocumentsResponse);
+            return [driver.id, summarizeDocumentVerificationStatus(docPayload)] as const;
+          } catch {
+            return [driver.id, "PENDING" as ApiDocStatus] as const;
+          }
+        })
+      );
+
+      setDocumentStatusByDriverId(Object.fromEntries(statusEntries));
     } catch {
       setDrivers([]);
+      setDocumentStatusByDriverId({});
     } finally {
       setLoading(false);
     }
@@ -216,6 +267,7 @@ export default function DocumentsQueuePage() {
   }, [loadDrivers]);
 
   const selectedDocument = previewDocuments.find((doc) => doc.id === selectedDocumentId) ?? previewDocuments[0];
+  const selectedDocIsFinalized = isFinalDecisionStatus(selectedDocument?.status);
 
   const loadPreviewDocuments = useCallback(async (driverId: number) => {
     setPreviewLoading(true);
@@ -303,7 +355,9 @@ export default function DocumentsQueuePage() {
     driver: DriverRow,
     type: DecisionType,
     scope: "table" | "preview",
-    selectedId: PreviewDocument["id"]
+    selectedId: PreviewDocument["id"],
+    rejectedValue: "REJECTED" | "REJECT" = "REJECTED",
+    rejectionReasonText?: string
   ) => {
     let payload: DocumentStatusPayload;
 
@@ -316,12 +370,12 @@ export default function DocumentsQueuePage() {
               vehicleStatus: "APPROVED"
             }
           : {
-              cnicStatus: "REJECTED",
-              licenseStatus: "REJECTED",
-              vehicleStatus: "REJECTED"
+              cnicStatus: rejectedValue,
+              licenseStatus: rejectedValue,
+              vehicleStatus: rejectedValue
             };
     } else {
-      const decision = type === "APPROVE" ? "APPROVED" : "REJECTED";
+      const decision = type === "APPROVE" ? "APPROVED" : rejectedValue;
       payload = { ...rawDocumentStatuses };
       if (selectedId === "driver-license") {
         payload.licenseStatus = decision;
@@ -330,6 +384,10 @@ export default function DocumentsQueuePage() {
       } else {
         payload.cnicStatus = decision;
       }
+    }
+
+    if (type === "REJECT" && rejectionReasonText) {
+      payload.rejectionReason = rejectionReasonText;
     }
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/status/${driver.id}`;
@@ -345,7 +403,33 @@ export default function DocumentsQueuePage() {
     const run = async () => {
       setDecisionLoading(true);
       try {
-        await applyDecision(decisionDriver, decisionType, decisionScope, selectedDocumentId);
+        const trimmedRejectReason = rejectReason.trim();
+        if (decisionType === "REJECT" && !trimmedRejectReason) {
+          error("Please add rejection reason.");
+          return;
+        }
+
+        try {
+          await applyDecision(
+            decisionDriver,
+            decisionType,
+            decisionScope,
+            selectedDocumentId,
+            "REJECTED",
+            trimmedRejectReason
+          );
+        } catch {
+          // Compatibility fallback: some backends expect `REJECT` instead of `REJECTED`.
+          if (decisionType !== "REJECT") throw new Error("reject-failed");
+          await applyDecision(
+            decisionDriver,
+            decisionType,
+            decisionScope,
+            selectedDocumentId,
+            "REJECT",
+            trimmedRejectReason
+          );
+        }
         if (decisionScope === "table") {
           success(
             decisionType === "APPROVE"
@@ -406,38 +490,50 @@ export default function DocumentsQueuePage() {
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />
+        cell: ({ row }) => {
+          const documentStatus =
+            documentStatusByDriverId[row.original.id] ?? normalizeApiDocStatus(row.original.status);
+          return <StatusBadge status={documentStatus} />;
+        }
       },
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void openPreview(row.original)}
-            >
-              Preview
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => openDecision(row.original, "APPROVE")}
-            >
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => openDecision(row.original, "REJECT")}
-            >
-              Reject
-            </Button>
-          </div>
-        )
+        cell: ({ row }) => {
+          const documentStatus =
+            documentStatusByDriverId[row.original.id] ?? normalizeApiDocStatus(row.original.status);
+          return (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void openPreview(row.original)}
+              >
+                Preview
+              </Button>
+              {!isFinalDecisionStatus(documentStatus) ? (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => openDecision(row.original, "APPROVE")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => openDecision(row.original, "REJECT")}
+                  >
+                    Reject
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          );
+        }
       }
     ],
-    []
+    [documentStatusByDriverId]
   );
 
   return (
@@ -663,18 +759,20 @@ export default function DocumentsQueuePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-2 border-t border-border/60 px-3 py-2">
-                    <Button size="sm" onClick={() => openPreviewDecision("APPROVE")}>
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => openPreviewDecision("REJECT")}
-                    >
-                      Reject
-                    </Button>
-                  </div>
+                  {!selectedDocIsFinalized ? (
+                    <div className="flex items-center justify-end gap-2 border-t border-border/60 px-3 py-2">
+                      <Button size="sm" onClick={() => openPreviewDecision("APPROVE")}>
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => openPreviewDecision("REJECT")}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
