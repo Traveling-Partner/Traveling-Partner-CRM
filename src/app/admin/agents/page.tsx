@@ -91,13 +91,6 @@ export default function AdminAgentsPage() {
       )
     },
     {
-      accessorKey: "commissionRate",
-      header: "Commission %",
-      cell: ({ row }) => (
-        <span className="font-medium">—</span>
-      )
-    },
-    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => <StatusBadge status={row.original.status} />
@@ -129,7 +122,7 @@ export default function AdminAgentsPage() {
       <PageContainer>
         <SectionCard
           title="Agent management"
-          description="Manage sales agents and view performance metrics."
+          description="Manage sales agents."
           headerAction={
             <Button onClick={() => router.push("/admin/agents/create")}>
               Create agent

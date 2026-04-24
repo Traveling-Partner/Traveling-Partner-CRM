@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { useToast } from "@/components/ui/toast";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { useAppSelector } from "@/store/hooks";
 import { fetcher } from "@/lib/fetcher";
@@ -44,7 +42,6 @@ interface PartnersResponse {
 
 export default function AdminPartnersPage() {
   const router = useRouter();
-  const { success } = useToast();
   const token = useAppSelector((state) => state.auth.token);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -54,61 +51,8 @@ export default function AdminPartnersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmPartner, setConfirmPartner] = useState<PartnerRow | null>(
-    null
-  );
-  const [confirmType, setConfirmType] = useState<"ACTIVE" | "INACTIVE" | null>(
-    null
-  );
-  const confirmSnapshotRef = useRef<{
-    partner: PartnerRow;
-    type: "ACTIVE" | "INACTIVE";
-  } | null>(null);
 
   const [cities, setCities] = useState<string[]>([]);
-  const fetchPartnersRef = useRef<() => Promise<void>>(async () => {});
-
-  const openActiveConfirm = useCallback((partner: PartnerRow) => {
-    confirmSnapshotRef.current = { partner, type: "ACTIVE" };
-    setConfirmPartner(partner);
-    setConfirmType("ACTIVE");
-    setConfirmOpen(true);
-  }, []);
-
-  const openInactiveConfirm = useCallback((partner: PartnerRow) => {
-    confirmSnapshotRef.current = { partner, type: "INACTIVE" };
-    setConfirmPartner(partner);
-    setConfirmType("INACTIVE");
-    setConfirmOpen(true);
-  }, []);
-
-  const handleStatusConfirm = useCallback(async () => {
-    const snap = confirmSnapshotRef.current;
-    if (!snap) return;
-    const nextStatus = snap.type === "ACTIVE" ? "ACTIVE" : "INACTIVE";
-    try {
-      await fetcher(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/status/${snap.partner.id}`,
-        {
-          method: "PUT",
-          token,
-          body: JSON.stringify({ status: nextStatus })
-        }
-      );
-      success(
-        snap.type === "ACTIVE" ? "Partner marked active." : "Partner marked inactive."
-      );
-      // Re-fetch list so backend-persisted status is reflected
-      await fetchPartnersRef.current();
-    } catch {
-      // Keep the UI consistent if API fails
-      success("Failed to update partner status."); // fallback toast
-    }
-    confirmSnapshotRef.current = null;
-    setConfirmPartner(null);
-    setConfirmType(null);
-  }, [success, token]);
 
   // Load city options from backend
   useEffect(() => {
@@ -162,10 +106,6 @@ export default function AdminPartnersPage() {
   }, [page, statusFilter, cityFilter, search, token]);
 
   useEffect(() => {
-    fetchPartnersRef.current = fetchPartners;
-  }, [fetchPartners]);
-
-  useEffect(() => {
     void fetchPartners();
   }, [fetchPartners]);
 
@@ -212,27 +152,11 @@ export default function AdminPartnersPage() {
           >
             View
           </Button>
-          {row.original.status === "ACTIVE" || row.original.status === "APPROVED" ? (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => openInactiveConfirm(row.original)}
-            >
-              Inactive
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              onClick={() => openActiveConfirm(row.original)}
-            >
-              Active
-            </Button>
-          )}
         </div>
       )
     }
     ],
-    [router, openActiveConfirm, openInactiveConfirm]
+    [router]
   );
 
   return (
@@ -321,34 +245,6 @@ export default function AdminPartnersPage() {
             onPageChange={(p) => setPage(p - 1)}
           />
         </SectionCard>
-
-        <ConfirmDialog
-          open={confirmOpen}
-          onOpenChange={(open) => {
-            setConfirmOpen(open);
-            if (!open) {
-              confirmSnapshotRef.current = null;
-              setConfirmPartner(null);
-              setConfirmType(null);
-            }
-          }}
-          onConfirm={handleStatusConfirm}
-          title={
-            confirmType === "ACTIVE"
-              ? "Activate partner?"
-              : "Set partner inactive?"
-          }
-          description={
-            confirmPartner
-              ? confirmType === "ACTIVE"
-                ? `Mark "${confirmPartner.name}" as active? This will immediately update the list.`
-                : `Mark "${confirmPartner.name}" as inactive? This will immediately update the list.`
-              : undefined
-          }
-          confirmLabel={confirmType === "ACTIVE" ? "Activate" : "Set inactive"}
-          cancelLabel="Cancel"
-          destructive={confirmType === "INACTIVE"}
-        />
       </PageContainer>
     </AppShell>
   );

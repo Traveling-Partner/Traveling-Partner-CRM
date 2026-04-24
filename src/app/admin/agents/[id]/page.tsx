@@ -22,6 +22,8 @@ interface AgentDetailResponse {
   name: string | null;
   status: string;
   cnicNumber?: string | null;
+  cnicFront?: string | null;
+  cnicBack?: string | null;
 }
 
 interface ApiEnvelope<T> {
@@ -35,6 +37,7 @@ export default function AdminAgentDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [agent, setAgent] = useState<AgentDetailResponse | null>(null);
+  const fallbackCnicImage = "/mock-images/id-document.svg";
 
   useEffect(() => {
     let active = true;
@@ -120,10 +123,6 @@ export default function AdminAgentDetailPage() {
                     <StatusBadge status={agent?.status || "PENDING"} />
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Commission rate</p>
-                  <p className="mt-0.5 font-heading font-medium">—</p>
-                </div>
               </div>
             )}
           </SectionCard>
@@ -141,12 +140,47 @@ export default function AdminAgentDetailPage() {
           </SectionCard>
         </div>
         <SectionCard
-          title="Commission trend"
-          description="Last 6 months"
+          title="CNIC documents"
+          description="Front and back CNIC images from agent profile."
           className="mt-4"
         >
-          <div className="h-64">
-            <EmptyState title="No commission data" description="Commission records will appear here." />
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                CNIC Front
+              </p>
+              <div className="h-56 overflow-hidden rounded-md border border-border/60 bg-background">
+                <img
+                  src={agent?.cnicFront || fallbackCnicImage}
+                  alt="CNIC Front"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = fallbackCnicImage;
+                  }}
+                />
+              </div>
+              <p className="mt-2 truncate text-xs text-muted-foreground">
+                {agent?.cnicFront || "—"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                CNIC Back
+              </p>
+              <div className="h-56 overflow-hidden rounded-md border border-border/60 bg-background">
+                <img
+                  src={agent?.cnicBack || fallbackCnicImage}
+                  alt="CNIC Back"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = fallbackCnicImage;
+                  }}
+                />
+              </div>
+              <p className="mt-2 truncate text-xs text-muted-foreground">
+                {agent?.cnicBack || "—"}
+              </p>
+            </div>
           </div>
         </SectionCard>
 
