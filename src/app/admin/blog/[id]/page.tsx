@@ -18,12 +18,20 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import { getBlogById, updateBlog } from "@/services/blog";
+import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
   type BlogEditorFormValues,
   buildBlogUpsertPayload,
   normalizeBlogStatusForForm
 } from "@/app/admin/blog/_blog-form-shared";
+
+interface UploadResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: string;
+}
 
 export default function AdminBlogEditPage() {
   const params = useParams<{ id: string }>();
@@ -37,6 +45,7 @@ export default function AdminBlogEditPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   const {
     register,
@@ -65,6 +74,7 @@ export default function AdminBlogEditPage() {
 
   const status = watch("status");
   const mainTitle = watch("mainTitle");
+  const coverImageValue = watch("coverImage");
 
   useEffect(() => {
     if (!Number.isFinite(idNum)) {
@@ -134,12 +144,38 @@ export default function AdminBlogEditPage() {
   const saveDraft = handleSubmit((vals) => void submitWithStatus(vals, "DRAFT"));
   const publish = handleSubmit((vals) => void submitWithStatus(vals, "PUBLISHED"));
 
-  const onImageChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const onImageChange: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const inputEl = event.currentTarget;
     const file = event.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setImagePreview(url);
-    setValue("coverImage", url);
+
+    setCoverUploading(true);
+    try {
+      const storageToken =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const accessToken = token ?? storageToken;
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(apiUrl("/documents/Carousel"), {
+        method: "POST",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: formData
+      });
+      const json: UploadResponse = await res.json();
+
+      if (!res.ok || !json.success || !json.data) {
+        throw new Error(json.message || "Cover upload failed.");
+      }
+
+      setValue("coverImage", json.data, { shouldValidate: true, shouldDirty: true });
+      setImagePreview(json.data);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to upload cover image.");
+    } finally {
+      setCoverUploading(false);
+      inputEl.value = "";
+    }
   };
 
   if (loading) {
@@ -202,7 +238,12 @@ export default function AdminBlogEditPage() {
                   required
                   error={errors.coverImage}
                 >
-                  <Input id="coverImage" placeholder="https://…" {...register("coverImage")} />
+                  <Input
+                    id="coverImage"
+                    placeholder="URL auto-generated after upload"
+                    readOnly
+                    {...register("coverImage")}
+                  />
                 </FormField>
                 <FormField
                   label="Description 1 (Short intro)"
@@ -295,10 +336,22 @@ export default function AdminBlogEditPage() {
 
             <SectionCard
               title="Cover image preview"
-              description="Upload a hero image or paste a public URL above."
+              description="Upload a hero image; uploaded CDN URL is auto-filled."
             >
               <div className="space-y-3">
-                <input type="file" accept="image/*" onChange={onImageChange} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onImageChange}
+                  disabled={coverUploading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {coverUploading
+                    ? "Uploading cover image..."
+                    : coverImageValue
+                      ? `Uploaded URL: ${coverImageValue}`
+                      : "No image uploaded yet."}
+                </p>
                 {imagePreview && (
                   <div className="overflow-hidden rounded-lg border border-border/60">
                     <img

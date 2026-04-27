@@ -18,11 +18,19 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import { createBlog } from "@/services/blog";
+import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
   type BlogEditorFormValues,
   buildBlogUpsertPayload
 } from "@/app/admin/blog/_blog-form-shared";
+
+interface UploadResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: string;
+}
 
 export default function AdminBlogCreatePage() {
   const router = useRouter();
@@ -33,6 +41,7 @@ export default function AdminBlogCreatePage() {
   const [description2, setDescription2] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("/mock-images/blog-cover.svg");
   const [submitting, setSubmitting] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   const {
     register,
@@ -59,6 +68,7 @@ export default function AdminBlogCreatePage() {
   });
 
   const status = watch("status");
+  const coverImageValue = watch("coverImage");
 
   const submitWithStatus = async (values: BlogEditorFormValues, nextStatus: "DRAFT" | "PUBLISHED") => {
     setSubmitting(true);
@@ -77,12 +87,38 @@ export default function AdminBlogCreatePage() {
   const saveDraft = handleSubmit((vals) => void submitWithStatus(vals, "DRAFT"));
   const publish = handleSubmit((vals) => void submitWithStatus(vals, "PUBLISHED"));
 
-  const onImageChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const onImageChange: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const inputEl = event.currentTarget;
     const file = event.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setImagePreview(url);
-    setValue("coverImage", url);
+
+    setCoverUploading(true);
+    try {
+      const storageToken =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const accessToken = token ?? storageToken;
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(apiUrl("/documents/Carousel"), {
+        method: "POST",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: formData
+      });
+      const json: UploadResponse = await res.json();
+
+      if (!res.ok || !json.success || !json.data) {
+        throw new Error(json.message || "Cover upload failed.");
+      }
+
+      setValue("coverImage", json.data, { shouldValidate: true, shouldDirty: true });
+      setImagePreview(json.data);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to upload cover image.");
+    } finally {
+      setCoverUploading(false);
+      inputEl.value = "";
+    }
   };
 
   return (
@@ -124,7 +160,8 @@ export default function AdminBlogCreatePage() {
                 >
                   <Input
                     id="coverImage"
-                    placeholder="https://…"
+                    placeholder="URL auto-generated after upload"
+                    readOnly
                     {...register("coverImage")}
                   />
                 </FormField>
@@ -257,10 +294,22 @@ export default function AdminBlogCreatePage() {
 
             <SectionCard
               title="Cover image preview"
-              description="Upload a hero image or paste a public URL above."
+              description="Upload a hero image; uploaded CDN URL is auto-filled."
             >
               <div className="space-y-3">
-                <input type="file" accept="image/*" onChange={onImageChange} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onImageChange}
+                  disabled={coverUploading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {coverUploading
+                    ? "Uploading cover image..."
+                    : coverImageValue
+                      ? `Uploaded URL: ${coverImageValue}`
+                      : "No image uploaded yet."}
+                </p>
                 {imagePreview && (
                   <div className="overflow-hidden rounded-lg border border-border/60">
                     <img

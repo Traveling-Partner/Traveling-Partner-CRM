@@ -83,6 +83,18 @@ interface DriverDocument {
   status: string;
 }
 
+interface DriverDocumentsResponse {
+  cnicStatus?: string | null;
+  licenseStatus?: string | null;
+  vehicleStatus?: string | null;
+  vehicleDocStatus?: string | null;
+  registrationStatus?: string | null;
+}
+
+interface ApiEnvelope<T> {
+  data?: T;
+}
+
 const fallbackImage = "/mock-images/document-fallback.svg";
 const fallbackByType: Record<string, string> = {
   DRIVER_LICENSE: "/mock-images/driver-license.svg",
@@ -95,6 +107,30 @@ function prettyDate(value?: string | null) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString();
+}
+
+function normalizeDocumentStatus(value: unknown): string {
+  if (typeof value !== "string") return "PENDING";
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return "PENDING";
+  if (normalized === "REJECT") return "REJECTED";
+  if (normalized === "VERIFIED") return "APPROVED";
+  return normalized;
+}
+
+function pickVehicleStatus(payload: Record<string, unknown>): unknown {
+  const keys = [
+    "vehicleDocStatus",
+    "vehicleStatus",
+    "registrationStatus",
+    "vehicleRegistrationStatus",
+    "registrationDocumentsStatus"
+  ] as const;
+  for (const key of keys) {
+    const value = payload[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") return value;
+  }
+  return null;
 }
 
 const statusPayloadMap: Record<DriverStatus, "ACTIVE" | "INACTIVE" | "BLOCKED"> = {
@@ -118,20 +154,53 @@ export default function AdminDriverDetailPage() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("driver-license");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
+  const [docStatuses, setDocStatuses] = useState<{
+    cnic: string;
+    license: string;
+    vehicle: string;
+  }>({
+    cnic: "PENDING",
+    license: "PENDING",
+    vehicle: "PENDING"
+  });
 
   useEffect(() => {
     let active = true;
     const loadDriver = async () => {
       setLoading(true);
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers/${params.id}`;
-        const response = await fetcher<DriverDetailResponse>(url, { token });
+        const driverUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers/${params.id}`;
+        const docUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/${params.id}`;
+        const [response, documentsResponse] = await Promise.all([
+          fetcher<DriverDetailResponse>(driverUrl, { token }),
+          fetcher<DriverDocumentsResponse | ApiEnvelope<DriverDocumentsResponse>>(docUrl, { token })
+        ]);
+        const documentsPayload =
+          documentsResponse &&
+          typeof documentsResponse === "object" &&
+          "data" in documentsResponse &&
+          documentsResponse.data
+            ? documentsResponse.data
+            : (documentsResponse as DriverDocumentsResponse);
+        const vehicleStatusRaw = pickVehicleStatus(
+          documentsPayload as unknown as Record<string, unknown>
+        );
         if (active) {
           setDriver(response);
+          setDocStatuses({
+            cnic: normalizeDocumentStatus(documentsPayload?.cnicStatus),
+            license: normalizeDocumentStatus(documentsPayload?.licenseStatus),
+            vehicle: normalizeDocumentStatus(vehicleStatusRaw)
+          });
         }
       } catch {
         if (active) {
           setDriver(null);
+          setDocStatuses({
+            cnic: "PENDING",
+            license: "PENDING",
+            vehicle: "PENDING"
+          });
         }
       } finally {
         if (active) {
@@ -157,7 +226,7 @@ export default function AdminDriverDetailPage() {
         fileName: "driver-license.jpg",
         frontUrl: driver.license?.licenseFront || fallbackByType.DRIVER_LICENSE,
         backUrl: driver.license?.licenseBack || fallbackByType.DRIVER_LICENSE,
-        status: driver.license?.licenseVerified ? "VERIFIED" : "PENDING"
+        status: docStatuses.license
       },
       {
         id: "vehicle-registration",
@@ -165,7 +234,7 @@ export default function AdminDriverDetailPage() {
         fileName: "vehicle-registration.jpg",
         frontUrl: driver.vehicle?.registrationFront || fallbackByType.VEHICLE_REGISTRATION,
         backUrl: driver.vehicle?.registrationBack || fallbackByType.VEHICLE_REGISTRATION,
-        status: driver.vehicle?.vehicleVerified ? "VERIFIED" : "PENDING"
+        status: docStatuses.vehicle
       },
       {
         id: "id-document",
@@ -173,10 +242,10 @@ export default function AdminDriverDetailPage() {
         fileName: "id-document.jpg",
         frontUrl: driver.basicInformation?.cnicFront || fallbackByType.ID_DOCUMENT,
         backUrl: driver.basicInformation?.cnicBack || fallbackByType.ID_DOCUMENT,
-        status: "PENDING"
+        status: docStatuses.cnic
       }
     ];
-  }, [driver]);
+  }, [driver, docStatuses]);
 
   useEffect(() => {
     if (documents.length > 0 && !documents.some((doc) => doc.id === selectedDocumentId)) {

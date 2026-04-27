@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -54,6 +54,8 @@ interface RideStatusCountResponse {
   canceled: number;
 }
 
+const DASHBOARD_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
 export default function AdminDashboardPage() {
   const token = useAppSelector((state) => state.auth.token);
   const [counts, setCounts] = useState<CountsResponse>({
@@ -78,69 +80,77 @@ export default function AdminDashboardPage() {
     { status: "COMPLETED", count: 0 }
   ]);
 
-  useEffect(() => {
-    let active = true;
-    const loadDashboard = async () => {
-      try {
-        const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes] = await Promise.all([
-          fetcher<CountsResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/counts`, { token }),
-          fetcher<DriverStatusCountsResponse>(
-            `${process.env.NEXT_PUBLIC_API_URL}/users/driver-status-counts`,
-            { token }
-          ),
-          fetcher<Last14DaysGraphResponse>(
-            `${process.env.NEXT_PUBLIC_API_URL}/users/graph/last-14-days`,
-            { token }
-          ),
-          fetcher<RideStatusCountResponse>(
-            `${process.env.NEXT_PUBLIC_API_URL}/users/ride-status-count`,
-            { token }
-          )
-        ]);
+  const loadDashboard = useCallback(async () => {
+    try {
+      const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes] = await Promise.all([
+        fetcher<CountsResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/counts`, { token }),
+        fetcher<DriverStatusCountsResponse>(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/driver-status-counts`,
+          { token }
+        ),
+        fetcher<Last14DaysGraphResponse>(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/graph/last-14-days`,
+          { token }
+        ),
+        fetcher<RideStatusCountResponse>(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/ride-status-count`,
+          { token }
+        )
+      ]);
 
-        if (!active) return;
-
-        setCounts(countsRes);
-        setDriverStatusCounts(driverStatusRes);
-        setRidesTrend(
-          (ridesTrendRes.dates ?? []).map((date, idx) => ({
-            day: format(parseISO(date), "MMM d"),
-            count: ridesTrendRes.counts?.[idx] ?? 0
-          }))
-        );
-        setRideStatusBreakdown([
-          { status: "ACCEPTED", count: rideStatusRes.accepted ?? 0 },
-          { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
-          { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
-        ]);
-      } catch {
-        if (!active) return;
-        setCounts({
-          totalDrivers: 0,
-          totalPartners: 0,
-          totalSalesAgents: 0,
-          totalRidePlans: 0
-        });
-        setDriverStatusCounts({
-          active: 0,
-          inactive: 0,
-          blocked: 0,
-          pending: 0,
-          approved: 0
-        });
-        setRidesTrend([]);
-        setRideStatusBreakdown([
-          { status: "ACCEPTED", count: 0 },
-          { status: "CANCELED", count: 0 },
-          { status: "COMPLETED", count: 0 }
-        ]);
-      }
-    };
-    void loadDashboard();
-    return () => {
-      active = false;
-    };
+      setCounts(countsRes);
+      setDriverStatusCounts(driverStatusRes);
+      setRidesTrend(
+        (ridesTrendRes.dates ?? []).map((date, idx) => ({
+          day: format(parseISO(date), "MMM d"),
+          count: ridesTrendRes.counts?.[idx] ?? 0
+        }))
+      );
+      setRideStatusBreakdown([
+        { status: "ACCEPTED", count: rideStatusRes.accepted ?? 0 },
+        { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
+        { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
+      ]);
+    } catch {
+      setCounts({
+        totalDrivers: 0,
+        totalPartners: 0,
+        totalSalesAgents: 0,
+        totalRidePlans: 0
+      });
+      setDriverStatusCounts({
+        active: 0,
+        inactive: 0,
+        blocked: 0,
+        pending: 0,
+        approved: 0
+      });
+      setRidesTrend([]);
+      setRideStatusBreakdown([
+        { status: "ACCEPTED", count: 0 },
+        { status: "CANCELED", count: 0 },
+        { status: "COMPLETED", count: 0 }
+      ]);
+    }
   }, [token]);
+
+  useEffect(() => {
+    let mounted = true;
+    const runRefresh = async () => {
+      if (!mounted) return;
+      await loadDashboard();
+    };
+
+    void runRefresh();
+    const intervalId = window.setInterval(() => {
+      void runRefresh();
+    }, DASHBOARD_REFRESH_INTERVAL_MS);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [loadDashboard]);
 
   const statusRows = useMemo(
     () => [

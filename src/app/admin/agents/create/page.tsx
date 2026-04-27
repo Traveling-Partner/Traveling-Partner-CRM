@@ -180,6 +180,7 @@ export default function AdminCreateAgentPage() {
                     className="hidden"
                     disabled={frontUploading}
                     onChange={async (e) => {
+                      const inputEl = e.currentTarget;
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setFrontUploading(true);
@@ -190,7 +191,7 @@ export default function AdminCreateAgentPage() {
                         error(err instanceof Error ? err.message : "Failed to upload CNIC front.");
                       } finally {
                         setFrontUploading(false);
-                        e.currentTarget.value = "";
+                        inputEl.value = "";
                       }
                     }}
                   />
@@ -214,6 +215,7 @@ export default function AdminCreateAgentPage() {
                     className="hidden"
                     disabled={backUploading}
                     onChange={async (e) => {
+                      const inputEl = e.currentTarget;
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setBackUploading(true);
@@ -224,7 +226,7 @@ export default function AdminCreateAgentPage() {
                         error(err instanceof Error ? err.message : "Failed to upload CNIC back.");
                       } finally {
                         setBackUploading(false);
-                        e.currentTarget.value = "";
+                        inputEl.value = "";
                       }
                     }}
                   />
