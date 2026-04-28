@@ -14,10 +14,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/common/FormField";
 import { BlogRichEditor } from "@/components/blog/BlogRichEditor";
-import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
-import { getBlogById, updateBlog } from "@/services/blog";
+import {
+  getBlogById,
+  updateBlog,
+  getAllBlogCategories,
+  type BlogCategory
+} from "@/services/blog";
 import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
@@ -46,6 +57,7 @@ export default function AdminBlogEditPage() {
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
 
   const {
     register,
@@ -72,9 +84,23 @@ export default function AdminBlogEditPage() {
     }
   });
 
-  const status = watch("status");
   const mainTitle = watch("mainTitle");
-  const coverImageValue = watch("coverImage");
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCategories = async () => {
+      try {
+        const list = await getAllBlogCategories(token);
+        if (!cancelled) setCategories(list);
+      } catch {
+        if (!cancelled) setCategories([]);
+      }
+    };
+    void loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   useEffect(() => {
     if (!Number.isFinite(idNum)) {
@@ -224,6 +250,7 @@ export default function AdminBlogEditPage() {
               description="Edit the article body and metadata."
             >
               <div className="space-y-4">
+                <input type="hidden" {...register("coverImage")} />
                 <FormField
                   label="Main Title"
                   htmlFor="mainTitle"
@@ -233,22 +260,8 @@ export default function AdminBlogEditPage() {
                   <Input id="mainTitle" placeholder="Post title" {...register("mainTitle")} />
                 </FormField>
                 <FormField
-                  label="Cover Image URL"
-                  htmlFor="coverImage"
-                  required
-                  error={errors.coverImage}
-                >
-                  <Input
-                    id="coverImage"
-                    placeholder="URL auto-generated after upload"
-                    readOnly
-                    {...register("coverImage")}
-                  />
-                </FormField>
-                <FormField
                   label="Description 1 (Short intro)"
                   htmlFor="description1"
-                  required
                   error={errors.description1}
                   description="Short summary shown in the blog list."
                 >
@@ -256,12 +269,27 @@ export default function AdminBlogEditPage() {
                 </FormField>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
-                    label="Category ID"
-                    htmlFor="categoryId"
+                    label="Category"
                     required
                     error={errors.categoryId}
                   >
-                    <Input id="categoryId" type="number" min={1} {...register("categoryId")} />
+                    <Select
+                      value={String(watch("categoryId"))}
+                      onValueChange={(value) =>
+                        setValue("categoryId", Number(value), { shouldValidate: true })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={String(category.id)}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormField>
                   <FormField label="Author" htmlFor="author" required error={errors.author}>
                     <Input id="author" {...register("author")} />
@@ -285,7 +313,6 @@ export default function AdminBlogEditPage() {
                 <FormField
                   label="Description 2 (Detailed content)"
                   htmlFor="description2"
-                  required
                   error={errors.description2}
                 >
                   <BlogRichEditor
@@ -302,41 +329,9 @@ export default function AdminBlogEditPage() {
           </div>
 
           <div className="space-y-4">
-            <SectionCard title="Meta & publishing" description="SEO and visibility.">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Publish
-                    </p>
-                    <p className="text-[0.7rem] text-muted-foreground">
-                      Toggle to mark as published (same as Publish button).
-                    </p>
-                  </div>
-                  <Switch
-                    checked={status === "PUBLISHED"}
-                    onCheckedChange={(checked) =>
-                      setValue("status", checked ? "PUBLISHED" : "DRAFT")
-                    }
-                  />
-                </div>
-
-                <FormField label="SEO title" htmlFor="seoTitle" error={errors.seoTitle}>
-                  <Input id="seoTitle" {...register("seoTitle")} />
-                </FormField>
-                <FormField
-                  label="SEO description"
-                  htmlFor="seoDescription"
-                  error={errors.seoDescription}
-                >
-                  <Textarea id="seoDescription" rows={2} {...register("seoDescription")} />
-                </FormField>
-              </div>
-            </SectionCard>
-
             <SectionCard
               title="Cover image preview"
-              description="Upload a hero image; uploaded CDN URL is auto-filled."
+              description="Upload a hero image."
             >
               <div className="space-y-3">
                 <input
@@ -345,13 +340,9 @@ export default function AdminBlogEditPage() {
                   onChange={onImageChange}
                   disabled={coverUploading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {coverUploading
-                    ? "Uploading cover image..."
-                    : coverImageValue
-                      ? `Uploaded URL: ${coverImageValue}`
-                      : "No image uploaded yet."}
-                </p>
+                {coverUploading ? (
+                  <p className="text-xs text-muted-foreground">Uploading cover image...</p>
+                ) : null}
                 {imagePreview && (
                   <div className="overflow-hidden rounded-lg border border-border/60">
                     <img

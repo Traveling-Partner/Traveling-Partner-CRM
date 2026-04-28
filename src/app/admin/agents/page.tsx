@@ -35,7 +35,7 @@ interface AgentsResponse {
   totalElements: number;
 }
 
-const PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 6;
 
 export default function AdminAgentsPage() {
   const router = useRouter();
@@ -43,6 +43,7 @@ export default function AdminAgentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [agentRows, setAgentRows] = useState<AgentRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
@@ -53,7 +54,7 @@ export default function AdminAgentsPage() {
     try {
       const statusParam = statusFilter === "all" ? "" : statusFilter;
       const searchParam = search.trim();
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents?page=${page}&size=${PAGE_SIZE}&search=${encodeURIComponent(searchParam)}&status=${encodeURIComponent(statusParam)}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents?page=${page}&size=${pageSize}&search=${encodeURIComponent(searchParam)}&status=${encodeURIComponent(statusParam)}`;
 
       const res = await fetcher<AgentsResponse>(url, { token });
       setAgentRows(res.content ?? []);
@@ -66,7 +67,7 @@ export default function AdminAgentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, token]);
+  }, [page, pageSize, search, statusFilter, token]);
 
   useEffect(() => {
     void fetchAgents();
@@ -139,25 +140,44 @@ export default function AdminAgentsPage() {
               }}
               className="max-w-xs"
             />
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setPage(0);
-              }}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-                <SelectItem value="BLOCKED">Blocked</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value);
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="BLOCKED">Blocked</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Page size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6 / page</SelectItem>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="20">20 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           {loading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
@@ -166,8 +186,8 @@ export default function AdminAgentsPage() {
           )}
           <div className="mt-3 text-xs text-muted-foreground">
             <span>
-              Showing {totalElements ? page * PAGE_SIZE + 1 : 0} –{" "}
-              {Math.min((page + 1) * PAGE_SIZE, totalElements)} of {totalElements}
+              Showing {totalElements ? page * pageSize + 1 : 0} –{" "}
+              {Math.min((page + 1) * pageSize, totalElements)} of {totalElements}
             </span>
           </div>
           <PaginationControls

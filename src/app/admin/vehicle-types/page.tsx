@@ -176,13 +176,7 @@ type ModelForm = z.infer<typeof modelSchema>;
 type ColorForm = z.infer<typeof colorSchema>;
 type BrandForm = z.infer<typeof brandSchema>;
 
-const VEHICLE_TYPE_PAGE_SIZE = 6;
-
-const MODEL_PAGE_SIZE = 6;
-
-const COLOR_PAGE_SIZE = 6;
-
-const BRAND_PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 6;
 
 export default function VehicleTypesPage() {
   const { success, error } = useToast();
@@ -212,6 +206,10 @@ export default function VehicleTypesPage() {
   const [modelPage, setModelPage] = useState(1);
   const [colorPage, setColorPage] = useState(1);
   const [brandPage, setBrandPage] = useState(1);
+  const [typePageSize, setTypePageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [modelPageSize, setModelPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [colorPageSize, setColorPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [brandPageSize, setBrandPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const [editingTypeId, setEditingTypeId] = useState<number | string | null>(null);
   const [editingModelId, setEditingModelId] = useState<number | string | null>(null);
@@ -249,7 +247,7 @@ export default function VehicleTypesPage() {
     try {
       const apiPage = page - 1;
       const res = await fetcher<VehicleTypesApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/getAll?page=${apiPage}&size=${VEHICLE_TYPE_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/getAll?page=${apiPage}&size=${typePageSize}&search=${encodeURIComponent(search)}`,
         { token }
       );
       setVehicleTypes(res.data.content);
@@ -265,14 +263,14 @@ export default function VehicleTypesPage() {
     if (token) {
       fetchVehicleTypes(typePage, typeSearch);
     }
-  }, [token, typePage, typeSearch]);
+  }, [token, typePage, typeSearch, typePageSize]);
 
   const fetchVehicleModels = async (page: number, search: string) => {
     setModelLoading(true);
     try {
       const apiPage = page - 1;
       const res = await fetcher<VehicleModelsApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/getAll?page=${apiPage}&size=${MODEL_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/getAll?page=${apiPage}&size=${modelPageSize}&search=${encodeURIComponent(search)}`,
         { token }
       );
       setVehicleModels(res.data.content);
@@ -288,14 +286,14 @@ export default function VehicleTypesPage() {
     if (token) {
       fetchVehicleModels(modelPage, modelSearch);
     }
-  }, [token, modelPage, modelSearch]);
+  }, [token, modelPage, modelSearch, modelPageSize]);
 
   const fetchVehicleColors = async (page: number, search: string) => {
     setColorLoading(true);
     try {
       const apiPage = page - 1;
       const res = await fetcher<VehicleColorsApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/colors/getAll?page=${apiPage}&size=${COLOR_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/colors/getAll?page=${apiPage}&size=${colorPageSize}&search=${encodeURIComponent(search)}`,
         { token }
       );
       setVehicleColors(res.data.content);
@@ -311,14 +309,14 @@ export default function VehicleTypesPage() {
     if (token) {
       fetchVehicleColors(colorPage, colorSearch);
     }
-  }, [token, colorPage, colorSearch]);
+  }, [token, colorPage, colorSearch, colorPageSize]);
 
   const fetchVehicleBrands = async (page: number, search: string) => {
     setBrandLoading(true);
     try {
       const apiPage = page - 1;
       const res = await fetcher<VehicleBrandsApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/brands/getAll?page=${apiPage}&size=${BRAND_PAGE_SIZE}&search=${encodeURIComponent(search)}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/brands/getAll?page=${apiPage}&size=${brandPageSize}&search=${encodeURIComponent(search)}`,
         { token }
       );
       setVehicleBrands(res.data.content);
@@ -334,7 +332,7 @@ export default function VehicleTypesPage() {
     if (token) {
       fetchVehicleBrands(brandPage, brandSearch);
     }
-  }, [token, brandPage, brandSearch]);
+  }, [token, brandPage, brandSearch, brandPageSize]);
 
   const openAddType = () => {
     setEditingTypeId(null);
@@ -629,22 +627,41 @@ export default function VehicleTypesPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-5 pt-5">
-                <div className="relative max-w-sm">
-                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={typeSearch}
-                    onChange={(event) => {
-                      setTypeSearch(event.target.value);
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative max-w-sm">
+                    <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={typeSearch}
+                      onChange={(event) => {
+                        setTypeSearch(event.target.value);
+                        setTypePage(1);
+                      }}
+                      placeholder="Search vehicle type..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select
+                    value={String(typePageSize)}
+                    onValueChange={(value) => {
+                      setTypePageSize(Number(value));
                       setTypePage(1);
                     }}
-                    placeholder="Search vehicle type..."
-                    className="pl-9"
-                  />
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {typeLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {Array.from({ length: VEHICLE_TYPE_PAGE_SIZE }).map((_, index) => (
+                    {Array.from({ length: typePageSize }).map((_, index) => (
                       <div key={`type-skeleton-${index}`} className="rounded-xl border border-border/70 p-4">
                         <Skeleton className="h-5 w-2/3" />
                         <Skeleton className="mt-2 h-4 w-1/3" />
@@ -705,17 +722,36 @@ export default function VehicleTypesPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                <div className="relative max-w-sm">
-                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={modelSearch}
-                    onChange={(event) => {
-                      setModelSearch(event.target.value);
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative max-w-sm">
+                    <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={modelSearch}
+                      onChange={(event) => {
+                        setModelSearch(event.target.value);
+                        setModelPage(1);
+                      }}
+                      placeholder="Search model..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select
+                    value={String(modelPageSize)}
+                    onValueChange={(value) => {
+                      setModelPageSize(Number(value));
                       setModelPage(1);
                     }}
-                    placeholder="Search model..."
-                    className="pl-9"
-                  />
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <ManagementTable
                   isLoading={modelLoading}
@@ -773,14 +809,33 @@ export default function VehicleTypesPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                <div className="relative max-w-sm">
-                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={colorSearch}
-                    onChange={(event) => { setColorSearch(event.target.value); setColorPage(1); }}
-                    placeholder="Search color..."
-                    className="pl-9"
-                  />
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative max-w-sm">
+                    <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={colorSearch}
+                      onChange={(event) => { setColorSearch(event.target.value); setColorPage(1); }}
+                      placeholder="Search color..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select
+                    value={String(colorPageSize)}
+                    onValueChange={(value) => {
+                      setColorPageSize(Number(value));
+                      setColorPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <ManagementTable
                   isLoading={colorLoading}
@@ -846,14 +901,33 @@ export default function VehicleTypesPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                <div className="relative max-w-sm">
-                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={brandSearch}
-                    onChange={(event) => { setBrandSearch(event.target.value); setBrandPage(1); }}
-                    placeholder="Search brand..."
-                    className="pl-9"
-                  />
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative max-w-sm">
+                    <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={brandSearch}
+                      onChange={(event) => { setBrandSearch(event.target.value); setBrandPage(1); }}
+                      placeholder="Search brand..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select
+                    value={String(brandPageSize)}
+                    onValueChange={(value) => {
+                      setBrandPageSize(Number(value));
+                      setBrandPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <ManagementTable
                   isLoading={brandLoading}

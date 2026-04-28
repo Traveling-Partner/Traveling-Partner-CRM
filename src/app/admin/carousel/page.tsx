@@ -9,6 +9,13 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { EmptyState } from "@/components/common/EmptyState";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -21,7 +28,7 @@ import {
   type BannerRecord
 } from "@/services/carousel";
 
-const PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 6;
 
 type BannerStatus = "Published" | "Draft";
 
@@ -35,6 +42,7 @@ export default function AdminCarouselListPage() {
 
   const [rows, setRows] = useState<BannerRow[]>([]);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -66,10 +74,10 @@ export default function AdminCarouselListPage() {
     void fetchRows();
   }, [fetchRows]);
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageRows = useMemo(
-    () => rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
-    [rows, page]
+    () => rows.slice(page * pageSize, page * pageSize + pageSize),
+    [rows, page, pageSize]
   );
 
   const openDelete = useCallback((row: BannerRow) => {
@@ -165,6 +173,25 @@ export default function AdminCarouselListPage() {
             </Button>
           }
         >
+          <div className="mb-3 flex justify-end">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6">6 / page</SelectItem>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {loading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Loading banners...</div>
           ) : pageRows.length === 0 ? (
@@ -181,8 +208,8 @@ export default function AdminCarouselListPage() {
           )}
 
           <div className="mt-3 text-xs text-muted-foreground">
-            Showing {rows.length ? page * PAGE_SIZE + 1 : 0} -{" "}
-            {Math.min((page + 1) * PAGE_SIZE, rows.length)} of {rows.length}
+            Showing {rows.length ? page * pageSize + 1 : 0} -{" "}
+            {Math.min((page + 1) * pageSize, rows.length)} of {rows.length}
           </div>
           <PaginationControls
             currentPage={Math.min(page + 1, totalPages)}
