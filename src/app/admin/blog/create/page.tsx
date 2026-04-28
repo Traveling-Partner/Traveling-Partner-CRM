@@ -38,6 +38,24 @@ interface UploadResponse {
   data: string;
 }
 
+function formatTimeAgo(fromDate: Date, now: Date): string {
+  const diffMs = Math.max(0, now.getTime() - fromDate.getTime());
+  const minutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  if (weeks < 5) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
 export default function AdminBlogCreatePage() {
   const router = useRouter();
   const token = useAppSelector((state) => state.auth.token);
@@ -49,6 +67,7 @@ export default function AdminBlogCreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [liveTimeText, setLiveTimeText] = useState("just now");
 
   const {
     register,
@@ -89,6 +108,28 @@ export default function AdminBlogCreatePage() {
       cancelled = true;
     };
   }, [token]);
+
+  useEffect(() => {
+    setValue("author", authUser?.name || "Admin", { shouldValidate: true });
+  }, [authUser?.name, setValue]);
+
+  const selectedDate = watch("date");
+
+  useEffect(() => {
+    const updateLiveTime = () => {
+      const baseDate = selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date();
+      const now = new Date();
+      const relativeText = formatTimeAgo(baseDate, now);
+      setLiveTimeText(relativeText);
+      setValue("readTime", relativeText, {
+        shouldValidate: true
+      });
+    };
+
+    updateLiveTime();
+    const intervalId = window.setInterval(updateLiveTime, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, [selectedDate, setValue]);
 
   const submitWithStatus = async (values: BlogEditorFormValues, nextStatus: "DRAFT" | "PUBLISHED") => {
     setSubmitting(true);
@@ -161,6 +202,8 @@ export default function AdminBlogCreatePage() {
             >
               <div className="space-y-4">
                 <input type="hidden" {...register("coverImage")} />
+                <input type="hidden" {...register("author")} />
+                <input type="hidden" {...register("readTime")} />
                 <FormField
                   label="Main Title"
                   htmlFor="mainTitle"
@@ -209,17 +252,8 @@ export default function AdminBlogCreatePage() {
                       </SelectContent>
                     </Select>
                   </FormField>
-                  <FormField
-                    label="Author"
-                    htmlFor="author"
-                    required
-                    error={errors.author}
-                  >
-                    <Input
-                      id="author"
-                      placeholder="Admin"
-                      {...register("author")}
-                    />
+                  <FormField label="Post time">
+                    <Input value={liveTimeText} readOnly />
                   </FormField>
                 </div>
                 <FormField
@@ -230,19 +264,6 @@ export default function AdminBlogCreatePage() {
                   <Input id="tagsText" placeholder="travel, adventure, guide" {...register("tagsText")} />
                 </FormField>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    label="Read time"
-                    htmlFor="readTime"
-                    required
-                    error={errors.readTime}
-                    description='Example: "5 min"'
-                  >
-                    <Input
-                      id="readTime"
-                      placeholder="5 min"
-                      {...register("readTime")}
-                    />
-                  </FormField>
                   <FormField label="Date" htmlFor="date">
                     <Input id="date" type="date" {...register("date")} />
                   </FormField>

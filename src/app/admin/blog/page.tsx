@@ -260,7 +260,7 @@ export default function AdminBlogPage() {
       },
       {
         accessorKey: "readTime",
-        header: "Read Time",
+        header: "Post Time",
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">
             {row.original.readTime?.trim() || "—"}
