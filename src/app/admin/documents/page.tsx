@@ -80,7 +80,7 @@ interface DocumentStatusPayload {
   rejectionReason?: string;
 }
 
-const PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 6;
 const fallbackImage = "/mock-images/document-fallback.svg";
 const fallbackByType = {
   DRIVER_LICENSE: "/mock-images/driver-license.svg",
@@ -173,6 +173,7 @@ export default function DocumentsQueuePage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
   const [documentStatusByDriverId, setDocumentStatusByDriverId] = useState<Record<number, ApiDocStatus>>({});
@@ -223,7 +224,7 @@ export default function DocumentsQueuePage() {
   const loadDrivers = useCallback(async () => {
     setLoading(true);
     try {
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${PAGE_SIZE}`;
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${pageSize}`;
       if (statusFilter !== "all") url += `&status=${statusFilter}`;
       if (cityFilter !== "all") url += `&city=${encodeURIComponent(cityFilter)}`;
       if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
@@ -260,7 +261,7 @@ export default function DocumentsQueuePage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, statusFilter, cityFilter, search]);
+  }, [token, page, pageSize, statusFilter, cityFilter, search]);
 
   useEffect(() => {
     void loadDrivers();
@@ -592,6 +593,23 @@ export default function DocumentsQueuePage() {
                     <SelectItem value="BLOCKED">Blocked</SelectItem>
                     <SelectItem value="PENDING">Pending</SelectItem>
                     <SelectItem value="APPROVED">Approved</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setPage(0);
+                  }}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Page size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="6">6 / page</SelectItem>
+                    <SelectItem value="10">10 / page</SelectItem>
+                    <SelectItem value="20">20 / page</SelectItem>
+                    <SelectItem value="50">50 / page</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

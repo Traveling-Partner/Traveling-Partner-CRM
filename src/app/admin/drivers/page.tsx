@@ -33,7 +33,7 @@ interface DriversApiResponse {
   number: number;
 }
 
-const PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 6;
 
 export default function AdminDriversPage() {
   const router = useRouter();
@@ -43,6 +43,7 @@ export default function AdminDriversPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -81,7 +82,7 @@ export default function AdminDriversPage() {
   const fetchDrivers = useCallback(async () => {
     setLoading(true);
     try {
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${PAGE_SIZE}`;
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${pageSize}`;
       if (statusFilter !== "all") url += `&status=${statusFilter}`;
       if (cityFilter !== "all") url += `&city=${encodeURIComponent(cityFilter)}`;
       if (debouncedSearch.trim()) url += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
@@ -94,7 +95,7 @@ export default function AdminDriversPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, cityFilter, debouncedSearch, token]);
+  }, [page, pageSize, statusFilter, cityFilter, debouncedSearch, token]);
 
   useEffect(() => {
     fetchDrivers();
@@ -206,6 +207,23 @@ export default function AdminDriversPage() {
                       {city}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => {
+                  setPage(0);
+                  setPageSize(Number(v));
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Page size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6 / page</SelectItem>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="20">20 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
                 </SelectContent>
               </Select>
             </div>

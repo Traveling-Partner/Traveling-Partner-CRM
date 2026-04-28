@@ -32,7 +32,7 @@ interface PartnerRow {
   createdAt?: string | null;
 }
 
-const PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 6;
 
 interface PartnersResponse {
   content: PartnerRow[];
@@ -47,6 +47,7 @@ export default function AdminPartnersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
@@ -88,7 +89,7 @@ export default function AdminPartnersPage() {
       const cityParam = cityFilter === "all" ? "" : cityFilter;
       const searchParam = search.trim();
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=${page}&size=${PAGE_SIZE}&status=${encodeURIComponent(
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=${page}&size=${pageSize}&status=${encodeURIComponent(
         statusParam
       )}&city=${encodeURIComponent(cityParam)}&search=${encodeURIComponent(searchParam)}`;
 
@@ -103,7 +104,7 @@ export default function AdminPartnersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, cityFilter, search, token]);
+  }, [page, pageSize, statusFilter, cityFilter, search, token]);
 
   useEffect(() => {
     void fetchPartners();
@@ -216,6 +217,23 @@ export default function AdminPartnersPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Page size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6 / page</SelectItem>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="20">20 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -229,11 +247,11 @@ export default function AdminPartnersPage() {
             <span>
               Showing{" "}
               <span className="font-medium">
-                {totalElements ? page * PAGE_SIZE + 1 : 0}
+                {totalElements ? page * pageSize + 1 : 0}
               </span>{" "}
               –{" "}
               <span className="font-medium">
-                {Math.min((page + 1) * PAGE_SIZE, totalElements)}
+                {Math.min((page + 1) * pageSize, totalElements)}
               </span>{" "}
               of <span className="font-medium">{totalElements}</span> partners
             </span>
