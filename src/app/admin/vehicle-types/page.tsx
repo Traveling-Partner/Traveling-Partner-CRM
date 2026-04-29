@@ -63,7 +63,6 @@ interface VehicleTypesApiResponse {
 interface VehicleModel {
   id: number | string;
   name: string;
-  vehicleTypeId: number | null;
   status: string | null;
   image: string | null;
 }
@@ -86,8 +85,6 @@ interface VehicleModelsApiResponse {
 interface VehicleColor {
   id: number | string;
   name: string;
-  vehicleTypeId: number | null;
-  modelNumberId: number | null;
   status: string | null;
   image: string | null;
 }
@@ -111,8 +108,6 @@ interface VehicleBrand {
   id: number | string;
   name: string;
   vehicleTypeId: number | null;
-  modelNumberId: number | null;
-  colorId: number | null;
   status: string | null;
   image: string | null;
 }
@@ -149,15 +144,12 @@ const vehicleTypeSchema = z.object({
 
 const modelSchema = z.object({
   name: z.string().trim().min(1, "Model name is required."),
-  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
   status: z.enum(STATUS_OPTIONS),
   image: z.string().trim().min(1, "Image is required.")
 });
 
 const colorSchema = z.object({
   name: z.string().trim().min(1, "Color name is required."),
-  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
-  modelNumberId: z.coerce.number().min(1, "Model number is required."),
   status: z.enum(STATUS_OPTIONS),
   image: z.string().trim().min(1, "Image is required.")
 });
@@ -165,8 +157,6 @@ const colorSchema = z.object({
 const brandSchema = z.object({
   name: z.string().trim().min(1, "Brand name is required."),
   vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
-  modelNumberId: z.coerce.number().min(1, "Model number is required."),
-  colorId: z.coerce.number().min(1, "Color is required."),
   status: z.enum(STATUS_OPTIONS),
   image: z.string().trim().min(1, "Image is required.")
 });
@@ -229,17 +219,17 @@ export default function VehicleTypesPage() {
 
   const modelForm = useForm<ModelForm>({
     resolver: zodResolver(modelSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, status: "PENDING", image: "" }
+    defaultValues: { name: "", status: "PENDING", image: "" }
   });
 
   const colorForm = useForm<ColorForm>({
     resolver: zodResolver(colorSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0, status: "PENDING", image: "" }
+    defaultValues: { name: "", status: "PENDING", image: "" }
   });
 
   const brandForm = useForm<BrandForm>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0, status: "PENDING", image: "" }
+    defaultValues: { name: "", vehicleTypeId: 0, status: "PENDING", image: "" }
   });
 
   const fetchVehicleTypes = async (page: number, search: string) => {
@@ -348,19 +338,23 @@ export default function VehicleTypesPage() {
 
   const openAddModel = () => {
     setEditingModelId(null);
-    modelForm.reset({ name: "", vehicleTypeId: 0, status: "PENDING", image: "" });
+    modelForm.reset({ name: "", status: "PENDING", image: "" });
     setShowModelModal(true);
   };
 
   const openEditModel = (model: VehicleModel) => {
     setEditingModelId(model.id);
-    modelForm.reset({ name: model.name, vehicleTypeId: Number(model.vehicleTypeId) || 0, status: (model.status as ModelForm["status"]) ?? "PENDING", image: model.image ?? "" });
+    modelForm.reset({
+      name: model.name,
+      status: (model.status as ModelForm["status"]) ?? "PENDING",
+      image: model.image ?? ""
+    });
     setShowModelModal(true);
   };
 
   const openAddColor = () => {
     setEditingColorId(null);
-    colorForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0, status: "PENDING", image: "" });
+    colorForm.reset({ name: "", status: "PENDING", image: "" });
     setShowColorModal(true);
   };
 
@@ -368,8 +362,6 @@ export default function VehicleTypesPage() {
     setEditingColorId(color.id);
     colorForm.reset({
       name: color.name,
-      vehicleTypeId: color.vehicleTypeId ?? 0,
-      modelNumberId: color.modelNumberId ?? 0,
       status: (color.status as ColorForm["status"]) ?? "PENDING",
       image: color.image ?? ""
     });
@@ -378,7 +370,7 @@ export default function VehicleTypesPage() {
 
   const openAddBrand = () => {
     setEditingBrandId(null);
-    brandForm.reset({ name: "", vehicleTypeId: 0, modelNumberId: 0, colorId: 0, status: "PENDING", image: "" });
+    brandForm.reset({ name: "", vehicleTypeId: 0, status: "PENDING", image: "" });
     setShowBrandModal(true);
   };
 
@@ -387,8 +379,6 @@ export default function VehicleTypesPage() {
     brandForm.reset({
       name: brand.name,
       vehicleTypeId: brand.vehicleTypeId ?? 0,
-      modelNumberId: brand.modelNumberId ?? 0,
-      colorId: brand.colorId ?? 0,
       status: (brand.status as BrandForm["status"]) ?? "PENDING",
       image: brand.image ?? ""
     });
@@ -428,7 +418,7 @@ export default function VehicleTypesPage() {
   const submitModel = async (values: ModelForm) => {
     setModelSubmitting(true);
     try {
-      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId, status: values.status, image: values.image };
+      const payload = { name: values.name, status: values.status, image: values.image };
       if (editingModelId) {
         await fetcher(
           `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/update/${editingModelId}`,
@@ -456,7 +446,7 @@ export default function VehicleTypesPage() {
   const submitColor = async (values: ColorForm) => {
     setColorSubmitting(true);
     try {
-      const payload = { name: values.name, vehicleTypeId: values.vehicleTypeId, modelNumberId: values.modelNumberId, status: values.status, image: values.image };
+      const payload = { name: values.name, status: values.status, image: values.image };
       if (editingColorId) {
         await fetcher(
           `${process.env.NEXT_PUBLIC_API_URL}/colors/update/${editingColorId}`,
@@ -487,8 +477,6 @@ export default function VehicleTypesPage() {
       const payload = {
         name: values.name,
         vehicleTypeId: values.vehicleTypeId,
-        modelNumberId: values.modelNumberId,
-        colorId: values.colorId,
         status: values.status,
         image: values.image
       };
@@ -766,14 +754,6 @@ export default function VehicleTypesPage() {
                     },
                     { key: "name", header: "Name", render: (item: VehicleModel) => <span className="font-medium">{item.name}</span> },
                     {
-                      key: "vehicleType",
-                      header: "Vehicle Type",
-                      render: (item: VehicleModel) => {
-                        const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
-                        return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
-                      }
-                    },
-                    {
                       key: "status",
                       header: "Status",
                       render: (item: VehicleModel) => <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">{item.status ?? "—"}</span>
@@ -850,22 +830,6 @@ export default function VehicleTypesPage() {
                     },
                     { key: "name", header: "Name", render: (item: VehicleColor) => <span className="font-medium">{item.name}</span> },
                     {
-                      key: "vehicleType",
-                      header: "Vehicle Type",
-                      render: (item: VehicleColor) => {
-                        const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
-                        return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
-                      }
-                    },
-                    {
-                      key: "modelNumber",
-                      header: "Model Number",
-                      render: (item: VehicleColor) => {
-                        const modelName = vehicleModels.find((m) => Number(m.id) === Number(item.modelNumberId))?.name;
-                        return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
-                      }
-                    },
-                    {
                       key: "status",
                       header: "Status",
                       render: (item: VehicleColor) => <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">{item.status ?? "—"}</span>
@@ -893,7 +857,7 @@ export default function VehicleTypesPage() {
               <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-lg font-heading">Vehicle Brands</CardTitle>
-                  <p className="text-sm text-muted-foreground">Manage vehicle brands mapped to types, models, and colors.</p>
+                  <p className="text-sm text-muted-foreground">Manage vehicle brands mapped to vehicle types.</p>
                 </div>
                 <Button onClick={openAddBrand}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -947,22 +911,6 @@ export default function VehicleTypesPage() {
                       render: (item: VehicleBrand) => {
                         const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
                         return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
-                      }
-                    },
-                    {
-                      key: "modelNumber",
-                      header: "Model Number",
-                      render: (item: VehicleBrand) => {
-                        const modelName = vehicleModels.find((m) => Number(m.id) === Number(item.modelNumberId))?.name;
-                        return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
-                      }
-                    },
-                    {
-                      key: "color",
-                      header: "Color",
-                      render: (item: VehicleBrand) => {
-                        const colorName = vehicleColors.find((c) => Number(c.id) === Number(item.colorId))?.name;
-                        return <span className="text-xs text-muted-foreground">{colorName ?? "—"}</span>;
                       }
                     },
                     {
@@ -1040,22 +988,6 @@ export default function VehicleTypesPage() {
         <FormField label="Model Name" required error={modelForm.formState.errors.name}>
           <Input placeholder="e.g., Corolla 2022" {...modelForm.register("name")} />
         </FormField>
-        <FormField label="Vehicle Type" required error={modelForm.formState.errors.vehicleTypeId}>
-          <Controller
-            name="vehicleTypeId"
-            control={modelForm.control}
-            render={({ field }) => (
-              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
-                <SelectContent>
-                  {vehicleTypes.map((type) => (
-                    <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FormField>
         <FormField label="Status" required error={modelForm.formState.errors.status}>
           <Controller
             name="status"
@@ -1093,38 +1025,6 @@ export default function VehicleTypesPage() {
         <FormField label="Color Name" required error={colorForm.formState.errors.name}>
           <Input placeholder="e.g., White" {...colorForm.register("name")} />
         </FormField>
-        <FormField label="Vehicle Type" required error={colorForm.formState.errors.vehicleTypeId}>
-          <Controller
-            name="vehicleTypeId"
-            control={colorForm.control}
-            render={({ field }) => (
-              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
-                <SelectContent>
-                  {vehicleTypes.map((type) => (
-                    <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FormField>
-        <FormField label="Model Number" required error={colorForm.formState.errors.modelNumberId}>
-          <Controller
-            name="modelNumberId"
-            control={colorForm.control}
-            render={({ field }) => (
-              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger><SelectValue placeholder="Select model number" /></SelectTrigger>
-                <SelectContent>
-                  {vehicleModels.map((model) => (
-                    <SelectItem key={model.id} value={String(model.id)}>{model.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FormField>
         <FormField label="Status" required error={colorForm.formState.errors.status}>
           <Controller
             name="status"
@@ -1153,7 +1053,7 @@ export default function VehicleTypesPage() {
         open={showBrandModal}
         onOpenChange={setShowBrandModal}
         title={editingBrandId ? "Edit Vehicle Brand" : "Add Vehicle Brand"}
-        description="Map a brand to a vehicle type, model, and color."
+        description="Map a brand to a vehicle type."
         submitLabel={brandSubmitting ? (editingBrandId ? "Updating…" : "Creating…") : editingBrandId ? "Update Brand" : "Create Brand"}
         isSubmitting={brandSubmitting}
         onCancel={() => setShowBrandModal(false)}
@@ -1172,38 +1072,6 @@ export default function VehicleTypesPage() {
                 <SelectContent>
                   {vehicleTypes.map((type) => (
                     <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FormField>
-        <FormField label="Model Number" required error={brandForm.formState.errors.modelNumberId}>
-          <Controller
-            name="modelNumberId"
-            control={brandForm.control}
-            render={({ field }) => (
-              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger><SelectValue placeholder="Select model number" /></SelectTrigger>
-                <SelectContent>
-                  {vehicleModels.map((model) => (
-                    <SelectItem key={model.id} value={String(model.id)}>{model.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FormField>
-        <FormField label="Color" required error={brandForm.formState.errors.colorId}>
-          <Controller
-            name="colorId"
-            control={brandForm.control}
-            render={({ field }) => (
-              <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger><SelectValue placeholder="Select color" /></SelectTrigger>
-                <SelectContent>
-                  {vehicleColors.map((color) => (
-                    <SelectItem key={color.id} value={String(color.id)}>{color.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
