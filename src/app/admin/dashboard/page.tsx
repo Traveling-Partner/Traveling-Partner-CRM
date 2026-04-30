@@ -6,9 +6,9 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { auditLogs } from "@/mock-data/audit-logs";
 import { fetcher } from "@/lib/fetcher";
 import { useAppSelector } from "@/store/hooks";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import {
   LineChart,
   Line,
@@ -54,7 +54,21 @@ interface RideStatusCountResponse {
   canceled: number;
 }
 
+interface AuditLogItem {
+  id: number;
+  userType: string | null;
+  description: string | null;
+  createdAt: string;
+  mobileNumber: string | null;
+}
+
+interface AuditLogsResponse {
+  content: AuditLogItem[];
+  totalPages: number;
+}
+
 const DASHBOARD_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const RECENT_ACTIVITY_PAGE_SIZE = 8;
 
 export default function AdminDashboardPage() {
   const token = useAppSelector((state) => state.auth.token);
@@ -79,10 +93,14 @@ export default function AdminDashboardPage() {
     { status: "CANCELED", count: 0 },
     { status: "COMPLETED", count: 0 }
   ]);
+  const [recentActivity, setRecentActivity] = useState<AuditLogItem[]>([]);
+  const [recentActivityPage, setRecentActivityPage] = useState(0);
+  const [recentActivityTotalPages, setRecentActivityTotalPages] = useState(1);
 
   const loadDashboard = useCallback(async () => {
     try {
-      const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes] = await Promise.all([
+      const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes, auditLogsRes] =
+        await Promise.all([
         fetcher<CountsResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/counts`, { token }),
         fetcher<DriverStatusCountsResponse>(
           `${process.env.NEXT_PUBLIC_API_URL}/users/driver-status-counts`,
@@ -95,8 +113,12 @@ export default function AdminDashboardPage() {
         fetcher<RideStatusCountResponse>(
           `${process.env.NEXT_PUBLIC_API_URL}/users/ride-status-count`,
           { token }
+        ),
+        fetcher<AuditLogsResponse>(
+          `${process.env.NEXT_PUBLIC_API_URL}/audit-logs/getAll?page=${recentActivityPage}&size=${RECENT_ACTIVITY_PAGE_SIZE}`,
+          { token }
         )
-      ]);
+        ]);
 
       setCounts(countsRes);
       setDriverStatusCounts(driverStatusRes);
@@ -111,6 +133,11 @@ export default function AdminDashboardPage() {
         { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
         { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
       ]);
+      const sortedActivity = [...(auditLogsRes.content ?? [])].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setRecentActivity(sortedActivity);
+      setRecentActivityTotalPages(Math.max(1, auditLogsRes.totalPages || 1));
     } catch {
       setCounts({
         totalDrivers: 0,
@@ -131,8 +158,10 @@ export default function AdminDashboardPage() {
         { status: "CANCELED", count: 0 },
         { status: "COMPLETED", count: 0 }
       ]);
+      setRecentActivity([]);
+      setRecentActivityTotalPages(1);
     }
-  }, [token]);
+  }, [token, recentActivityPage]);
 
   useEffect(() => {
     let mounted = true;
@@ -164,13 +193,6 @@ export default function AdminDashboardPage() {
   );
 
   const statusColors = ["#fdb813", "#ef4444", "#22c55e", "#3b82f6"];
-
-  const recentActivity = auditLogs
-    .slice(0, 8)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
 
   return (
     <AppShell title="Admin Dashboard">
@@ -323,23 +345,34 @@ export default function AdminDashboardPage() {
           className="mt-6"
         >
           <div className="space-y-3">
-            {recentActivity.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs"
-              >
-                <div>
-                  <p className="font-medium">{log.action}</p>
-                  <p className="text-[0.7rem] text-muted-foreground">
-                    {log.entityType} • {log.entityId}
-                  </p>
+            {recentActivity.length === 0 ? (
+              <p className="rounded-lg border border-border/60 bg-muted/40 px-3 py-4 text-xs text-muted-foreground">
+                No recent activity found.
+              </p>
+            ) : (
+              recentActivity.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs"
+                >
+                  <div>
+                    <p className="font-medium">{log.description?.trim() || "—"}</p>
+                    <p className="text-[0.7rem] text-muted-foreground">
+                      {log.userType || "—"} • {log.mobileNumber || "—"}
+                    </p>
+                  </div>
+                  <span className="text-[0.7rem] text-muted-foreground">
+                    {format(parseISO(log.createdAt), "MMM d, HH:mm")}
+                  </span>
                 </div>
-                <span className="text-[0.7rem] text-muted-foreground">
-                  {format(parseISO(log.createdAt), "MMM d, HH:mm")}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
+          <PaginationControls
+            currentPage={recentActivityPage + 1}
+            totalPages={recentActivityTotalPages}
+            onPageChange={(p) => setRecentActivityPage(p - 1)}
+          />
         </SectionCard>
       </PageContainer>
     </AppShell>

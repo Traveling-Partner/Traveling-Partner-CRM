@@ -6,36 +6,21 @@ interface PaginationControlsProps {
   onPageChange: (page: number) => void;
 }
 
-function getPageNumbers(current: number, total: number): (number | "...")[] {
-  const maxVisible = 8;
-
+function getPageNumbers(current: number, total: number): number[] {
+  const maxVisible = 5;
   if (total <= maxVisible) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
 
-  // Always show first + last, and a sliding window for the rest
-  const middleCount = maxVisible - 2; // numbers between first/last
+  let start = current;
+  let end = start + maxVisible - 1;
 
-  const pages: (number | "...")[] = [1];
-
-  let start = Math.max(2, current - Math.floor(middleCount / 2));
-  let end = start + middleCount - 1;
-
-  if (end > total - 1) {
-    end = total - 1;
-    start = end - middleCount + 1;
+  if (end > total) {
+    end = total;
+    start = Math.max(1, end - maxVisible + 1);
   }
 
-  if (start > 2) pages.push("...");
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
-  if (end < total - 1) pages.push("...");
-
-  pages.push(total);
-  return pages;
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 }
 
 export function PaginationControls({
@@ -59,27 +44,32 @@ export function PaginationControls({
           type="button"
           size="sm"
           variant="outline"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+        >
+          First
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
           Previous
         </Button>
-        {pageNumbers.map((page, idx) =>
-          page === "..." ? (
-            <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-muted-foreground">...</span>
-          ) : (
-            <Button
-              key={page}
-              type="button"
-              size="sm"
-              variant={page === currentPage ? "default" : "outline"}
-              className="min-w-[2rem] px-2"
-              onClick={() => onPageChange(page)}
-            >
-              {page}
-            </Button>
-          )
-        )}
+        {pageNumbers.map((page) => (
+          <Button
+            key={page}
+            type="button"
+            size="sm"
+            variant={page === currentPage ? "default" : "outline"}
+            className="min-w-[2rem] px-2"
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </Button>
+        ))}
         <Button
           type="button"
           size="sm"
@@ -88,6 +78,15 @@ export function PaginationControls({
           disabled={currentPage === totalPages}
         >
           Next
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+        >
+          Last
         </Button>
       </div>
     </div>

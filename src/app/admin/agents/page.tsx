@@ -96,11 +96,12 @@ export default function AdminAgentsPage() {
       header: "Status",
       cell: ({ row }) => <StatusBadge status={row.original.status} />
     },
-    {
-      id: "metrics",
-      header: "Onboarded",
-      cell: () => <span className="text-xs text-muted-foreground">—</span>
-    },
+    // Future use: keep onboarded column config for upcoming metrics work.
+    // {
+    //   id: "metrics",
+    //   header: "Onboarded",
+    //   cell: () => <span className="text-xs text-muted-foreground">—</span>
+    // },
     {
       id: "actions",
       header: "",
