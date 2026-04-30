@@ -285,29 +285,7 @@ export default function AdminPartnerDetailPage() {
                           {selectedDocument.type.replaceAll("_", " ")}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <a
-                          href={selectedDocument.frontUrl}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setPreviewSrc(selectedDocument.frontUrl);
-                            setPreviewDownloadName("id-document-front.jpg");
-                            setPreviewOpen(true);
-                          }}
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                        >
-                          <Eye className="h-3 w-3" />
-                          Preview
-                        </a>
-                        <a
-                          href={selectedDocument.frontUrl}
-                          download
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                        >
-                          <Download className="h-3 w-3" />
-                          Download
-                        </a>
-                      </div>
+                      <div />
                     </div>
                     <div className="grid gap-3 p-3 md:grid-cols-2">
                       <div>

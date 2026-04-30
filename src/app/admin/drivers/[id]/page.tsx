@@ -256,6 +256,9 @@ export default function AdminDriverDetailPage() {
 
   const selectedDocument = documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
   const displayName = driver?.username || driver?.basicInformation?.firstName || "Driver";
+  const currentStatus = String(driver?.status || "").trim().toUpperCase();
+  const showApproveAction = currentStatus === "INACTIVE";
+  const showRestrictAction = currentStatus === "ACTIVE";
 
   if (!loading && !driver) {
     return (
@@ -355,21 +358,25 @@ export default function AdminDriverDetailPage() {
                 persisted and are safe to experiment with.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  disabled={updatingStatus}
-                  onClick={() => handleStatusChange("APPROVED")}
-                >
-                  Approve
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  disabled={updatingStatus}
-                  onClick={() => handleStatusChange("RESTRICTED")}
-                >
-                  Restrict
-                </Button>
+                {showApproveAction ? (
+                  <Button
+                    size="sm"
+                    disabled={updatingStatus}
+                    onClick={() => handleStatusChange("APPROVED")}
+                  >
+                    Approve
+                  </Button>
+                ) : null}
+                {showRestrictAction ? (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={updatingStatus}
+                    onClick={() => handleStatusChange("RESTRICTED")}
+                  >
+                    Restrict
+                  </Button>
+                ) : null}
               </div>
             </div>
           </SectionCard>
