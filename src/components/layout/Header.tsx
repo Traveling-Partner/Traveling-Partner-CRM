@@ -22,6 +22,7 @@ interface HeaderProps {
 export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuthStore();
+  const displayName = user?.name?.trim() || user?.mobileNumber || "User";
 
   const isDark = theme === "dark";
 
@@ -67,14 +68,14 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
               className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-sm"
             >
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813] text-xs font-semibold text-slate-900">
-                {user?.name
+                {displayName
                   ?.split(" ")
                   .map((n) => n[0])
                   .join("") ?? "TP"}
               </span>
               <div className="hidden flex-col text-left text-xs md:flex">
                 <span className="font-medium leading-tight">
-                  {user?.name ?? "User"}
+                  {displayName}
                 </span>
                 <span className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">
                   {user?.role === "ADMIN" ? "Admin" : "Sales Agent"}
@@ -87,7 +88,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
             <DropdownMenuLabel>Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="flex flex-col items-start gap-0.5 text-xs">
-              <span className="font-medium">{user?.name}</span>
+              <span className="font-medium">{displayName}</span>
               <span className="text-muted-foreground">{user?.email}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

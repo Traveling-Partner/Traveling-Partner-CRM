@@ -187,11 +187,15 @@ export default function DocumentsQueuePage() {
   const [previewDocuments, setPreviewDocuments] = useState<PreviewDocument[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<PreviewDocument["id"]>("driver-license");
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [imageModalSrc, setImageModalSrc] = useState<string>(fallbackImage);
+  const [imageModalTitle, setImageModalTitle] = useState("Document preview");
 
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
   const [decisionScope, setDecisionScope] = useState<"table" | "preview">("table");
   const [decisionType, setDecisionType] = useState<DecisionType | null>(null);
   const [decisionDriver, setDecisionDriver] = useState<DriverRow | null>(null);
+  const [tableActionMenuVersion, setTableActionMenuVersion] = useState(0);
   const [rejectReason, setRejectReason] = useState("");
   const [decisionLoading, setDecisionLoading] = useState(false);
   const [rawDocumentStatuses, setRawDocumentStatuses] = useState<DocumentStatusPayload>({
@@ -351,6 +355,34 @@ export default function DocumentsQueuePage() {
     setRejectReason("");
     setDecisionDialogOpen(true);
   };
+
+  const openImageModal = (src: string, label: string) => {
+    setImageModalSrc(src || fallbackImage);
+    setImageModalTitle(label);
+    setImageModalOpen(true);
+  };
+
+  const downloadDocument = useCallback(
+    async (url: string, fileName: string) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("download-failed");
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(blobUrl);
+      } catch {
+        window.open(url, "_blank", "noopener,noreferrer");
+        error("Direct download not available; opened file in a new tab.");
+      }
+    },
+    [error]
+  );
 
   const applyDecision = async (
     driver: DriverRow,
@@ -513,28 +545,30 @@ export default function DocumentsQueuePage() {
                 Preview
               </Button>
               {!isFinalDecisionStatus(documentStatus) ? (
-                <>
-                  <Button
-                    size="sm"
-                    onClick={() => openDecision(row.original, "APPROVE")}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => openDecision(row.original, "REJECT")}
-                  >
-                    Reject
-                  </Button>
-                </>
+                <Select
+                  key={`doc-action-${row.original.id}-${tableActionMenuVersion}`}
+                  onValueChange={(value) => {
+                    if (value === "APPROVE" || value === "REJECT") {
+                      openDecision(row.original, value);
+                      setTableActionMenuVersion((prev) => prev + 1);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-32">
+                    <SelectValue placeholder="Action" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="APPROVE">Approve</SelectItem>
+                    <SelectItem value="REJECT">Reject</SelectItem>
+                  </SelectContent>
+                </Select>
               ) : null}
             </div>
           );
         }
       }
     ],
-    [documentStatusByDriverId]
+    [documentStatusByDriverId, tableActionMenuVersion]
   );
 
   return (
@@ -716,27 +750,43 @@ export default function DocumentsQueuePage() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => setPreviewSrc(selectedDocument?.frontUrl || fallbackImage)}
+                            onClick={() =>
+                              openImageModal(
+                                selectedDocument?.frontUrl || fallbackImage,
+                                `${selectedDocument?.fileName || "document"} (Front)`
+                              )
+                            }
                             className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Eye className="h-3 w-3" />
                             Preview
                           </button>
-                          <a
-                            href={selectedDocument?.frontUrl || fallbackImage}
-                            download
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void downloadDocument(
+                                selectedDocument?.frontUrl || fallbackImage,
+                                `${selectedDocument?.id || "document"}-front.jpg`
+                              )
+                            }
                             className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Download className="h-3 w-3" />
                             Download
-                          </a>
+                          </button>
                         </div>
                       </div>
                       <div className="h-[210px] bg-muted/20 p-2">
                         <img
                           src={selectedDocument?.frontUrl || fallbackImage}
                           alt="Front"
-                          className="h-full w-full rounded-md bg-background object-cover"
+                          className="h-full w-full cursor-zoom-in rounded-md bg-background object-cover"
+                          onClick={() =>
+                            openImageModal(
+                              selectedDocument?.frontUrl || fallbackImage,
+                              `${selectedDocument?.fileName || "document"} (Front)`
+                            )
+                          }
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).src = fallbackImage;
                           }}
@@ -749,27 +799,43 @@ export default function DocumentsQueuePage() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => setPreviewSrc(selectedDocument?.backUrl || fallbackImage)}
+                            onClick={() =>
+                              openImageModal(
+                                selectedDocument?.backUrl || fallbackImage,
+                                `${selectedDocument?.fileName || "document"} (Back)`
+                              )
+                            }
                             className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Eye className="h-3 w-3" />
                             Preview
                           </button>
-                          <a
-                            href={selectedDocument?.backUrl || fallbackImage}
-                            download
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void downloadDocument(
+                                selectedDocument?.backUrl || fallbackImage,
+                                `${selectedDocument?.id || "document"}-back.jpg`
+                              )
+                            }
                             className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Download className="h-3 w-3" />
                             Download
-                          </a>
+                          </button>
                         </div>
                       </div>
                       <div className="h-[210px] bg-muted/20 p-2">
                         <img
                           src={selectedDocument?.backUrl || fallbackImage}
                           alt="Back"
-                          className="h-full w-full rounded-md bg-background object-cover"
+                          className="h-full w-full cursor-zoom-in rounded-md bg-background object-cover"
+                          onClick={() =>
+                            openImageModal(
+                              selectedDocument?.backUrl || fallbackImage,
+                              `${selectedDocument?.fileName || "document"} (Back)`
+                            )
+                          }
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).src = fallbackImage;
                           }}
@@ -794,6 +860,23 @@ export default function DocumentsQueuePage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+        <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+          <DialogContent className="max-w-5xl">
+            <DialogHeader>
+              <DialogTitle>{imageModalTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="h-[70vh] overflow-hidden rounded-lg border border-border/70 bg-muted/20 p-2">
+              <img
+                src={imageModalSrc}
+                alt={imageModalTitle}
+                className="h-full w-full rounded-md bg-background object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                }}
+              />
+            </div>
           </DialogContent>
         </Dialog>
 

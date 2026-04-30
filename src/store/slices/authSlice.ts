@@ -50,8 +50,8 @@ export const loginUserThunk = createAsyncThunk(
       const user: AuthUser = {
         id: String(decoded.id),
         role: decoded.role,
-        name: "",
-        email: "",
+        name: data.name ?? "",
+        email: data.email ?? "",
         mobileNumber: decoded.mobileNumber,
         mustChangePassword: false
       };

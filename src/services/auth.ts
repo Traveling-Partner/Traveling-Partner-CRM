@@ -10,6 +10,7 @@ interface LoginResponse {
   statusCode: number;
   message: string;
   data: {
+    name: string | null;
     email: string | null;
     id: number;
     role: string;
@@ -22,6 +23,8 @@ export async function loginUser({ mobileNumber, otp }: LoginPayload) {
     method: "POST",
     body: JSON.stringify({ mobileNumber, otp })
   });
+
+  console.log("[Auth] /auth/admin/login response:", response);
 
   return response.data;
 }

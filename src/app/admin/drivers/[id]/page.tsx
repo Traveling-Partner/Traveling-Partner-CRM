@@ -17,7 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import { fetcher } from "@/lib/fetcher";
 
-type DriverStatus = "PENDING" | "APPROVED" | "RESTRICTED" | "SUSPENDED";
+type DriverStatus = "PENDING" | "APPROVED" | "RESTRICTED";
 
 interface DriverDetailResponse {
   id: number;
@@ -59,7 +59,9 @@ interface DriverDetailResponse {
   vehicle?: {
     id: number;
     modelNumberId: number | null;
+    modelNumberName?: string | null;
     colorId: number | null;
+    colorName?: string | null;
     registrationNo: string | null;
     registrationFront: string | null;
     registrationBack: string | null;
@@ -136,7 +138,6 @@ function pickVehicleStatus(payload: Record<string, unknown>): unknown {
 const statusPayloadMap: Record<DriverStatus, "ACTIVE" | "INACTIVE" | "BLOCKED"> = {
   APPROVED: "ACTIVE",
   RESTRICTED: "INACTIVE",
-  SUSPENDED: "BLOCKED",
   PENDING: "INACTIVE"
 };
 
@@ -363,19 +364,11 @@ export default function AdminDriverDetailPage() {
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="destructive"
                   disabled={updatingStatus}
                   onClick={() => handleStatusChange("RESTRICTED")}
                 >
                   Restrict
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  disabled={updatingStatus}
-                  onClick={() => handleStatusChange("SUSPENDED")}
-                >
-                  Suspend
                 </Button>
               </div>
             </div>
@@ -543,11 +536,19 @@ export default function AdminDriverDetailPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Model</span>
-                  <span className="font-medium">{driver?.vehicle?.modelNumberId ?? "—"}</span>
+                  <span className="font-medium">
+                    {driver?.vehicle?.modelNumberName?.trim() ||
+                      driver?.vehicle?.modelNumberId ||
+                      "—"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Color</span>
-                  <span className="font-medium">{driver?.vehicle?.colorId ?? "—"}</span>
+                  <span className="font-medium">
+                    {driver?.vehicle?.colorName?.trim() ||
+                      driver?.vehicle?.colorId ||
+                      "—"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Plate</span>
@@ -559,6 +560,7 @@ export default function AdminDriverDetailPage() {
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {/* Future feature: keep ride performance section for upcoming analytics work.
           <SectionCard
             title="Ride performance"
             description="Aggregated performance across all rides completed by this driver."
@@ -579,6 +581,7 @@ export default function AdminDriverDetailPage() {
               </div>
             </div>
           </SectionCard>
+          */}
 
           <SectionCard
             title="Status timeline"
@@ -612,7 +615,7 @@ export default function AdminDriverDetailPage() {
           }
           confirmLabel={updatingStatus ? "Updating..." : "Confirm"}
           cancelLabel="Cancel"
-          destructive={pendingAction === "SUSPENDED"}
+          destructive={pendingAction === "RESTRICTED"}
         />
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl">

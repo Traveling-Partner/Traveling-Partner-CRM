@@ -66,6 +66,7 @@ export default function AdminPartnerDetailPage() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("id-document");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
+  const [previewDownloadName, setPreviewDownloadName] = useState<string>("document.jpg");
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
 
@@ -169,11 +170,10 @@ export default function AdminPartnerDetailPage() {
             </Link>
           </Button>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4">
           <SectionCard
             title="Partner profile"
             description="Core details for this fleet partner"
-            className="lg:col-span-2"
           >
             {loading ? (
               <Skeleton className="h-32 w-full rounded-lg" />
@@ -212,22 +212,6 @@ export default function AdminPartnerDetailPage() {
                 )}
               </div>
             ) : null}
-          </SectionCard>
-
-          <SectionCard
-            title="Vehicle"
-            description="Vehicle information associated with this partner."
-          >
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
-                <span className="text-muted-foreground">Model</span>
-                <span className="font-heading font-semibold">{partner?.vehicle?.modelNumberId ?? "—"}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
-                <span className="text-muted-foreground">Color</span>
-                <span className="font-heading font-semibold">{partner?.vehicle?.colorId ?? "—"}</span>
-              </div>
-            </div>
           </SectionCard>
         </div>
 
@@ -306,6 +290,8 @@ export default function AdminPartnerDetailPage() {
                           href={selectedDocument.frontUrl}
                           onClick={(e) => {
                             e.preventDefault();
+                            setPreviewSrc(selectedDocument.frontUrl);
+                            setPreviewDownloadName("id-document-front.jpg");
                             setPreviewOpen(true);
                           }}
                           className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
@@ -325,12 +311,41 @@ export default function AdminPartnerDetailPage() {
                     </div>
                     <div className="grid gap-3 p-3 md:grid-cols-2">
                       <div>
-                        <div className="mb-1 text-[0.7rem] font-medium text-muted-foreground">Front</div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <p className="text-[0.7rem] font-medium text-muted-foreground">Front</p>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewSrc(selectedDocument.frontUrl);
+                                setPreviewDownloadName("id-document-front.jpg");
+                                setPreviewOpen(true);
+                              }}
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                            >
+                              <Eye className="h-3 w-3" />
+                              Preview
+                            </button>
+                            <a
+                              href={selectedDocument.frontUrl}
+                              download="id-document-front.jpg"
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                            >
+                              <Download className="h-3 w-3" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
                         <div className="h-[220px] bg-muted/20 p-2">
                           <img
                             src={selectedDocument.frontUrl}
                             alt={`${selectedDocument.fileName} front`}
-                            className="h-full w-full rounded-md bg-background object-cover"
+                            className="h-full w-full cursor-zoom-in rounded-md bg-background object-cover"
+                            onClick={() => {
+                              setPreviewSrc(selectedDocument.frontUrl);
+                              setPreviewDownloadName("id-document-front.jpg");
+                              setPreviewOpen(true);
+                            }}
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src = fallbackImage;
                             }}
@@ -338,12 +353,41 @@ export default function AdminPartnerDetailPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="mb-1 text-[0.7rem] font-medium text-muted-foreground">Back</div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <p className="text-[0.7rem] font-medium text-muted-foreground">Back</p>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewSrc(selectedDocument.backUrl);
+                                setPreviewDownloadName("id-document-back.jpg");
+                                setPreviewOpen(true);
+                              }}
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                            >
+                              <Eye className="h-3 w-3" />
+                              Preview
+                            </button>
+                            <a
+                              href={selectedDocument.backUrl}
+                              download="id-document-back.jpg"
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
+                            >
+                              <Download className="h-3 w-3" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
                         <div className="h-[220px] bg-muted/20 p-2">
                           <img
                             src={selectedDocument.backUrl}
                             alt={`${selectedDocument.fileName} back`}
-                            className="h-full w-full rounded-md bg-background object-cover"
+                            className="h-full w-full cursor-zoom-in rounded-md bg-background object-cover"
+                            onClick={() => {
+                              setPreviewSrc(selectedDocument.backUrl);
+                              setPreviewDownloadName("id-document-back.jpg");
+                              setPreviewOpen(true);
+                            }}
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src = fallbackImage;
                             }}
@@ -362,37 +406,6 @@ export default function AdminPartnerDetailPage() {
         <SectionCard title="Trade/VAT documents">...</SectionCard>
         */}
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <SectionCard
-            title="Status history"
-            description="How this partner has moved through your onboarding workflow."
-          >
-            <ol className="space-y-3 text-xs">
-              <li className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
-                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                <div className="min-w-0">
-                  <p className="font-heading font-medium">—</p>
-                  <p className="text-[0.7rem] text-muted-foreground">—</p>
-                </div>
-              </li>
-            </ol>
-          </SectionCard>
-
-          <SectionCard
-            title="Recent rides"
-            description="Sample of trips associated with this partner."
-          >
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <div>
-                  <p className="font-medium">—</p>
-                  <p className="text-[0.7rem] text-muted-foreground">—</p>
-                </div>
-                <span className="text-[0.7rem] font-semibold">—</span>
-              </div>
-            </div>
-          </SectionCard>
-        </div>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
@@ -408,8 +421,8 @@ export default function AdminPartnerDetailPage() {
                     {selectedDocument.uploadedAt ? new Date(selectedDocument.uploadedAt).toLocaleDateString() : "—"}
                   </p>
                   <a
-                    href={selectedDocument.frontUrl}
-                    download
+                    href={previewSrc}
+                    download={previewDownloadName}
                     className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                   >
                     <Download className="h-3 w-3" />
