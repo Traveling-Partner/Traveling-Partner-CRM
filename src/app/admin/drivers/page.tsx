@@ -22,7 +22,7 @@ interface DriverRow {
   username: string | null;
   mobileNumber: string;
   status: string;
-  city: string | null;
+  cnicNumber?: string | null;
   createdAt: string | null;
 }
 
@@ -41,13 +41,11 @@ export default function AdminDriversPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [cities, setCities] = useState<string[]>([]);
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -61,30 +59,11 @@ export default function AdminDriversPage() {
     }, 400);
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadCities() {
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=0&size=500`;
-        const res = await fetcher<DriversApiResponse>(url, { token });
-        if (!cancelled) {
-          const unique = Array.from(
-            new Set(res.content.map((d) => d.city).filter(Boolean) as string[])
-          ).sort();
-          setCities(unique);
-        }
-      } catch { /* ignore */ }
-    }
-    loadCities();
-    return () => { cancelled = true; };
-  }, [token]);
-
   const fetchDrivers = useCallback(async () => {
     setLoading(true);
     try {
       let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${pageSize}`;
       if (statusFilter !== "all") url += `&status=${statusFilter}`;
-      if (cityFilter !== "all") url += `&city=${encodeURIComponent(cityFilter)}`;
       if (debouncedSearch.trim()) url += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
 
       const res = await fetcher<DriversApiResponse>(url, { token });
@@ -95,7 +74,7 @@ export default function AdminDriversPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter, cityFilter, debouncedSearch, token]);
+  }, [page, pageSize, statusFilter, debouncedSearch, token]);
 
   useEffect(() => {
     fetchDrivers();
@@ -124,10 +103,10 @@ export default function AdminDriversPage() {
       )
     },
     {
-      accessorKey: "city",
-      header: "City",
+      accessorKey: "cnicNumber",
+      header: "CNIC Number",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.city || "—"}</span>
+        <span className="text-sm">{row.original.cnicNumber || "—"}</span>
       )
     },
     {
@@ -192,40 +171,6 @@ export default function AdminDriversPage() {
                   <SelectItem value="BLOCKED">Blocked</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Select
-                value={cityFilter}
-                onValueChange={(v) => { setPage(0); setCityFilter(v); }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="City" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All cities</SelectItem>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(v) => {
-                  setPage(0);
-                  setPageSize(Number(v));
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Page size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">6 / page</SelectItem>
-                  <SelectItem value="10">10 / page</SelectItem>
-                  <SelectItem value="20">20 / page</SelectItem>
-                  <SelectItem value="50">50 / page</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
@@ -237,11 +182,30 @@ export default function AdminDriversPage() {
             <DataTable columns={columns} data={drivers} />
           )}
 
-          <PaginationControls
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
-          />
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPage(0);
+                setPageSize(Number(v));
+              }}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6">6 / page</SelectItem>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+              </SelectContent>
+            </Select>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p - 1)}
+            />
+          </div>
         </SectionCard>
       </PageContainer>
     </AppShell>

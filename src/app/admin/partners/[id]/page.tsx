@@ -28,6 +28,8 @@ interface PartnerDetailResponse {
   basicInformation?: {
     firstName: string | null;
     lastName: string | null;
+    gender?: string | null;
+    email?: string | null;
     city: string | null;
     cnicFront: string | null;
     cnicBack: string | null;
@@ -122,6 +124,8 @@ export default function AdminPartnerDetailPage() {
 
   const fullName = `${partner?.basicInformation?.firstName || ""} ${partner?.basicInformation?.lastName || ""}`.trim() || "—";
   const city = partner?.basicInformation?.city || "—";
+  const gender = partner?.basicInformation?.gender || "—";
+  const email = partner?.basicInformation?.email || partner?.email || "—";
   const isActiveStatus = partner?.status === "ACTIVE" || partner?.status === "APPROVED";
   const nextStatus: "ACTIVE" | "INACTIVE" = isActiveStatus ? "INACTIVE" : "ACTIVE";
 
@@ -188,8 +192,16 @@ export default function AdminPartnerDetailPage() {
                   <p className="mt-0.5 font-heading font-medium">{city}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Gender</p>
+                  <p className="mt-0.5 font-heading font-medium">{gender}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
                   <p className="mt-0.5 font-heading font-medium">{partner?.mobileNumber || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</p>
+                  <p className="mt-0.5 font-heading font-medium break-all">{email}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>

@@ -1,8 +1,19 @@
 import { fetcher } from "@/lib/fetcher";
 
+interface OtpPayload {
+  mobileNumber: string;
+}
+
 interface LoginPayload {
   mobileNumber: string;
   otp: string;
+}
+
+interface GenerateOtpResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: string;
 }
 
 interface LoginResponse {
@@ -16,6 +27,14 @@ interface LoginResponse {
     role: string;
     token: string;
   };
+}
+
+export async function generateAdminOtp({ mobileNumber }: OtpPayload) {
+  const response = await fetcher<GenerateOtpResponse>("/api/auth/admin/generate/otp", {
+    method: "POST",
+    body: JSON.stringify({ mobileNumber })
+  });
+  return response;
 }
 
 export async function loginUser({ mobileNumber, otp }: LoginPayload) {

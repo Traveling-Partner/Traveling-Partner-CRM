@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loginUser } from "@/services/auth";
 import { decodeToken } from "@/lib/decodeToken";
+import { normalizeRole } from "@/lib/rbac";
 
 export type Role = string;
 
@@ -49,7 +50,7 @@ export const loginUserThunk = createAsyncThunk(
 
       const user: AuthUser = {
         id: String(decoded.id),
-        role: decoded.role,
+        role: normalizeRole(decoded.role),
         name: data.name ?? "",
         email: data.email ?? "",
         mobileNumber: decoded.mobileNumber,

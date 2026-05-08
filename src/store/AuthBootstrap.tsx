@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { decodeToken } from "@/lib/decodeToken";
 import { useAppDispatch } from "@/store/hooks";
 import { logout, restoreAuth } from "@/store/slices/authSlice";
+import { normalizeRole } from "@/lib/rbac";
 
 export function AuthBootstrap() {
   const dispatch = useAppDispatch();
@@ -26,14 +27,14 @@ export function AuthBootstrap() {
     const user = persistedUser
       ? {
           id: String(persistedUser.id ?? decoded.id),
-          role: persistedUser.role ?? decoded.role,
+          role: normalizeRole(persistedUser.role ?? decoded.role),
           name: persistedUser.name ?? "",
           email: persistedUser.email ?? "",
           mobileNumber: persistedUser.mobileNumber ?? decoded.mobileNumber
         }
       : {
           id: String(decoded.id),
-          role: decoded.role,
+          role: normalizeRole(decoded.role),
           name: "",
           email: "",
           mobileNumber: decoded.mobileNumber

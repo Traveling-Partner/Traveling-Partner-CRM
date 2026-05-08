@@ -26,6 +26,7 @@ interface AgentRow {
   name: string | null;
   email: string | null;
   mobileNumber: string | null;
+  cnicNumber?: string | null;
   status: string;
 }
 
@@ -89,6 +90,13 @@ export default function AdminAgentsPage() {
       header: "Phone",
       cell: ({ row }) => (
         <span className="text-xs">{row.original.mobileNumber || "—"}</span>
+      )
+    },
+    {
+      accessorKey: "cnicNumber",
+      header: "CNIC Number",
+      cell: ({ row }) => (
+        <span className="text-xs">{row.original.cnicNumber || "—"}</span>
       )
     },
     {
@@ -161,23 +169,6 @@ export default function AdminAgentsPage() {
                   <SelectItem value="APPROVED">Approved</SelectItem>
                 </SelectContent>
               </Select>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Page size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">6 / page</SelectItem>
-                  <SelectItem value="10">10 / page</SelectItem>
-                  <SelectItem value="20">20 / page</SelectItem>
-                  <SelectItem value="50">50 / page</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           {loading ? (
@@ -185,17 +176,30 @@ export default function AdminAgentsPage() {
           ) : (
             <DataTable columns={columns} data={agentRows} />
           )}
-          <div className="mt-3 text-xs text-muted-foreground">
-            <span>
-              Showing {totalElements ? page * pageSize + 1 : 0} –{" "}
-              {Math.min((page + 1) * pageSize, totalElements)} of {totalElements}
-            </span>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6">6 / page</SelectItem>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+              </SelectContent>
+            </Select>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p - 1)}
+            />
           </div>
-          <PaginationControls
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
-          />
         </SectionCard>
       </PageContainer>
     </AppShell>

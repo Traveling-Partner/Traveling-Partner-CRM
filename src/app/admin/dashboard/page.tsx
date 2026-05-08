@@ -67,7 +67,7 @@ interface AuditLogsResponse {
   totalPages: number;
 }
 
-const DASHBOARD_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const DASHBOARD_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 const RECENT_ACTIVITY_PAGE_SIZE = 8;
 
 export default function AdminDashboardPage() {

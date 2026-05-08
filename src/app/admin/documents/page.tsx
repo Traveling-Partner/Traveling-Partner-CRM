@@ -32,7 +32,7 @@ interface DriverRow {
   username: string | null;
   mobileNumber: string | null;
   status: string;
-  city: string | null;
+  cnicNumber?: string | null;
   createdAt: string | null;
 }
 
@@ -169,7 +169,6 @@ export default function DocumentsQueuePage() {
   const { success, error } = useToast();
   const token = useAppSelector((state) => state.auth.token);
 
-  const [cityFilter, setCityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -177,7 +176,6 @@ export default function DocumentsQueuePage() {
 
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
   const [documentStatusByDriverId, setDocumentStatusByDriverId] = useState<Record<number, ApiDocStatus>>({});
-  const [cities, setCities] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -204,33 +202,11 @@ export default function DocumentsQueuePage() {
     vehicleStatus: "PENDING"
   });
 
-  useEffect(() => {
-    let active = true;
-    const loadCities = async () => {
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=0&size=500`;
-        const response = await fetcher<DriversResponse>(url, { token });
-        if (!active) return;
-        const uniqueCities = Array.from(
-          new Set(response.content.map((item) => item.city).filter(Boolean) as string[])
-        ).sort();
-        setCities(uniqueCities);
-      } catch {
-        // ignore city load error
-      }
-    };
-    void loadCities();
-    return () => {
-      active = false;
-    };
-  }, [token]);
-
   const loadDrivers = useCallback(async () => {
     setLoading(true);
     try {
       let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${pageSize}`;
       if (statusFilter !== "all") url += `&status=${statusFilter}`;
-      if (cityFilter !== "all") url += `&city=${encodeURIComponent(cityFilter)}`;
       if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
 
       const response = await fetcher<DriversResponse>(url, { token });
@@ -265,7 +241,7 @@ export default function DocumentsQueuePage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, pageSize, statusFilter, cityFilter, search]);
+  }, [token, page, pageSize, statusFilter, search]);
 
   useEffect(() => {
     void loadDrivers();
@@ -511,9 +487,9 @@ export default function DocumentsQueuePage() {
         }
       },
       {
-        accessorKey: "city",
-        header: "City",
-        cell: ({ row }) => row.original.city || "—"
+        accessorKey: "cnicNumber",
+        header: "CNIC Number",
+        cell: ({ row }) => row.original.cnicNumber || "—"
       },
       {
         accessorKey: "email",
@@ -591,26 +567,6 @@ export default function DocumentsQueuePage() {
               />
               <div className="flex flex-wrap items-center gap-2">
                 <Select
-                  value={cityFilter}
-                  onValueChange={(value) => {
-                    setCityFilter(value);
-                    setPage(0);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="City" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All cities</SelectItem>
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
                   value={statusFilter}
                   onValueChange={(value) => {
                     setStatusFilter(value);
@@ -629,23 +585,6 @@ export default function DocumentsQueuePage() {
                     <SelectItem value="APPROVED">Approved</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setPage(0);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Page size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="6">6 / page</SelectItem>
-                    <SelectItem value="10">10 / page</SelectItem>
-                    <SelectItem value="20">20 / page</SelectItem>
-                    <SelectItem value="50">50 / page</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -662,11 +601,30 @@ export default function DocumentsQueuePage() {
               <DataTable columns={columns} data={drivers} />
             )}
 
-            <PaginationControls
-              currentPage={page + 1}
-              totalPages={totalPages}
-              onPageChange={(newPage) => setPage(newPage - 1)}
-            />
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Page size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6 / page</SelectItem>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="20">20 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                </SelectContent>
+              </Select>
+              <PaginationControls
+                currentPage={page + 1}
+                totalPages={totalPages}
+                onPageChange={(newPage) => setPage(newPage - 1)}
+              />
+            </div>
           </>
         </SectionCard>
 

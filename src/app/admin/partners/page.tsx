@@ -27,7 +27,6 @@ interface PartnerRow {
   email: string | null;
   mobileNumber: string | null;
   status: string;
-  city: string | null;
   profilePicture?: string | null;
   createdAt?: string | null;
 }
@@ -45,7 +44,6 @@ export default function AdminPartnersPage() {
   const token = useAppSelector((state) => state.auth.token);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
@@ -53,45 +51,16 @@ export default function AdminPartnersPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const [cities, setCities] = useState<string[]>([]);
-
-  // Load city options from backend
-  useEffect(() => {
-    let cancelled = false;
-    const loadCities = async () => {
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=0&size=500&status=&city=&search=`;
-        const res = await fetcher<PartnersResponse>(url, { token });
-        if (cancelled) return;
-        const unique = Array.from(
-          new Set(
-            res.content
-              .map((p) => p.city)
-              .filter((c): c is string => Boolean(c))
-          )
-        ).sort();
-        setCities(unique);
-      } catch {
-        // ignore city load error
-      }
-    };
-    void loadCities();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
-
   // Fetch partners from backend with filters + pagination
   const fetchPartners = useCallback(async () => {
     setLoading(true);
     try {
       const statusParam = statusFilter === "all" ? "" : statusFilter;
-      const cityParam = cityFilter === "all" ? "" : cityFilter;
       const searchParam = search.trim();
 
       const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=${page}&size=${pageSize}&status=${encodeURIComponent(
         statusParam
-      )}&city=${encodeURIComponent(cityParam)}&search=${encodeURIComponent(searchParam)}`;
+      )}&city=&search=${encodeURIComponent(searchParam)}`;
 
       const res = await fetcher<PartnersResponse>(url, { token });
       setPartnerRows(res.content);
@@ -104,7 +73,7 @@ export default function AdminPartnersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter, cityFilter, search, token]);
+  }, [page, pageSize, statusFilter, search, token]);
 
   useEffect(() => {
     void fetchPartners();
@@ -121,7 +90,7 @@ export default function AdminPartnersPage() {
           <div className="space-y-0.5">
             <p className="text-sm font-medium">{displayName}</p>
             <p className="text-xs text-muted-foreground">
-              {row.original.city || "—"}
+              {row.original.mobileNumber || "—"}
             </p>
           </div>
         );
@@ -198,42 +167,6 @@ export default function AdminPartnersPage() {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={cityFilter}
-                onValueChange={(value) => {
-                  setCityFilter(value);
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="City" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All cities</SelectItem>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Page size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">6 / page</SelectItem>
-                  <SelectItem value="10">10 / page</SelectItem>
-                  <SelectItem value="20">20 / page</SelectItem>
-                  <SelectItem value="50">50 / page</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
@@ -243,25 +176,30 @@ export default function AdminPartnersPage() {
             <DataTable columns={columns} data={partnerRows} />
           )}
 
-          <div className="mt-3 text-xs text-muted-foreground">
-            <span>
-              Showing{" "}
-              <span className="font-medium">
-                {totalElements ? page * pageSize + 1 : 0}
-              </span>{" "}
-              –{" "}
-              <span className="font-medium">
-                {Math.min((page + 1) * pageSize, totalElements)}
-              </span>{" "}
-              of <span className="font-medium">{totalElements}</span> partners
-            </span>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6">6 / page</SelectItem>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+              </SelectContent>
+            </Select>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p - 1)}
+            />
           </div>
-
-          <PaginationControls
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
-          />
         </SectionCard>
       </PageContainer>
     </AppShell>

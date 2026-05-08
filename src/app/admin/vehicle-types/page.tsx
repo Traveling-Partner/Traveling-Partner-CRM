@@ -628,23 +628,6 @@ export default function VehicleTypesPage() {
                       className="pl-9"
                     />
                   </div>
-                  <Select
-                    value={String(typePageSize)}
-                    onValueChange={(value) => {
-                      setTypePageSize(Number(value));
-                      setTypePage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 {typeLoading ? (
@@ -692,7 +675,26 @@ export default function VehicleTypesPage() {
                     ))}
                   </div>
                 )}
-                <PaginationControls currentPage={typePage} totalPages={typeTotalPages} onPageChange={setTypePage} />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <Select
+                    value={String(typePageSize)}
+                    onValueChange={(value) => {
+                      setTypePageSize(Number(value));
+                      setTypePage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <PaginationControls currentPage={typePage} totalPages={typeTotalPages} onPageChange={setTypePage} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -723,23 +725,6 @@ export default function VehicleTypesPage() {
                       className="pl-9"
                     />
                   </div>
-                  <Select
-                    value={String(modelPageSize)}
-                    onValueChange={(value) => {
-                      setModelPageSize(Number(value));
-                      setModelPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <ManagementTable
                   isLoading={modelLoading}
@@ -771,7 +756,26 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <PaginationControls currentPage={modelPage} totalPages={modelTotalPages} onPageChange={setModelPage} />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <Select
+                    value={String(modelPageSize)}
+                    onValueChange={(value) => {
+                      setModelPageSize(Number(value));
+                      setModelPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <PaginationControls currentPage={modelPage} totalPages={modelTotalPages} onPageChange={setModelPage} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -799,23 +803,6 @@ export default function VehicleTypesPage() {
                       className="pl-9"
                     />
                   </div>
-                  <Select
-                    value={String(colorPageSize)}
-                    onValueChange={(value) => {
-                      setColorPageSize(Number(value));
-                      setColorPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <ManagementTable
                   isLoading={colorLoading}
@@ -847,7 +834,26 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <PaginationControls currentPage={colorPage} totalPages={colorTotalPages} onPageChange={setColorPage} />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <Select
+                    value={String(colorPageSize)}
+                    onValueChange={(value) => {
+                      setColorPageSize(Number(value));
+                      setColorPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <PaginationControls currentPage={colorPage} totalPages={colorTotalPages} onPageChange={setColorPage} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -875,23 +881,6 @@ export default function VehicleTypesPage() {
                       className="pl-9"
                     />
                   </div>
-                  <Select
-                    value={String(brandPageSize)}
-                    onValueChange={(value) => {
-                      setBrandPageSize(Number(value));
-                      setBrandPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <ManagementTable
                   isLoading={brandLoading}
@@ -931,7 +920,26 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <PaginationControls currentPage={brandPage} totalPages={brandTotalPages} onPageChange={setBrandPage} />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <Select
+                    value={String(brandPageSize)}
+                    onValueChange={(value) => {
+                      setBrandPageSize(Number(value));
+                      setBrandPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 / page</SelectItem>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <PaginationControls currentPage={brandPage} totalPages={brandTotalPages} onPageChange={setBrandPage} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
