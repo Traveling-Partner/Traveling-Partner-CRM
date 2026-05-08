@@ -331,11 +331,29 @@ export default function AdminDriverDetailPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Full name</p>
-                  <p className="mt-0.5 font-heading font-medium">{driver?.username || "—"}</p>
+                  <p className="mt-0.5 font-heading font-medium">
+                    {[driver?.basicInformation?.firstName, driver?.basicInformation?.lastName]
+                      .filter(Boolean)
+                      .join(" ") || driver?.username || "—"}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
                   <p className="mt-0.5 font-heading font-medium">{driver?.mobileNumber || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Gender</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.basicInformation?.gender || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">WhatsApp</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.basicInformation?.whatsApp || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</p>
+                  <p className="mt-0.5 font-heading font-medium">
+                    {driver?.basicInformation?.email || driver?.email || "—"}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">City</p>

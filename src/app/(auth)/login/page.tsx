@@ -7,10 +7,12 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearAuthError, loginUserThunk } from "@/store/slices/authSlice";
+import { generateAdminOtp } from "@/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 
 const loginSchema = z.object({
   mobileNumber: z.string().min(8, "Enter a valid mobile number"),
@@ -22,14 +24,15 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { success: toastSuccess, error: toastError } = useToast();
   const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
   const [showOtpField, setShowOtpField] = useState(false);
+  const [otpGenerating, setOtpGenerating] = useState(false);
   const otpInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
     handleSubmit,
-    getValues,
     setError,
     formState: { errors }
   } = useForm<LoginFormValues>({
@@ -54,8 +57,17 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginFormValues) => {
     if (!showOtpField) {
-      setShowOtpField(true);
-      setTimeout(() => otpInputRef.current?.focus(), 0);
+      setOtpGenerating(true);
+      try {
+        await generateAdminOtp({ mobileNumber: values.mobileNumber.trim() });
+        toastSuccess("Your OTP is generated successfully.");
+        setShowOtpField(true);
+        setTimeout(() => otpInputRef.current?.focus(), 0);
+      } catch (err) {
+        toastError(err instanceof Error ? err.message : "Failed to generate OTP.");
+      } finally {
+        setOtpGenerating(false);
+      }
       return;
     }
 
@@ -101,15 +113,6 @@ export default function LoginPage() {
               type="text"
               placeholder="03002234519"
               autoComplete="tel"
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !showOtpField) {
-                  event.preventDefault();
-                  const mobile = getValues("mobileNumber")?.trim() ?? "";
-                  if (mobile.length < 8) return;
-                  setShowOtpField(true);
-                  setTimeout(() => otpInputRef.current?.focus(), 0);
-                }
-              }}
               {...register("mobileNumber")}
             />
           </FormField>
@@ -142,9 +145,15 @@ export default function LoginPage() {
           <Button
             type="submit"
             className="mt-2 w-full"
-            disabled={loading}
+            disabled={loading || otpGenerating}
           >
-            {loading ? "Signing in..." : showOtpField ? "Login" : "Continue"}
+            {showOtpField
+              ? loading
+                ? "Signing in..."
+                : "Login"
+              : otpGenerating
+                ? "Generating OTP..."
+                : "Continue"}
           </Button>
         </form>
 

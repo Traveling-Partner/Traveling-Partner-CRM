@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { decodeToken } from "@/lib/decodeToken";
 import {
   LOGIN_ROUTE,
+  normalizeRole,
   getRedirectForRoleOnProtectedRoute
 } from "@/lib/rbac";
 
@@ -91,7 +92,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       return;
     }
 
-    if (allowedRoles && !allowedRoles.includes(decoded.role)) {
+    const normalizedDecodedRole = normalizeRole(decoded.role);
+    const normalizedAllowedRoles = allowedRoles?.map((role) => normalizeRole(role));
+    if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(normalizedDecodedRole)) {
       router.replace("/403");
       return;
     }

@@ -173,7 +173,22 @@ export default function AdminCarouselListPage() {
             </Button>
           }
         >
-          <div className="mb-3 flex justify-end">
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Loading banners...</div>
+          ) : pageRows.length === 0 ? (
+            <EmptyState
+              title="No banners found"
+              description="Create a banner to start building your app carousel."
+            />
+          ) : (
+            <DataTable
+              columns={columns}
+              data={pageRows}
+              getRowId={(row) => String(row.id)}
+            />
+          )}
+
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {
@@ -191,31 +206,12 @@ export default function AdminCarouselListPage() {
                 <SelectItem value="50">50 / page</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading banners...</div>
-          ) : pageRows.length === 0 ? (
-            <EmptyState
-              title="No banners found"
-              description="Create a banner to start building your app carousel."
+            <PaginationControls
+              currentPage={Math.min(page + 1, totalPages)}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => setPage(nextPage - 1)}
             />
-          ) : (
-            <DataTable
-              columns={columns}
-              data={pageRows}
-              getRowId={(row) => String(row.id)}
-            />
-          )}
-
-          <div className="mt-3 text-xs text-muted-foreground">
-            Showing {rows.length ? page * pageSize + 1 : 0} -{" "}
-            {Math.min((page + 1) * pageSize, rows.length)} of {rows.length}
           </div>
-          <PaginationControls
-            currentPage={Math.min(page + 1, totalPages)}
-            totalPages={totalPages}
-            onPageChange={(nextPage) => setPage(nextPage - 1)}
-          />
         </SectionCard>
 
         <ConfirmDialog

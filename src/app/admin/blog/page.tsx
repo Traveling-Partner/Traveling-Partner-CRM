@@ -361,6 +361,22 @@ export default function AdminBlogPage() {
                 <SelectItem value="ACTIVE">Active</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+          ) : rows.length === 0 ? (
+            <EmptyState
+              title="No posts found"
+              description="Try another search or status filter."
+            />
+          ) : (
+            <DataTable
+              columns={columns}
+              data={rows}
+              getRowId={(row) => String(row.id)}
+            />
+          )}
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {
@@ -378,33 +394,12 @@ export default function AdminBlogPage() {
                 <SelectItem value="50">50 / page</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
-          ) : rows.length === 0 ? (
-            <EmptyState
-              title="No posts found"
-              description="Try another search or status filter."
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p - 1)}
             />
-          ) : (
-            <DataTable
-              columns={columns}
-              data={rows}
-              getRowId={(row) => String(row.id)}
-            />
-          )}
-          <div className="mt-3 text-xs text-muted-foreground">
-            <span>
-              Showing{" "}
-              {totalElements ? page * pageSize + 1 : 0} –{" "}
-              {Math.min((page + 1) * pageSize, totalElements)} of {totalElements}
-            </span>
           </div>
-          <PaginationControls
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
-          />
         </SectionCard>
 
         <ConfirmDialog
