@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { fetcher } from "@/lib/fetcher";
 import { useAppSelector } from "@/store/hooks";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+// import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import {
   LineChart,
   Line,
@@ -68,7 +68,10 @@ interface AuditLogsResponse {
 }
 
 const DASHBOARD_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
-const RECENT_ACTIVITY_PAGE_SIZE = 8;
+/** Most recent audit rows to show (single fetch, no pagination UI). */
+const RECENT_ACTIVITY_LIMIT = 10;
+// Pagination (restore when bringing back PaginationControls + page state):
+// const RECENT_ACTIVITY_PAGE_SIZE = 10;
 
 export default function AdminDashboardPage() {
   const token = useAppSelector((state) => state.auth.token);
@@ -94,8 +97,8 @@ export default function AdminDashboardPage() {
     { status: "COMPLETED", count: 0 }
   ]);
   const [recentActivity, setRecentActivity] = useState<AuditLogItem[]>([]);
-  const [recentActivityPage, setRecentActivityPage] = useState(0);
-  const [recentActivityTotalPages, setRecentActivityTotalPages] = useState(1);
+  // const [recentActivityPage, setRecentActivityPage] = useState(0);
+  // const [recentActivityTotalPages, setRecentActivityTotalPages] = useState(1);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -115,7 +118,7 @@ export default function AdminDashboardPage() {
           { token }
         ),
         fetcher<AuditLogsResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/audit-logs/getAll?page=${recentActivityPage}&size=${RECENT_ACTIVITY_PAGE_SIZE}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/audit-logs/getAll?page=0&size=${RECENT_ACTIVITY_LIMIT}`,
           { token }
         )
         ]);
@@ -133,11 +136,13 @@ export default function AdminDashboardPage() {
         { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
         { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
       ]);
-      const sortedActivity = [...(auditLogsRes.content ?? [])].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      const sortedActivity = [...(auditLogsRes.content ?? [])]
+        .sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, RECENT_ACTIVITY_LIMIT);
       setRecentActivity(sortedActivity);
-      setRecentActivityTotalPages(Math.max(1, auditLogsRes.totalPages || 1));
+      // setRecentActivityTotalPages(Math.max(1, auditLogsRes.totalPages || 1));
     } catch {
       setCounts({
         totalDrivers: 0,
@@ -159,9 +164,9 @@ export default function AdminDashboardPage() {
         { status: "COMPLETED", count: 0 }
       ]);
       setRecentActivity([]);
-      setRecentActivityTotalPages(1);
+      // setRecentActivityTotalPages(1);
     }
-  }, [token, recentActivityPage]);
+  }, [token]);
 
   useEffect(() => {
     let mounted = true;
@@ -368,11 +373,13 @@ export default function AdminDashboardPage() {
               ))
             )}
           </div>
+          {/*
           <PaginationControls
             currentPage={recentActivityPage + 1}
             totalPages={recentActivityTotalPages}
             onPageChange={(p) => setRecentActivityPage(p - 1)}
           />
+          */}
         </SectionCard>
       </PageContainer>
     </AppShell>
