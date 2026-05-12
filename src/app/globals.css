@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
+  --background: 0 0% 98%;
   --foreground: 222.2 84% 4.9%;
 
   --primary: 46 100% 52%;
@@ -13,7 +13,7 @@
   --secondary-foreground: 222.2 47.4% 11.2%;
 
   --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted-foreground: 215.4 16.3% 42%;
 
   --accent: 210 40% 96.1%;
   --accent-foreground: 222.2 47.4% 11.2%;
@@ -21,9 +21,9 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+  --border: 214.3 31.8% 88%;
+  --input: 214.3 31.8% 88%;
+  --ring: 46 100% 52%;
 
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
@@ -32,6 +32,19 @@
   --popover-foreground: 222.2 84% 4.9%;
 
   --radius: 0.75rem;
+
+  --brand-from: #fce001;
+  --brand-to: #fdb813;
+  --brand-light: rgba(253, 184, 19, 0.08);
+  --brand-light-hover: rgba(253, 184, 19, 0.14);
+  --brand-light-active: rgba(253, 184, 19, 0.2);
+  --brand-focus-ring: rgba(253, 184, 19, 0.35);
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.04);
 }
 
 .dark {
@@ -55,28 +68,111 @@
 
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+  --ring: 46 100% 52%;
 
   --card: 222.2 84% 6%;
   --card-foreground: 210 40% 98%;
 
   --popover: 222.2 84% 6%;
   --popover-foreground: 210 40% 98%;
+
+  --brand-light: rgba(253, 184, 19, 0.06);
+  --brand-light-hover: rgba(253, 184, 19, 0.1);
+  --brand-light-active: rgba(253, 184, 19, 0.16);
+  --brand-focus-ring: rgba(253, 184, 19, 0.3);
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -2px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.2);
 }
 
-body {
-  @apply font-body;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-body antialiased;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  html.dark body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight text-foreground;
+  }
+
+  h1 { @apply text-2xl font-bold sm:text-3xl; }
+  h2 { @apply text-xl font-semibold sm:text-2xl; }
+  h3 { @apply text-lg font-semibold; }
+  h4 { @apply text-base font-semibold; }
+
+  p {
+    @apply leading-relaxed;
+  }
 }
 
-/* Ensure dark theme applies to body when .dark is on html */
-html.dark body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+@layer components {
+  .premium-card {
+    @apply rounded-xl border border-border bg-card transition-colors duration-200;
+  }
+
+  .brand-hover {
+    @apply transition-colors duration-150;
+  }
+  .brand-hover:hover {
+    background-color: var(--brand-light-hover);
+  }
+  .brand-hover:active {
+    background-color: var(--brand-light-active);
+  }
+
+  .brand-focus {
+    @apply outline-none;
+  }
+  .brand-focus:focus-visible {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--brand-focus-ring);
+  }
 }
 
-/* Breadcrumbs: no list numbers or bullets (works even before Tailwind utilities load) */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-brand {
+    scrollbar-color: #fdb813 transparent;
+  }
+  .scrollbar-brand::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-brand::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-brand::-webkit-scrollbar-thumb {
+    background: #fdb813;
+    border-radius: 100px;
+  }
+  .scrollbar-brand::-webkit-scrollbar-thumb:hover {
+    background: #fce001;
+  }
+}
+
+/* Breadcrumbs: no list numbers or bullets */
 nav[aria-label="Breadcrumb"] ol,
 nav[aria-label="Breadcrumb"] ol li,
 ol.breadcrumb-list,
@@ -100,3 +196,30 @@ nav[aria-label="Breadcrumb"] ol {
   animation: ride-route-dash 22s linear infinite;
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out both;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }

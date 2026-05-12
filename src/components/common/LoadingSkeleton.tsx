@@ -1,19 +1,23 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface LoadingSkeletonProps {
   lines?: number;
+  className?: string;
 }
 
-export function LoadingSkeleton({ lines = 3 }: LoadingSkeletonProps) {
+export function LoadingSkeleton({ lines = 3, className }: LoadingSkeletonProps) {
   return (
-    <div className="space-y-3">
+    <div className={cn("space-y-3", className)}>
       {Array.from({ length: lines }).map((_, index) => (
         <Skeleton
           key={index}
-          className="h-4 w-full rounded-md bg-muted/80 last:w-2/3"
+          className={cn(
+            "h-4 rounded-lg",
+            index === lines - 1 ? "w-2/3" : "w-full"
+          )}
         />
       ))}
     </div>
   );
 }
-

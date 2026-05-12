@@ -41,22 +41,22 @@ export function ConfirmDialog({
         <DialogHeader className="items-start text-left">
           <div className="flex items-start gap-3">
             {icon && (
-              <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-300 ring-1 ring-amber-500/20">
                 {icon}
               </div>
             )}
             <div>
               <DialogTitle>{title}</DialogTitle>
               {description && (
-                <DialogDescription className="mt-1">
+                <DialogDescription className="mt-1.5">
                   {description}
                 </DialogDescription>
               )}
             </div>
           </div>
         </DialogHeader>
-        {children && <div className="mt-3">{children}</div>}
-        <DialogFooter className="mt-4">
+        {children && <div className="mt-2">{children}</div>}
+        <DialogFooter className="mt-4 gap-2">
           <DialogClose asChild>
             <Button variant="outline">{cancelLabel}</Button>
           </DialogClose>
@@ -74,4 +74,3 @@ export function ConfirmDialog({
     </Dialog>
   );
 }
-

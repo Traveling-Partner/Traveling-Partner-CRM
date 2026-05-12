@@ -90,18 +90,18 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="border-border/70 bg-background/90 shadow-lg">
-      <CardContent className="space-y-6 pt-6">
+    <Card className="overflow-hidden">
+      <CardContent className="space-y-6 p-6 sm:p-8">
         <div>
-          <h2 className="text-lg font-heading font-semibold">
+          <h2 className="text-lg font-heading font-bold text-foreground">
             Sign in to your workspace
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Use your mobile number and OTP to access the portal.
           </p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
           <FormField
             label="Mobile Number"
             htmlFor="mobileNumber"
@@ -139,12 +139,12 @@ export default function LoginPage() {
           ) : null}
 
           {error ? (
-            <p className="text-sm text-destructive">{error}</p>
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 dark:bg-red-950/30 dark:text-red-400">{error}</p>
           ) : null}
 
           <Button
             type="submit"
-            className="mt-2 w-full"
+            className="mt-2 w-full h-11"
             disabled={loading || otpGenerating}
           >
             {showOtpField
@@ -157,21 +157,20 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="rounded-md bg-muted/40 p-3 text-[0.7rem] text-muted-foreground">
-          <p className="font-semibold text-xs text-foreground">
-            Example
+        <div className="rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+          <p className="font-semibold text-xs text-foreground mb-1.5">
+            Example credentials
           </p>
-          <ul className="mt-1 space-y-0.5">
-            <li>Mobile Number: 03002234519</li>
-            <li>OTP: 1234</li>
+          <ul className="space-y-0.5 text-muted-foreground">
+            <li>Mobile Number: <span className="font-medium text-foreground">03002234519</span></li>
+            <li>OTP: <span className="font-medium text-foreground">1234</span></li>
           </ul>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col items-center justify-between gap-2 border-t border-border/60 bg-muted/40 py-3 text-xs text-muted-foreground sm:flex-row">
-        <span>© {new Date().getFullYear()} Traveling Partner</span>
+      <CardFooter className="flex flex-col items-center justify-between gap-2 border-t border-border bg-muted/30 py-3.5 px-6 text-xs text-muted-foreground sm:flex-row">
+        <span>&copy; {new Date().getFullYear()} Traveling Partner</span>
         <span>Back-office portal for ride-hailing partners.</span>
       </CardFooter>
     </Card>
   );
 }
-

@@ -46,17 +46,17 @@ export function DataTable<TData, TValue>({
       <EmptyState
         title={emptyTitle}
         description={emptyDescription}
-        className="py-10"
+        className="py-12"
       />
     );
   }
 
   return (
-    <div className={cn("w-full overflow-hidden rounded-xl border", className)}>
+    <div className={cn("w-full overflow-hidden rounded-lg border border-border/60", className)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
                 <TableHead key={header.id}>
                   {header.isPlaceholder
@@ -88,4 +88,3 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
-
