@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Inbox } from "lucide-react";
 
 interface EmptyStateProps {
   title: string;
@@ -23,26 +22,29 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/70 bg-muted/40 px-6 py-10 text-center",
         className
       )}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/60">
-        {icon || <Inbox className="h-5 w-5 text-[#fdb813]" />}
-      </div>
+      {icon && (
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-b from-[#fce001]/80 to-[#fdb813]/80 text-slate-900 shadow-sm">
+          {icon}
+        </div>
+      )}
       <div className="space-y-1">
-        <h3 className="text-sm font-heading font-semibold text-foreground">{title}</h3>
+        <h3 className="text-sm font-heading font-semibold">{title}</h3>
         {description && (
-          <p className="mx-auto max-w-xs text-xs text-muted-foreground sm:text-sm">
+          <p className="text-xs text-muted-foreground sm:text-sm">
             {description}
           </p>
         )}
       </div>
       {actionLabel && onActionClick && (
-        <Button size="sm" onClick={onActionClick} className="mt-1">
+        <Button size="sm" onClick={onActionClick}>
           {actionLabel}
         </Button>
       )}
     </div>
   );
 }
+

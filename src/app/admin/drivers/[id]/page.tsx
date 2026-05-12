@@ -310,7 +310,7 @@ export default function AdminDriverDetailPage() {
   return (
     <AppShell title={`Driver • ${displayName}`}>
       <PageContainer>
-        <div className="mb-3 flex items-center gap-3">
+        <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin/drivers" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
@@ -329,38 +329,38 @@ export default function AdminDriverDetailPage() {
               <Skeleton className="h-32 w-full rounded-lg" />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Full name</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Full name</p>
+                  <p className="mt-0.5 font-heading font-medium">
                     {[driver?.basicInformation?.firstName, driver?.basicInformation?.lastName]
                       .filter(Boolean)
                       .join(" ") || driver?.username || "—"}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Phone</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{driver?.mobileNumber || "—"}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.mobileNumber || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Gender</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{driver?.basicInformation?.gender || "—"}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Gender</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.basicInformation?.gender || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">WhatsApp</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{driver?.basicInformation?.whatsApp || "—"}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">WhatsApp</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.basicInformation?.whatsApp || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Email</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</p>
+                  <p className="mt-0.5 font-heading font-medium">
                     {driver?.basicInformation?.email || driver?.email || "—"}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">City</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{driver?.basicInformation?.city || "—"}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">City</p>
+                  <p className="mt-0.5 font-heading font-medium">{driver?.basicInformation?.city || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
                   <div className="mt-0.5">
                     <StatusBadge status={driver?.status || "PENDING"} />
                   </div>
@@ -371,7 +371,7 @@ export default function AdminDriverDetailPage() {
 
           <SectionCard title="Approval controls">
             <div className="space-y-3 text-sm">
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground">
                 Simulate approval actions for this driver. Changes are not
                 persisted and are safe to experiment with.
               </p>
@@ -400,7 +400,7 @@ export default function AdminDriverDetailPage() {
           </SectionCard>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Documents"
             description="Driver identity and vehicle documents."
@@ -415,7 +415,7 @@ export default function AdminDriverDetailPage() {
                     onClick={() => setSelectedDocumentId(doc.id)}
                     className={`w-full rounded-xl border p-3 text-left transition-all ${
                       selectedDocument?.id === doc.id
-                        ? "border-[#fdb813]/40 bg-[var(--brand-light-hover)] shadow-sm ring-1 ring-[#fdb813]/20"
+                        ? "border-primary/60 bg-primary/10 shadow-sm"
                         : "border-border/60 bg-card hover:bg-muted/30"
                     }`}
                   >
@@ -474,7 +474,7 @@ export default function AdminDriverDetailPage() {
                             setPreviewSrc(selectedDocument?.frontUrl || fallbackImage);
                             setPreviewOpen(true);
                           }}
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                         >
                           <Eye className="h-3 w-3" />
                           Preview
@@ -482,7 +482,7 @@ export default function AdminDriverDetailPage() {
                         <a
                           href={selectedDocument?.frontUrl || fallbackImage}
                           download
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                         >
                           <Download className="h-3 w-3" />
                           Download
@@ -511,7 +511,7 @@ export default function AdminDriverDetailPage() {
                             setPreviewSrc(selectedDocument?.backUrl || fallbackImage);
                             setPreviewOpen(true);
                           }}
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                         >
                           <Eye className="h-3 w-3" />
                           Preview
@@ -519,7 +519,7 @@ export default function AdminDriverDetailPage() {
                         <a
                           href={selectedDocument?.backUrl || fallbackImage}
                           download
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                         >
                           <Download className="h-3 w-3" />
                           Download
@@ -558,8 +558,8 @@ export default function AdminDriverDetailPage() {
                   }}
                 />
               </div>
-              <div className="text-sm">
-                <div className="flex items-center justify-between py-3 border-b border-border/40">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Model</span>
                   <span className="font-medium">
                     {driver?.vehicle?.modelNumberName?.trim() ||
@@ -567,7 +567,7 @@ export default function AdminDriverDetailPage() {
                       "—"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-3 border-b border-border/40">
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Color</span>
                   <span className="font-medium">
                     {driver?.vehicle?.colorName?.trim() ||
@@ -575,7 +575,7 @@ export default function AdminDriverDetailPage() {
                       "—"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-3 border-b border-border/40 last:border-0">
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Plate</span>
                   <span className="font-medium">{driver?.vehicle?.registrationNo || "—"}</span>
                 </div>
@@ -584,7 +584,7 @@ export default function AdminDriverDetailPage() {
           </SectionCard>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
           {/* Future feature: keep ride performance section for upcoming analytics work.
           <SectionCard
             title="Ride performance"
@@ -614,7 +614,7 @@ export default function AdminDriverDetailPage() {
           >
             <ol className="space-y-3 text-xs">
               <li className="flex gap-2">
-                <div className="mt-0.5 h-2 w-2 rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813]" />
+                <div className="mt-0.5 h-2 w-2 rounded-full bg-emerald-500" />
                 <div>
                   <p className="font-medium">
                     {driver?.status || "—"} • {prettyDate(driver?.updatedAt)}

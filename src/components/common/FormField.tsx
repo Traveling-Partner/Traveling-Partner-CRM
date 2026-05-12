@@ -23,22 +23,23 @@ export function FormField({
   required
 }: FormFieldProps) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-1.5 text-sm", className)}>
       <div className="flex items-center justify-between">
-        <Label htmlFor={htmlFor} className="text-sm font-semibold text-foreground">
+        <Label htmlFor={htmlFor}>
           {label}
           {required && <span className="ml-1 text-red-500">*</span>}
         </Label>
         {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-[0.7rem] text-muted-foreground">{description}</p>
         )}
       </div>
       {children}
       {error?.message && (
-        <p className="text-xs font-medium text-red-500 flex items-center gap-1">
+        <p className="text-[0.7rem] font-medium text-red-500">
           {error.message}
         </p>
       )}
     </div>
   );
 }
+

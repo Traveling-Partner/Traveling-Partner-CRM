@@ -6,19 +6,9 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { fetcher } from "@/lib/fetcher";
-import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/store/hooks";
-import {
-  Users,
-  Briefcase,
-  UserCircle2,
-  Car,
-  TrendingUp,
-  Activity,
-  Clock
-} from "lucide-react";
+// import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import {
   LineChart,
   Line,
@@ -78,11 +68,13 @@ interface AuditLogsResponse {
 }
 
 const DASHBOARD_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+/** Most recent audit rows to show (single fetch, no pagination UI). */
 const RECENT_ACTIVITY_LIMIT = 10;
+// Pagination (restore when bringing back PaginationControls + page state):
+// const RECENT_ACTIVITY_PAGE_SIZE = 10;
 
 export default function AdminDashboardPage() {
   const token = useAppSelector((state) => state.auth.token);
-  const [isLoading, setIsLoading] = useState(true);
   const [counts, setCounts] = useState<CountsResponse>({
     totalDrivers: 0,
     totalPartners: 0,
@@ -105,6 +97,8 @@ export default function AdminDashboardPage() {
     { status: "COMPLETED", count: 0 }
   ]);
   const [recentActivity, setRecentActivity] = useState<AuditLogItem[]>([]);
+  // const [recentActivityPage, setRecentActivityPage] = useState(0);
+  // const [recentActivityTotalPages, setRecentActivityTotalPages] = useState(1);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -148,6 +142,7 @@ export default function AdminDashboardPage() {
         )
         .slice(0, RECENT_ACTIVITY_LIMIT);
       setRecentActivity(sortedActivity);
+      // setRecentActivityTotalPages(Math.max(1, auditLogsRes.totalPages || 1));
     } catch {
       setCounts({
         totalDrivers: 0,
@@ -169,8 +164,7 @@ export default function AdminDashboardPage() {
         { status: "COMPLETED", count: 0 }
       ]);
       setRecentActivity([]);
-    } finally {
-      setIsLoading(false);
+      // setRecentActivityTotalPages(1);
     }
   }, [token]);
 
@@ -205,97 +199,84 @@ export default function AdminDashboardPage() {
 
   const statusColors = ["#fdb813", "#ef4444", "#22c55e", "#3b82f6"];
 
-  const statCards = [
-    { label: "Total Drivers", value: counts.totalDrivers, icon: Users, accent: "from-blue-500/10 to-blue-600/10 dark:from-blue-500/5 dark:to-blue-600/5" },
-    { label: "Total Partners", value: counts.totalPartners, icon: Briefcase, accent: "from-emerald-500/10 to-emerald-600/10 dark:from-emerald-500/5 dark:to-emerald-600/5" },
-    { label: "Total Agents", value: counts.totalSalesAgents, icon: UserCircle2, accent: "from-violet-500/10 to-violet-600/10 dark:from-violet-500/5 dark:to-violet-600/5" },
-    { label: "Total Rides", value: counts.totalRidePlans, icon: Car, accent: "from-amber-500/10 to-amber-600/10 dark:from-amber-500/5 dark:to-amber-600/5" }
-  ];
-
   return (
     <AppShell title="Admin Dashboard">
       <PageContainer>
-        {/* Stat Cards */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-          {statCards.map((stat) => (
-            <Card key={stat.label} className="relative overflow-hidden">
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.accent}`} />
-              <CardContent className="relative flex items-center gap-3 p-3.5 sm:p-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-[#fce001] to-[#fdb813]">
-                  <stat.icon className="h-4 w-4 text-slate-900" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {stat.label}
-                  </p>
-                  {isLoading ? (
-                    <Skeleton className="mt-1 h-6 w-14" />
-                  ) : (
-                    <p className="text-xl font-heading font-bold text-foreground">
-                      {stat.value.toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
+            <CardContent className="space-y-2 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide">
+                Total Drivers
+              </p>
+              <p className="text-2xl font-heading font-semibold">
+                {counts.totalDrivers}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
+            <CardContent className="space-y-2 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide">
+                Total Partners
+              </p>
+              <p className="text-2xl font-heading font-semibold">
+                {counts.totalPartners}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
+            <CardContent className="space-y-2 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide">
+                Total Agents
+              </p>
+              <p className="text-2xl font-heading font-semibold">
+                {counts.totalSalesAgents}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
+            <CardContent className="space-y-2 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide">
+                Total Rides
+              </p>
+              <p className="text-2xl font-heading font-semibold">
+                {counts.totalRidePlans}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Driver Status Overview */}
-        <Card>
-          <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/50">
-            <div>
-              <h3 className="text-sm font-heading font-semibold text-foreground sm:text-base">Driver status overview</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Active vs suspended breakdown</p>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Activity className="h-3.5 w-3.5" />
-              <span>Live</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-            {statusRows.map((row, idx) => (
-              <div
-                key={row.label}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 py-4 px-3 text-center",
-                  idx < statusRows.length - 1 && "border-r border-border/40",
-                  "last:border-r-0"
-                )}
-              >
-                <span className="text-xl font-heading font-bold text-foreground tabular-nums">
-                  {isLoading ? <Skeleton className="h-6 w-8 mx-auto" /> : row.count}
-                </span>
-                <StatusBadge status={row.badge} />
-                <span className="text-[11px] text-muted-foreground">{row.label}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <Card className="md:col-span-3">
+            <CardContent className="space-y-3 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Active vs Suspended
+              </p>
+              {statusRows.map((row) => (
+                <div key={row.label} className="flex items-center justify-between text-sm">
+                  <span>{row.label}</span>
+                  <StatusBadge status={row.badge} />
+                  <span className="font-semibold">{row.count}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Rides Trend Chart */}
         <SectionCard
           title="Rides trend"
-          description="Daily ride volume across your active markets over the last 14 days."
-          headerAction={
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>14 days</span>
-            </div>
-          }
+          description="Daily ride volume across your active markets."
+          className="mt-6"
         >
-          <div className="h-56 sm:h-64">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={ridesTrend}>
-                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} vertical={false} />
-                <XAxis dataKey="day" tickMargin={8} tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                <XAxis dataKey="day" tickMargin={8} />
+                <YAxis allowDecimals={false} />
                 <Tooltip
                   contentStyle={{
-                    borderRadius: 12,
-                    border: "1px solid hsl(var(--border))",
-                    boxShadow: "var(--shadow-lg)",
-                    fontSize: 13
+                    borderRadius: 10,
+                    border: "1px solid hsl(var(--border))"
                   }}
                 />
                 <Legend />
@@ -304,37 +285,35 @@ export default function AdminDashboardPage() {
                   dataKey="count"
                   name="Rides"
                   stroke="#fdb813"
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
-                  activeDot={{ r: 5, strokeWidth: 2 }}
+                  strokeWidth={3}
+                  dot={{ r: 3, strokeWidth: 1 }}
+                  activeDot={{ r: 5 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </SectionCard>
 
-        {/* Ride Status Breakdown */}
         <SectionCard
           title="Ride status breakdown"
           description="Distribution of accepted, canceled, and completed rides."
+          className="mt-6"
         >
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="h-56 sm:h-64">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rideStatusBreakdown}>
-                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} vertical={false} />
-                  <XAxis dataKey="status" tickMargin={8} tick={{ fontSize: 12 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />
+                  <XAxis dataKey="status" tickMargin={8} />
+                  <YAxis allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid hsl(var(--border))",
-                      boxShadow: "var(--shadow-lg)",
-                      fontSize: 13
+                      borderRadius: 10,
+                      border: "1px solid hsl(var(--border))"
                     }}
                   />
                   <Legend />
-                  <Bar dataKey="count" name="Trips" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="count" name="Trips" radius={[6, 6, 0, 0]}>
                     {rideStatusBreakdown.map((entry, idx) => (
                       <Cell key={entry.status} fill={statusColors[idx % statusColors.length]} />
                     ))}
@@ -342,18 +321,16 @@ export default function AdminDashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="h-56 sm:h-64">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={rideStatusBreakdown}
                     dataKey="count"
                     nameKey="status"
-                    innerRadius={50}
-                    outerRadius={90}
+                    innerRadius={45}
+                    outerRadius={85}
                     paddingAngle={4}
-                    strokeWidth={2}
-                    stroke="hsl(var(--card))"
                   >
                     {rideStatusBreakdown.map((entry, idx) => (
                       <Cell key={entry.status} fill={statusColors[idx % statusColors.length]} />
@@ -367,45 +344,45 @@ export default function AdminDashboardPage() {
           </div>
         </SectionCard>
 
-        {/* Recent Activity */}
         <SectionCard
           title="Recent activity"
           description="Key administrative events across drivers, partners, and agents."
-          headerAction={
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <span>Latest</span>
-            </div>
-          }
+          className="mt-6"
         >
-          <div className="divide-y divide-border/40">
+          <div className="space-y-3">
             {recentActivity.length === 0 ? (
-              <div className="rounded-lg bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
+              <p className="rounded-lg border border-border/60 bg-muted/40 px-3 py-4 text-xs text-muted-foreground">
                 No recent activity found.
-              </div>
+              </p>
             ) : (
               recentActivity.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between gap-3 py-2.5 px-1 transition-colors duration-150 hover:bg-[var(--brand-light)] first:pt-0 last:pb-0"
+                  className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {log.description?.trim() || "—"}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {log.userType || "—"} &middot; {log.mobileNumber || "—"}
+                  <div>
+                    <p className="font-medium">{log.description?.trim() || "—"}</p>
+                    <p className="text-[0.7rem] text-muted-foreground">
+                      {log.userType || "—"} • {log.mobileNumber || "—"}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  <span className="text-[0.7rem] text-muted-foreground">
                     {format(parseISO(log.createdAt), "MMM d, HH:mm")}
                   </span>
                 </div>
               ))
             )}
           </div>
+          {/*
+          <PaginationControls
+            currentPage={recentActivityPage + 1}
+            totalPages={recentActivityTotalPages}
+            onPageChange={(p) => setRecentActivityPage(p - 1)}
+          />
+          */}
         </SectionCard>
       </PageContainer>
     </AppShell>
   );
 }
+

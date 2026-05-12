@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Download, Eye, FileText, Search, Filter } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Eye, FileText } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -479,7 +478,7 @@ export default function DocumentsQueuePage() {
          
           return (
             <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-foreground">{driverName}</p>
+              <p className="text-sm font-medium">{driverName}</p>
               <p className="text-xs text-muted-foreground">
                 {row.original.mobileNumber || "—"}
               </p>
@@ -556,21 +555,17 @@ export default function DocumentsQueuePage() {
           description="Review and act on pending driver documents before they go live."
         >
           <>
-            <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-                <Input
-                  placeholder="Search drivers…"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(0);
-                  }}
-                  className="pl-9"
-                />
-              </div>
+            <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <Input
+                placeholder="Search drivers…"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
+                className="max-w-xs"
+              />
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Filter className="h-3.5 w-3.5" /></div>
                 <Select
                   value={statusFilter}
                   onValueChange={(value) => {
@@ -594,10 +589,8 @@ export default function DocumentsQueuePage() {
             </div>
 
             {loading ? (
-              <div className="space-y-2 py-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-full rounded-md" />
-                ))}
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                Loading...
               </div>
             ) : drivers.length === 0 ? (
               <EmptyState
@@ -608,7 +601,7 @@ export default function DocumentsQueuePage() {
               <DataTable columns={columns} data={drivers} />
             )}
 
-            <div className="mt-3 border-t border-border/50 pt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Select
                 value={String(pageSize)}
                 onValueChange={(value) => {
@@ -657,7 +650,7 @@ export default function DocumentsQueuePage() {
                       }}
                       className={`w-full rounded-xl border p-3 text-left transition-all ${
                         selectedDocument?.id === doc.id
-                          ? "border-[#fdb813]/40 bg-[var(--brand-light-hover)] shadow-sm ring-1 ring-[#fdb813]/20"
+                          ? "border-primary/60 bg-primary/10 shadow-sm"
                           : "border-border/60 bg-card hover:bg-muted/30"
                       }`}
                     >
@@ -721,7 +714,7 @@ export default function DocumentsQueuePage() {
                                 `${selectedDocument?.fileName || "document"} (Front)`
                               )
                             }
-                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Eye className="h-3 w-3" />
                             Preview
@@ -734,7 +727,7 @@ export default function DocumentsQueuePage() {
                                 `${selectedDocument?.id || "document"}-front.jpg`
                               )
                             }
-                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Download className="h-3 w-3" />
                             Download
@@ -770,7 +763,7 @@ export default function DocumentsQueuePage() {
                                 `${selectedDocument?.fileName || "document"} (Back)`
                               )
                             }
-                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Eye className="h-3 w-3" />
                             Preview
@@ -783,7 +776,7 @@ export default function DocumentsQueuePage() {
                                 `${selectedDocument?.id || "document"}-back.jpg`
                               )
                             }
-                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-[var(--brand-light-hover)] transition-colors duration-150"
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
                           >
                             <Download className="h-3 w-3" />
                             Download

@@ -33,14 +33,12 @@ export function ToastProvider() {
       toastOptions={{
         duration: 3500,
         style: {
-          background: "linear-gradient(135deg, #fce001 0%, #fdb813 100%)",
+          background: "linear-gradient(90deg, #fce001 0%, #fdb813 100%)",
           color: "#0f172a",
-          border: "1px solid rgba(244,196,0,0.4)",
-          borderRadius: "0.75rem",
-          fontSize: "0.875rem",
-          fontWeight: 500,
+          border: "1px solid #f4c400",
+          borderRadius: "calc(var(--radius) - 2px)",
           boxShadow:
-            "0 10px 25px -5px rgba(253,184,19,0.2), 0 8px 10px -6px rgba(0,0,0,0.1)"
+            "0 10px 30px -12px rgba(15,23,42,0.35), 0 8px 12px -8px rgba(15,23,42,0.25)"
         },
         success: {
           iconTheme: {
@@ -58,3 +56,4 @@ export function ToastProvider() {
     />
   );
 }
+

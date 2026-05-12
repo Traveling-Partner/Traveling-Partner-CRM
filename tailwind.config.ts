@@ -13,9 +13,6 @@ const config: Config = {
         heading: ["var(--font-poppins)"],
         body: ["var(--font-montserrat)"]
       },
-      fontSize: {
-        "2xs": ["0.65rem", { lineHeight: "1rem" }]
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -56,13 +53,6 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)"
       },
-      boxShadow: {
-        "premium-xs": "var(--shadow-xs)",
-        "premium-sm": "var(--shadow-sm)",
-        "premium-md": "var(--shadow-md)",
-        "premium-lg": "var(--shadow-lg)",
-        "premium-xl": "var(--shadow-xl)"
-      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -71,21 +61,11 @@ const config: Config = {
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" }
-        },
-        "fade-in": {
-          from: { opacity: "0", transform: "translateY(4px)" },
-          to: { opacity: "1", transform: "translateY(0)" }
-        },
-        "slide-up": {
-          from: { opacity: "0", transform: "translateY(8px)" },
-          to: { opacity: "1", transform: "translateY(0)" }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.3s ease-out both",
-        "slide-up": "slide-up 0.35s ease-out both"
+        "accordion-up": "accordion-up 0.2s ease-out"
       }
     }
   },
@@ -93,3 +73,4 @@ const config: Config = {
 };
 
 export default config;
+
