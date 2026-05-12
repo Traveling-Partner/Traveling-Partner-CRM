@@ -337,7 +337,7 @@ export default function AdminBlogPage() {
             </Button>
           }
         >
-          <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <Input
               placeholder="Search by title…"
               value={search}
@@ -363,7 +363,11 @@ export default function AdminBlogPage() {
             </Select>
           </div>
           {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted/60" />
+              ))}
+            </div>
           ) : rows.length === 0 ? (
             <EmptyState
               title="No posts found"
@@ -376,7 +380,7 @@ export default function AdminBlogPage() {
               getRowId={(row) => String(row.id)}
             />
           )}
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-3 flex flex-col gap-2 border-t border-border/50 pt-3 sm:flex-row sm:items-center sm:justify-between">
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {

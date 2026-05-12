@@ -174,7 +174,11 @@ export default function AdminCarouselListPage() {
           }
         >
           {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading banners...</div>
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-14 w-full animate-pulse rounded-md bg-muted/60" />
+              ))}
+            </div>
           ) : pageRows.length === 0 ? (
             <EmptyState
               title="No banners found"
@@ -188,7 +192,7 @@ export default function AdminCarouselListPage() {
             />
           )}
 
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-3 flex flex-col gap-2 border-t border-border/50 pt-3 sm:flex-row sm:items-center sm:justify-between">
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {

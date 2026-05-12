@@ -16,8 +16,10 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { Search, Filter } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { fetcher } from "@/lib/fetcher";
 
@@ -88,7 +90,7 @@ export default function AdminPartnersPage() {
         const displayName = row.original.name || "—";
         return (
           <div className="space-y-0.5">
-            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-sm font-semibold text-foreground">{displayName}</p>
             <p className="text-xs text-muted-foreground">
               {row.original.mobileNumber || "—"}
             </p>
@@ -105,7 +107,7 @@ export default function AdminPartnersPage() {
       accessorKey: "createdAt",
       header: "Created",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm text-foreground">
           {row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : "—"}
         </span>
       )
@@ -136,17 +138,21 @@ export default function AdminPartnersPage() {
           title="Partner management"
           description="Manage fleet and corporate partners across your operating regions."
         >
-          <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <Input
-              placeholder="Search partners…"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(0);
-              }}
-              className="max-w-xs"
-            />
+          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search partners…"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
+                className="pl-9"
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
@@ -171,12 +177,16 @@ export default function AdminPartnersPage() {
           </div>
 
           {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md" />
+              ))}
+            </div>
           ) : (
             <DataTable columns={columns} data={partnerRows} />
           )}
 
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 pt-3">
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {
