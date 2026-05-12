@@ -472,30 +472,35 @@ export default function DocumentsQueuePage() {
       {
         accessorKey: "name",
         header: "Driver",
-          cell: ({ row }) => {
-          const driverName =
-             row.original.name || row.original.username || "—";
-
-         
+        cell: ({ row }) => {
+          const driverName = row.original.name || row.original.username || "—";
+          const initials = driverName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
           return (
-            <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-foreground">{driverName}</p>
-              <p className="text-xs text-muted-foreground">
-                {row.original.mobileNumber || "—"}
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-200 text-[11px] font-bold text-amber-700 dark:from-amber-800 dark:to-amber-900 dark:text-amber-300">
+                {initials || "?"}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{driverName}</p>
+                <p className="text-[11px] text-muted-foreground">{row.original.mobileNumber || "—"}</p>
+              </div>
             </div>
           );
         }
       },
       {
         accessorKey: "cnicNumber",
-        header: "CNIC Number",
-        cell: ({ row }) => row.original.cnicNumber || "—"
+        header: "CNIC",
+        cell: ({ row }) => (
+          <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
+        )
       },
       {
         accessorKey: "email",
         header: "Email",
-        cell: ({ row }) => row.original.email || "—"
+        cell: ({ row }) => (
+          <span className="text-[13px] text-muted-foreground">{row.original.email || "—"}</span>
+        )
       },
       {
         accessorKey: "status",
@@ -516,10 +521,11 @@ export default function DocumentsQueuePage() {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground"
                 onClick={() => void openPreview(row.original)}
               >
-                Preview
+                Preview →
               </Button>
               {!isFinalDecisionStatus(documentStatus) ? (
                 <Select

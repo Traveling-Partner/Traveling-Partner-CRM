@@ -30,10 +30,10 @@ export function ManagementTable<T>({
   emptyLabel = "No data found."
 }: ManagementTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/70">
+    <div className="overflow-hidden rounded-lg border border-border/50 bg-card">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
+          <TableRow className="hover:bg-transparent border-0">
             {columns.map((column) => (
               <TableHead key={column.key} className={column.className}>
                 {column.header}

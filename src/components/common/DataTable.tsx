@@ -52,11 +52,11 @@ export function DataTable<TData, TValue>({
   }
 
   return (
-    <div className={cn("w-full overflow-hidden rounded-lg border border-border/60", className)}>
+    <div className={cn("w-full overflow-hidden rounded-lg border border-border/50 bg-card", className)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="hover:bg-transparent">
+            <TableRow key={headerGroup.id} className="hover:bg-transparent border-0">
               {headerGroup.headers.map((header) => (
                 <TableHead key={header.id}>
                   {header.isPlaceholder
