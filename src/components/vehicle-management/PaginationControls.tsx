@@ -8,13 +8,11 @@ interface PaginationControlsProps {
 }
 
 function getPageNumbers(current: number, total: number): (number | "...")[] {
-  if (total <= 5) {
+  if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
 
-  const pages: (number | "...")[] = [];
-
-  pages.push(1);
+  const pages: (number | "...")[] = [1];
 
   if (current > 3) pages.push("...");
 
@@ -44,21 +42,27 @@ export function PaginationControls({
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <nav className="flex items-center gap-1" aria-label="Pagination">
+    <nav
+      className="inline-flex items-center gap-0.5 rounded-lg border border-border/50 bg-muted/20 p-1"
+      aria-label="Pagination"
+    >
       <button
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-all hover:bg-background hover:text-foreground hover:shadow-sm disabled:pointer-events-none disabled:opacity-30"
         aria-label="Previous page"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-3.5 w-3.5" />
       </button>
 
       {pageNumbers.map((page, idx) =>
         page === "..." ? (
-          <span key={`dots-${idx}`} className="flex h-8 w-8 items-center justify-center text-xs text-muted-foreground">
-            &hellip;
+          <span
+            key={`dots-${idx}`}
+            className="flex h-7 w-5 items-center justify-center text-[11px] text-muted-foreground/50 select-none"
+          >
+            ···
           </span>
         ) : (
           <button
@@ -66,10 +70,10 @@ export function PaginationControls({
             type="button"
             onClick={() => onPageChange(page)}
             className={cn(
-              "inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-xs font-medium transition-all",
+              "inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-md px-1.5 text-xs font-medium transition-all",
               page === currentPage
                 ? "bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm"
             )}
           >
             {page}
@@ -81,10 +85,10 @@ export function PaginationControls({
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-all hover:bg-background hover:text-foreground hover:shadow-sm disabled:pointer-events-none disabled:opacity-30"
         aria-label="Next page"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-3.5 w-3.5" />
       </button>
     </nav>
   );
