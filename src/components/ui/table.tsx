@@ -5,11 +5,11 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto scrollbar-thin scrollbar-brand rounded-lg">
+  <div className="relative w-full overflow-auto scrollbar-thin scrollbar-brand">
     <table
       ref={ref}
       className={cn(
-        "w-full caption-bottom text-sm border-separate border-spacing-0",
+        "w-full caption-bottom text-sm",
         className
       )}
       {...props}
@@ -24,7 +24,7 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("[&_tr]:border-b [&_tr]:border-border", className)}
+    className={cn("", className)}
     {...props}
   />
 ));
@@ -49,8 +49,8 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b border-border/60 transition-colors duration-150",
-      "hover:bg-[var(--brand-light)] data-[state=selected]:bg-[var(--brand-light-hover)]",
+      "border-b border-border/40 transition-colors duration-150",
+      "hover:bg-muted/30 data-[state=selected]:bg-[var(--brand-light)]",
       className
     )}
     {...props}
@@ -65,8 +65,8 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-9 px-4 text-left align-middle text-[11px] font-semibold text-muted-foreground uppercase tracking-wider",
-      "bg-muted/40 first:rounded-tl-lg last:rounded-tr-lg",
+      "h-10 px-4 text-left align-middle text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider",
+      "bg-muted/30 border-b border-border/50",
       className
     )}
     {...props}
@@ -80,7 +80,7 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("px-4 py-2.5 align-middle text-sm text-foreground", className)}
+    className={cn("px-4 py-3 align-middle text-sm", className)}
     {...props}
   />
 ));

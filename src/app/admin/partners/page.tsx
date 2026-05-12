@@ -88,12 +88,16 @@ export default function AdminPartnersPage() {
       header: "Partner",
       cell: ({ row }) => {
         const displayName = row.original.name || "—";
+        const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
         return (
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-foreground">{displayName}</p>
-            <p className="text-xs text-muted-foreground">
-              {row.original.mobileNumber || "—"}
-            </p>
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 text-[11px] font-bold text-emerald-700 dark:from-emerald-800 dark:to-emerald-900 dark:text-emerald-300">
+              {initials || "?"}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+              <p className="text-[11px] text-muted-foreground">{row.original.mobileNumber || "—"}</p>
+            </div>
           </div>
         );
       }
@@ -107,7 +111,7 @@ export default function AdminPartnersPage() {
       accessorKey: "createdAt",
       header: "Created",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">
+        <span className="text-[12px] text-muted-foreground tabular-nums">
           {row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : "—"}
         </span>
       )
@@ -116,15 +120,14 @@ export default function AdminPartnersPage() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/admin/partners/${row.original.id}`)}
-          >
-            View
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => router.push(`/admin/partners/${row.original.id}`)}
+        >
+          View →
+        </Button>
       )
     }
     ],

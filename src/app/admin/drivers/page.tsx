@@ -89,10 +89,16 @@ export default function AdminDriversPage() {
       cell: ({ row }) => {
         const d = row.original;
         const displayName = d.name || d.username || "—";
+        const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
         return (
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-foreground">{displayName}</p>
-            <p className="text-xs text-muted-foreground">{d.mobileNumber}</p>
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[11px] font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
+              {initials || "?"}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+              <p className="text-[11px] text-muted-foreground">{d.mobileNumber}</p>
+            </div>
           </div>
         );
       }
@@ -101,14 +107,14 @@ export default function AdminDriversPage() {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.email || "—"}</span>
+        <span className="text-[13px] text-muted-foreground">{row.original.email || "—"}</span>
       )
     },
     {
       accessorKey: "cnicNumber",
-      header: "CNIC Number",
+      header: "CNIC",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
+        <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
       )
     },
     {
@@ -120,7 +126,7 @@ export default function AdminDriversPage() {
       accessorKey: "createdAt",
       header: "Created",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-[12px] text-muted-foreground tabular-nums">
           {row.original.createdAt
             ? new Date(row.original.createdAt).toLocaleDateString()
             : "—"}
@@ -132,11 +138,12 @@ export default function AdminDriversPage() {
       header: "",
       cell: ({ row }) => (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground"
           onClick={() => router.push(`/admin/drivers/${row.original.id}`)}
         >
-          View
+          View →
         </Button>
       )
     }

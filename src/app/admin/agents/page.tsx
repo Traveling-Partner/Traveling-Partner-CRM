@@ -80,25 +80,34 @@ export default function AdminAgentsPage() {
     {
       accessorKey: "name",
       header: "Agent",
-      cell: ({ row }) => (
-        <div className="space-y-0.5">
-          <p className="text-sm font-semibold text-foreground">{row.original.name || "—"}</p>
-          <p className="text-xs text-muted-foreground">{row.original.email || "—"}</p>
-        </div>
-      )
+      cell: ({ row }) => {
+        const name = row.original.name || "—";
+        const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+        return (
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-violet-200 text-[11px] font-bold text-violet-700 dark:from-violet-800 dark:to-violet-900 dark:text-violet-300">
+              {initials || "?"}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{name}</p>
+              <p className="text-[11px] text-muted-foreground">{row.original.email || "—"}</p>
+            </div>
+          </div>
+        );
+      }
     },
     {
       accessorKey: "mobileNumber",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.mobileNumber || "—"}</span>
+        <span className="text-[13px] text-muted-foreground">{row.original.mobileNumber || "—"}</span>
       )
     },
     {
       accessorKey: "cnicNumber",
-      header: "CNIC Number",
+      header: "CNIC",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.cnicNumber || "—"}</span>
+        <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
       )
     },
     {
@@ -106,25 +115,18 @@ export default function AdminAgentsPage() {
       header: "Status",
       cell: ({ row }) => <StatusBadge status={row.original.status} />
     },
-    // Future use: keep onboarded column config for upcoming metrics work.
-    // {
-    //   id: "metrics",
-    //   header: "Onboarded",
-    //   cell: () => <span className="text-xs text-muted-foreground">—</span>
-    // },
     {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/admin/agents/${row.original.id}`)}
-          >
-            View
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => router.push(`/admin/agents/${row.original.id}`)}
+        >
+          View →
+        </Button>
       )
     }
   ];
