@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function toTitle(segment: string): string {
@@ -37,20 +37,21 @@ export function Breadcrumbs() {
         <li>
           <Link
             href="/"
-            className="transition-colors hover:text-foreground"
+            className="flex items-center gap-1 transition-colors duration-150 hover:text-foreground"
           >
-            Home
+            <Home className="h-3 w-3" />
+            <span className="sr-only sm:not-sr-only">Home</span>
           </Link>
         </li>
         {items.map((item) => (
           <li key={item.href} className="flex items-center gap-1">
-            <ChevronRight className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-40" aria-hidden />
             {item.isLast ? (
-              <span className="font-medium text-foreground">{item.label}</span>
+              <span className="font-semibold text-foreground">{item.label}</span>
             ) : (
               <Link
                 href={item.href}
-                className="transition-colors hover:text-foreground"
+                className="transition-colors duration-150 hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -61,4 +62,3 @@ export function Breadcrumbs() {
     </nav>
   );
 }
-

@@ -11,9 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { useAppSelector } from "@/store/hooks";
 import { fetcher } from "@/lib/fetcher";
+import { Search, Filter } from "lucide-react";
 
 interface DriverRow {
   id: number;
@@ -89,7 +91,7 @@ export default function AdminDriversPage() {
         const displayName = d.name || d.username || "—";
         return (
           <div className="space-y-0.5">
-            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-sm font-semibold text-foreground">{displayName}</p>
             <p className="text-xs text-muted-foreground">{d.mobileNumber}</p>
           </div>
         );
@@ -99,14 +101,14 @@ export default function AdminDriversPage() {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.email || "—"}</span>
+        <span className="text-sm text-foreground">{row.original.email || "—"}</span>
       )
     },
     {
       accessorKey: "cnicNumber",
       header: "CNIC Number",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.cnicNumber || "—"}</span>
+        <span className="text-sm text-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
       )
     },
     {
@@ -118,7 +120,7 @@ export default function AdminDriversPage() {
       accessorKey: "createdAt",
       header: "Created",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground tabular-nums">
           {row.original.createdAt
             ? new Date(row.original.createdAt).toLocaleDateString()
             : "—"}
@@ -147,19 +149,26 @@ export default function AdminDriversPage() {
           title="Driver directory"
           description="Search, filter, and review all drivers in your Traveling Partner network."
         >
-          <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <Input
-              placeholder="Search by name or phone…"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="max-w-xs"
-            />
+          {/* Filters */}
+          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+              <Input
+                placeholder="Search by name or phone..."
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Filter className="h-3.5 w-3.5" />
+              </div>
               <Select
                 value={statusFilter}
                 onValueChange={(v) => { setPage(0); setStatusFilter(v); }}
               >
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-36">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,15 +183,19 @@ export default function AdminDriversPage() {
             </div>
           </div>
 
+          {/* Table */}
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-              Loading…
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md" />
+              ))}
             </div>
           ) : (
             <DataTable columns={columns} data={drivers} />
           )}
 
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Pagination footer */}
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 pt-3">
             <Select
               value={String(pageSize)}
               onValueChange={(v) => {

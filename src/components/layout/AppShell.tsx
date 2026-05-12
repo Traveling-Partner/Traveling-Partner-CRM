@@ -27,8 +27,8 @@ export function AppShell({ children, title, allowedRoles }: AppShellProps) {
 
   return (
     <ProtectedRoute allowedRoles={routeRoles}>
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/80 to-slate-100 dark:from-slate-950 dark:via-slate-950/95 dark:to-slate-950">
-        {/* Fixed sidebar: always left, never reflows */}
+      <div className="min-h-screen bg-[hsl(220,20%,97%)] dark:bg-slate-950">
+        {/* Fixed sidebar */}
         <aside
           className={cn(
             "fixed inset-y-0 left-0 z-30 hidden transition-[width] duration-200 ease-out md:block",
@@ -44,7 +44,7 @@ export function AppShell({ children, title, allowedRoles }: AppShellProps) {
           />
         </aside>
 
-        {/* Main content: offset by sidebar width so it never overlaps */}
+        {/* Main content area */}
         <div
           className={cn(
             "flex min-h-screen flex-col transition-[margin] duration-200 ease-out",
@@ -56,8 +56,8 @@ export function AppShell({ children, title, allowedRoles }: AppShellProps) {
             onToggleSidebarMobile={() => setMobileOpen((prev) => !prev)}
           />
 
-          <main className="min-w-0 flex-1 px-3 py-4 md:px-6 md:py-6">
-            <div className="mx-auto flex h-full max-w-6xl flex-col gap-4">
+          <main className="min-w-0 flex-1 px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
+            <div className="mx-auto flex h-full max-w-7xl flex-col gap-4">
               {children}
             </div>
           </main>
@@ -66,4 +66,3 @@ export function AppShell({ children, title, allowedRoles }: AppShellProps) {
     </ProtectedRoute>
   );
 }
-

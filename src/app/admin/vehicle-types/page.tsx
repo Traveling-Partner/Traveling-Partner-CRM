@@ -586,10 +586,10 @@ export default function VehicleTypesPage() {
 
   return (
     <AppShell title="Vehicle types">
-      <PageContainer className="gap-5">
-        <div className="rounded-2xl border border-border/80 bg-gradient-to-r from-background to-muted/30 p-6 shadow-sm">
-          <h1 className="text-2xl font-heading font-semibold md:text-3xl">Vehicle Management</h1>
-          <p className="mt-1 text-sm text-muted-foreground md:text-base">
+      <PageContainer>
+        <div className="px-1">
+          <h1 className="text-lg font-heading font-bold text-foreground sm:text-xl">Vehicle Management</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Manage all vehicles used in the ride-hailing ecosystem.
           </p>
         </div>
@@ -603,18 +603,18 @@ export default function VehicleTypesPage() {
           </TabsList>
 
           <TabsContent value="vehicleTypes">
-            <Card className="rounded-xl border-border/80 shadow-md">
-              <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
+            <Card>
+              <CardHeader className="flex flex-col gap-3 border-b border-border/50 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-lg font-heading">Vehicle Types</CardTitle>
-                  <p className="text-sm text-muted-foreground">All ride categories with operational defaults.</p>
+                  <CardTitle>Vehicle Types</CardTitle>
+                  <p className="text-xs text-muted-foreground sm:text-sm">All ride categories with operational defaults.</p>
                 </div>
                 <Button onClick={openAddType}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Vehicle Type
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-5 pt-5">
+              <CardContent className="space-y-4 pt-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative max-w-sm">
                     <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -700,11 +700,11 @@ export default function VehicleTypesPage() {
           </TabsContent>
 
           <TabsContent value="vehicleModels">
-            <Card className="rounded-xl border-border/80 shadow-md">
-              <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
+            <Card>
+              <CardHeader className="flex flex-col gap-3 border-b border-border/50 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-lg font-heading">Vehicle Models</CardTitle>
-                  <p className="text-sm text-muted-foreground">Model years for marketplace availability.</p>
+                  <CardTitle>Vehicle Models</CardTitle>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Model years for marketplace availability.</p>
                 </div>
                 <Button onClick={openAddModel}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -781,11 +781,11 @@ export default function VehicleTypesPage() {
           </TabsContent>
 
           <TabsContent value="vehicleColors">
-            <Card className="rounded-xl border-border/80 shadow-md">
-              <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
+            <Card>
+              <CardHeader className="flex flex-col gap-3 border-b border-border/50 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-lg font-heading">Vehicle Colors</CardTitle>
-                  <p className="text-sm text-muted-foreground">Manage vehicle colors mapped to types and models.</p>
+                  <CardTitle>Vehicle Colors</CardTitle>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Manage vehicle colors mapped to types and models.</p>
                 </div>
                 <Button onClick={openAddColor}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -859,11 +859,11 @@ export default function VehicleTypesPage() {
           </TabsContent>
 
           <TabsContent value="vehicleBrands">
-            <Card className="rounded-xl border-border/80 shadow-md">
-              <CardHeader className="flex flex-col gap-3 border-b border-border/60 sm:flex-row sm:items-center sm:justify-between">
+            <Card>
+              <CardHeader className="flex flex-col gap-3 border-b border-border/50 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-lg font-heading">Vehicle Brands</CardTitle>
-                  <p className="text-sm text-muted-foreground">Manage vehicle brands mapped to vehicle types.</p>
+                  <CardTitle>Vehicle Brands</CardTitle>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Manage vehicle brands mapped to vehicle types.</p>
                 </div>
                 <Button onClick={openAddBrand}>
                   <Plus className="mr-2 h-4 w-4" />
