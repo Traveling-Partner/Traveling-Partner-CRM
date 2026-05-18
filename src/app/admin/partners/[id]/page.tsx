@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
@@ -13,36 +13,11 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
 import { useToast } from "@/components/ui/toast";
-
-interface PartnerDetailResponse {
-  id: number;
-  email: string | null;
-  username: string | null;
-  mobileNumber: string | null;
-  status: string;
-  createdAt: string | null;
-  updatedAt: string | null;
-  basicInformation?: {
-    firstName: string | null;
-    lastName: string | null;
-    gender?: string | null;
-    email?: string | null;
-    city: string | null;
-    cnicFront: string | null;
-    cnicBack: string | null;
-  } | null;
-  vehicle?: {
-    modelNumberId: number | null;
-    colorId: number | null;
-  } | null;
-}
-
-interface ApiEnvelope<T> {
-  data?: T;
-}
+import { useApiMutation } from "@/hooks/api";
+import { usePartnerDetailQuery } from "@/hooks/queries/use-partner-detail-query";
+import { queryKeys } from "@/lib/api/query-keys";
+import { updateUserStatus } from "@/services/users";
 
 interface PartnerDocument {
   id: "id-document";
@@ -60,41 +35,33 @@ const fallbackIdImage = "/mock-images/id-document.svg";
 export default function AdminPartnerDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const token = useAppSelector((state) => state.auth.token);
   const { success, error: showError } = useToast();
 
-  const [loading, setLoading] = useState(true);
-  const [partner, setPartner] = useState<PartnerDetailResponse | null>(null);
+  const { data: partner, isLoading, isError } = usePartnerDetailQuery(params.id);
+  const loading = isLoading;
+
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("id-document");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
   const [previewDownloadName, setPreviewDownloadName] = useState<string>("document.jpg");
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
-  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    const loadPartner = async () => {
-      setLoading(true);
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners/${params.id}`;
-        const response = await fetcher<PartnerDetailResponse | ApiEnvelope<PartnerDetailResponse>>(url, { token });
-        const payload =
-          response && typeof response === "object" && "data" in response && response.data
-            ? response.data
-            : (response as PartnerDetailResponse);
-        if (active) setPartner(payload);
-      } catch {
-        if (active) setPartner(null);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    void loadPartner();
-    return () => {
-      active = false;
-    };
-  }, [params.id, token]);
+  const statusMutation = useApiMutation<void, { userId: number; status: string }>({
+    mutationFn: ({ token, variables }) =>
+      updateUserStatus(variables.userId, variables.status, { token }),
+    invalidateKeys: [queryKeys.users.partnerDetail(params.id)],
+    onSuccess: (_data, variables) => {
+      setOptimisticStatus(variables.status);
+      success(variables.status === "ACTIVE" ? "Partner marked active." : "Partner marked inactive.");
+      setStatusConfirmOpen(false);
+    },
+    onError: (err) => {
+      showError(err.message);
+    }
+  });
+
+  const statusUpdating = statusMutation.isPending;
 
   const documents = useMemo<PartnerDocument[]>(() => {
     if (!partner) return [];
@@ -126,29 +93,16 @@ export default function AdminPartnerDetailPage() {
   const city = partner?.basicInformation?.city || "—";
   const gender = partner?.basicInformation?.gender || "—";
   const email = partner?.basicInformation?.email || partner?.email || "—";
-  const isActiveStatus = partner?.status === "ACTIVE" || partner?.status === "APPROVED";
+  const partnerStatus = optimisticStatus ?? partner?.status;
+  const isActiveStatus = partnerStatus === "ACTIVE" || partnerStatus === "APPROVED";
   const nextStatus: "ACTIVE" | "INACTIVE" = isActiveStatus ? "INACTIVE" : "ACTIVE";
 
-  const handleStatusConfirm = useCallback(async () => {
+  const handleStatusConfirm = () => {
     if (!partner) return;
-    setStatusUpdating(true);
-    try {
-      await fetcher(`${process.env.NEXT_PUBLIC_API_URL}/users/status/${partner.id}`, {
-        method: "PUT",
-        token,
-        body: JSON.stringify({ status: nextStatus })
-      });
-      setPartner((prev) => (prev ? { ...prev, status: nextStatus } : prev));
-      success(nextStatus === "ACTIVE" ? "Partner marked active." : "Partner marked inactive.");
-      setStatusConfirmOpen(false);
-    } catch (e) {
-      showError(e instanceof Error ? e.message : "Failed to update partner status.");
-    } finally {
-      setStatusUpdating(false);
-    }
-  }, [nextStatus, partner, showError, success, token]);
+    statusMutation.mutate({ userId: partner.id, status: nextStatus });
+  };
 
-  if (!loading && !partner) {
+  if (!loading && (isError || !partner)) {
     return (
       <AppShell title="Partner detail">
         <PageContainer>
@@ -206,7 +160,7 @@ export default function AdminPartnerDetailPage() {
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
                   <div className="mt-0.5">
-                    <StatusBadge status={partner?.status || "PENDING"} />
+                    <StatusBadge status={partnerStatus || "PENDING"} />
                   </div>
                 </div>
               </div>

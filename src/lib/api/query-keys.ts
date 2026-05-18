@@ -1,0 +1,97 @@
+/**
+ * Centralized TanStack Query keys.
+ * Always use these factories so cache invalidation stays consistent.
+ */
+export const queryKeys = {
+  auth: {
+    all: ["auth"] as const
+  },
+  dashboard: {
+    admin: () => ["dashboard", "admin"] as const
+  },
+  users: {
+    all: ["users"] as const,
+    drivers: (filters: DriversListFilters) =>
+      ["users", "drivers", "list", filters] as const,
+    driverDetail: (id: string | number) => ["users", "drivers", "detail", String(id)] as const,
+    driverDocuments: (id: string | number) =>
+      ["users", "drivers", "documents", String(id)] as const,
+    driverDocumentSummary: (id: number) =>
+      ["users", "drivers", "document-summary", id] as const,
+    partners: (filters: PartnersListFilters) =>
+      ["users", "partners", "list", filters] as const,
+    partnerDetail: (id: string | number) => ["users", "partners", "detail", String(id)] as const,
+    agents: (filters: AgentsListFilters) =>
+      ["users", "agents", "list", filters] as const,
+    agentDetail: (id: string | number) => ["users", "agents", "detail", String(id)] as const,
+    documentsQueue: (filters: DocumentsQueueFilters) =>
+      ["users", "documents", "queue", filters] as const
+  },
+  vehicle: {
+    all: ["vehicle"] as const,
+    types: (filters: VehicleTypesListFilters) => ["vehicle", "types", filters] as const,
+    models: (filters: VehicleModelsListFilters) => ["vehicle", "models", filters] as const,
+    colors: (filters: VehicleColorsListFilters) => ["vehicle", "colors", filters] as const,
+    brands: (filters: VehicleBrandsListFilters) => ["vehicle", "brands", filters] as const
+  },
+  blog: {
+    all: ["blog"] as const,
+    list: (filters: BlogListFilters) => ["blog", "list", filters] as const,
+    detail: (id: number) => ["blog", "detail", id] as const,
+    categories: () => ["blog", "categories"] as const
+  },
+  carousel: {
+    banners: () => ["carousel", "banners"] as const,
+    publishedIds: () => ["carousel", "published-ids"] as const,
+    detail: (id: number) => ["carousel", "detail", id] as const
+  },
+  audit: {
+    logs: (page: number, size: number) => ["audit", "logs", { page, size }] as const
+  }
+} as const;
+
+export interface DriversListFilters {
+  page: number;
+  pageSize: number;
+  status: string;
+  search: string;
+}
+
+export interface PartnersListFilters {
+  page: number;
+  pageSize: number;
+  status: string;
+  search: string;
+}
+
+export interface AgentsListFilters {
+  page: number;
+  pageSize: number;
+  status: string;
+  search: string;
+}
+
+export interface DocumentsQueueFilters {
+  page: number;
+  pageSize: number;
+  status: string;
+  search: string;
+}
+
+export interface BlogListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+  status: string;
+}
+
+export interface VehicleListFiltersBase {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export type VehicleTypesListFilters = VehicleListFiltersBase;
+export type VehicleModelsListFilters = VehicleListFiltersBase;
+export type VehicleColorsListFilters = VehicleListFiltersBase;
+export type VehicleBrandsListFilters = VehicleListFiltersBase;

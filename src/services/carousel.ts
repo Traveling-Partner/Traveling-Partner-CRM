@@ -79,8 +79,15 @@ function parseCarouselPage(res: unknown): Required<CarouselPageData> {
   };
 }
 
-export async function getAllBanners(token: string | null): Promise<BannerRecord[]> {
-  const res = await fetcher<unknown>(apiUrl("/banners/getAll"), { token });
+export async function getAllBanners(
+  token: string | null,
+  signal?: AbortSignal
+): Promise<BannerRecord[]> {
+  const res = await fetcher<unknown>(apiUrl("/banners/getAll"), {
+    token,
+    signal,
+    dedupe: false
+  });
   return parseBannerList(res);
 }
 
@@ -119,7 +126,10 @@ export async function deleteBanner(id: number, token: string | null) {
   });
 }
 
-export async function getCarouselPublishedIds(token: string | null): Promise<Set<number>> {
+export async function getCarouselPublishedIds(
+  token: string | null,
+  signal?: AbortSignal
+): Promise<Set<number>> {
   const publishedIds = new Set<number>();
   let page = 0;
   const size = 50;
@@ -127,7 +137,9 @@ export async function getCarouselPublishedIds(token: string | null): Promise<Set
 
   while (page < totalPages) {
     const res = await fetcher<unknown>(apiUrl(`/banners/carousel?page=${page}&size=${size}`), {
-      token
+      token,
+      signal,
+      dedupe: false
     });
     const parsed = parseCarouselPage(res);
     parsed.content.forEach((item) => publishedIds.add(item.id));

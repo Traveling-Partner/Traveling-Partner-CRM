@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
@@ -21,63 +21,13 @@ import {
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/components/ui/toast";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
+import { useApiMutation } from "@/hooks/api";
+import { useBlogListQuery } from "@/hooks/queries/use-blog-list-query";
+import { queryKeys } from "@/lib/api/query-keys";
 import { deleteBlog } from "@/services/blog";
-import { apiUrl } from "@/lib/api-base";
-
-interface BlogRow {
-  id: number;
-  coverImage?: string | null;
-  mainTitle: string | null;
-  description1?: string | null;
-  description2?: string | null;
-  date?: string | null;
-  author?: string | null;
-  readTime?: string | null;
-  tags?: string[] | null;
-  seoTitle?: string | null;
-  seoDescription?: string | null;
-  status?: string | null;
-  categoryId?: number | null;
-  categoryName?: string | null;
-  views?: number | string | null;
-  /** Some APIs use this key instead of `views` */
-  viewCount?: number | string | null;
-}
-
-interface PaginatedBlogData {
-  content: BlogRow[];
-  totalPages: number;
-  totalElements?: number;
-}
+import type { BlogRow } from "@/services/blog-list";
 
 const DEFAULT_PAGE_SIZE = 6;
-
-function parseBlogListResponse(res: unknown): PaginatedBlogData {
-  if (!res || typeof res !== "object") {
-    return { content: [], totalPages: 1 };
-  }
-  const r = res as Record<string, unknown>;
-  const payload =
-    r.data && typeof r.data === "object"
-      ? (r.data as Record<string, unknown>)
-      : r;
-
-  const content = Array.isArray(payload.content) ? payload.content : [];
-  const totalPages =
-    typeof payload.totalPages === "number" ? payload.totalPages : 1;
-  const totalElements =
-    typeof payload.totalElements === "number"
-      ? payload.totalElements
-      : undefined;
-
-  return {
-    content: content as BlogRow[],
-    totalPages,
-    totalElements
-  };
-}
 
 function formatBlogDate(value: string | null | undefined): string {
   if (!value || !String(value).trim()) return "—";
@@ -111,102 +61,60 @@ function extractViews(row: BlogRow): number | undefined {
 }
 
 export default function AdminBlogPage() {
-  const token = useAppSelector((state) => state.auth.token);
   const { success, error: toastError } = useToast();
 
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [rows, setRows] = useState<BlogRow[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(false);
+
+  const { data, isLoading, isFetching } = useBlogListQuery({
+    page,
+    pageSize,
+    status: statusFilter,
+    search
+  });
+
+  const rows = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalElements = data?.totalElements ?? rows.length;
+  const loading = isLoading || isFetching;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<BlogRow | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const deleteMutation = useApiMutation<void, number>({
+    mutationFn: async ({ token, variables: id }) => {
+      await deleteBlog(id, token);
+    },
+    invalidateKeys: [queryKeys.blog.all],
+    onSuccess: () => {
+      success("Blog deleted.");
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: (err) => {
+      toastError(err.message);
+    }
+  });
+
+  const deleteLoading = deleteMutation.isPending;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setPage(0);
-      setDebouncedSearch(value);
-    }, 400);
+    setPage(0);
   };
-
-  const fetchBlogs = useCallback(async () => {
-    setLoading(true);
-    try {
-      let url = `${apiUrl("/blog/getAll")}?page=${page}&size=${pageSize}&search=${encodeURIComponent(debouncedSearch.trim())}`;
-      if (statusFilter !== "all") {
-        url += `&status=${encodeURIComponent(statusFilter)}`;
-      }
-
-      const res = await fetcher<unknown>(url, { token });
-      const parsed = parseBlogListResponse(res);
-      const raw = Array.isArray(parsed.content) ? parsed.content : [];
-
-      if (process.env.NODE_ENV === "development") {
-        const asRows = raw as BlogRow[];
-        const sample = asRows.find((r) => r.id === 40) ?? asRows[0];
-        console.log("[Blog] list request URL →", url);
-        console.log("[Blog] NEXT_PUBLIC_API_URL →", process.env.NEXT_PUBLIC_API_URL);
-        console.log("[Blog] resolved api root (via apiUrl) matches /api/blog/...");
-        console.log("[Blog] first row keys:", sample && Object.keys(sample as object));
-        const row40 = asRows.find((r) => r.id === 40);
-        console.log("[Blog] row id=40 →", row40);
-        console.log(
-          "[Blog] extractViews(id 40) →",
-          row40 ? extractViews(row40) : "(not in this page)"
-        );
-      }
-
-      setRows(raw as BlogRow[]);
-      setTotalPages(parsed.totalPages || 1);
-      setTotalElements(
-        typeof parsed.totalElements === "number"
-          ? parsed.totalElements
-          : parsed.content.length
-      );
-    } catch {
-      setRows([]);
-      setTotalPages(1);
-      setTotalElements(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, debouncedSearch, statusFilter, token]);
-
-  useEffect(() => {
-    void fetchBlogs();
-  }, [fetchBlogs]);
 
   const openDeleteDialog = useCallback((row: BlogRow) => {
     setDeleteTarget(row);
     setDeleteDialogOpen(true);
   }, []);
 
-  const handleDeleteConfirm = useCallback(async () => {
+  const handleDeleteConfirm = useCallback(() => {
     const id = deleteTarget?.id;
     if (!id) return;
-    setDeleteLoading(true);
-    try {
-      await deleteBlog(id, token);
-      success("Blog deleted.");
-      setDeleteDialogOpen(false);
-      setDeleteTarget(null);
-      await fetchBlogs();
-    } catch (e) {
-      toastError(e instanceof Error ? e.message : "Failed to delete blog.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [deleteTarget, token, success, toastError, fetchBlogs]);
+    deleteMutation.mutate(id);
+  }, [deleteTarget, deleteMutation]);
 
   const columns: ColumnDef<BlogRow>[] = useMemo(
     () => [

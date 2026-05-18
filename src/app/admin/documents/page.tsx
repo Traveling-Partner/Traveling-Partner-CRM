@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { Download, Eye, FileText, Search, Filter } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,64 +23,23 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
+import { useApiMutation } from "@/hooks/api";
+import { useDocumentsQueueQuery } from "@/hooks/queries/use-documents-queue-query";
+import { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
+import {
+  normalizeApiDocStatus,
+  type ApiDocStatus
+} from "@/lib/documents-utils";
+import { queryKeys } from "@/lib/api/query-keys";
+import {
+  updateDriverDocumentStatus,
+  type DocumentStatusPayload,
+  type PreviewDocument
+} from "@/services/documents";
+import type { DriverRow } from "@/services/users";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
-interface DriverRow {
-  id: number;
-  email: string | null;
-  name: string | null;
-  username: string | null;
-  mobileNumber: string | null;
-  status: string;
-  cnicNumber?: string | null;
-  createdAt: string | null;
-}
-
-interface DriversResponse {
-  content: DriverRow[];
-  totalPages: number;
-}
-
-interface DriverDocumentsResponse {
-  id: number;
-  cnicFront: string | null;
-  cnicBack: string | null;
-  licenseFront: string | null;
-  licenseBack: string | null;
-  registrationFront: string | null;
-  registrationBack: string | null;
-  cnicStatus?: string | null;
-  licenseStatus?: string | null;
-  vehicleStatus?: string | null;
-  /** GET /users/documents/{id} returns vehicle doc status under this key */
-  vehicleDocStatus?: string | null;
-  registrationStatus?: string | null;
-}
-
-interface ApiEnvelope<T> {
-  data?: T;
-}
-
-interface PreviewDocument {
-  id: "driver-license" | "vehicle-registration" | "id-document";
-  type: "DRIVER_LICENSE" | "VEHICLE_REGISTRATION" | "ID_DOCUMENT";
-  fileName: string;
-  frontUrl: string;
-  backUrl: string;
-  status: string;
-}
-
 type DecisionType = "APPROVE" | "REJECT";
-type ApiDocStatus = "APPROVED" | "REJECTED" | "REJECT" | "PENDING";
-
-interface DocumentStatusPayload {
-  cnicStatus: ApiDocStatus;
-  licenseStatus: ApiDocStatus;
-  vehicleStatus: ApiDocStatus;
-  rejectionReason?: string;
-}
 
 const DEFAULT_PAGE_SIZE = 6;
 const fallbackImage = "/mock-images/document-fallback.svg";
@@ -107,50 +67,10 @@ function normalizeDocumentStatus(value: unknown): string {
   return normalized;
 }
 
-function mapRawStatus(value: unknown): ApiDocStatus {
-  if (value === null || value === undefined) return "PENDING";
-  const s = String(value).trim().toUpperCase();
-  if (s === "APPROVED" || s === "REJECTED" || s === "REJECT" || s === "PENDING") return s;
-  return "PENDING";
-}
-
-function normalizeApiDocStatus(value: unknown): ApiDocStatus {
-  const mapped = mapRawStatus(value);
-  return mapped === "REJECT" ? "REJECTED" : mapped;
-}
-
 function isFinalDecisionStatus(value: unknown): boolean {
   if (typeof value !== "string") return false;
   const normalized = value.trim().toUpperCase();
   return normalized === "APPROVED" || normalized === "REJECTED" || normalized === "REJECT";
-}
-
-function summarizeDocumentVerificationStatus(payload: DriverDocumentsResponse): ApiDocStatus {
-  const vehicleStatusRaw = pickVehicleStatus(payload as unknown as Record<string, unknown>);
-  const statuses: ApiDocStatus[] = [
-    normalizeApiDocStatus(payload.cnicStatus),
-    normalizeApiDocStatus(payload.licenseStatus),
-    normalizeApiDocStatus(vehicleStatusRaw)
-  ];
-
-  if (statuses.some((s) => s === "REJECTED")) return "REJECTED";
-  if (statuses.every((s) => s === "APPROVED")) return "APPROVED";
-  return "PENDING";
-}
-
-function pickVehicleStatus(payload: Record<string, unknown>): unknown {
-  const keys = [
-    "vehicleDocStatus",
-    "vehicleStatus",
-    "registrationStatus",
-    "vehicleRegistrationStatus",
-    "registrationDocumentsStatus"
-  ] as const;
-  for (const k of keys) {
-    const v = payload[k];
-    if (v !== undefined && v !== null && String(v).trim() !== "") return v;
-  }
-  return null;
 }
 
 function previewDocLabel(id: PreviewDocument["id"]): string {
@@ -168,27 +88,41 @@ function previewDocLabel(id: PreviewDocument["id"]): string {
 
 export default function DocumentsQueuePage() {
   const { success, error } = useToast();
-  const token = useAppSelector((state) => state.auth.token);
+  const queryClient = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const [drivers, setDrivers] = useState<DriverRow[]>([]);
-  const [documentStatusByDriverId, setDocumentStatusByDriverId] = useState<Record<number, ApiDocStatus>>({});
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const queueQuery = useDocumentsQueueQuery({
+    page,
+    pageSize,
+    status: statusFilter,
+    search
+  });
+
+  const drivers = queueQuery.data?.drivers.content ?? [];
+  const documentStatusByDriverId = queueQuery.data?.documentStatusByDriverId ?? {};
+  const totalPages = queueQuery.data?.drivers.totalPages ?? 1;
+  const loading = queueQuery.isLoading || queueQuery.isFetching;
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDriver, setPreviewDriver] = useState<DriverRow | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewDocuments, setPreviewDocuments] = useState<PreviewDocument[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<PreviewDocument["id"]>("driver-license");
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [imageModalSrc, setImageModalSrc] = useState<string>(fallbackImage);
   const [imageModalTitle, setImageModalTitle] = useState("Document preview");
+
+  const previewDocsQuery = useDriverDocumentsQuery(previewDriver?.id, previewOpen);
+  const previewDocuments = previewDocsQuery.previewDocuments;
+  const previewLoading = previewDocsQuery.isLoading || previewDocsQuery.isFetching;
+  const rawDocumentStatuses = previewDocsQuery.rawStatuses ?? {
+    cnicStatus: "PENDING" as ApiDocStatus,
+    licenseStatus: "PENDING" as ApiDocStatus,
+    vehicleStatus: "PENDING" as ApiDocStatus
+  };
 
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
   const [decisionScope, setDecisionScope] = useState<"table" | "preview">("table");
@@ -196,124 +130,37 @@ export default function DocumentsQueuePage() {
   const [decisionDriver, setDecisionDriver] = useState<DriverRow | null>(null);
   const [tableActionMenuVersion, setTableActionMenuVersion] = useState(0);
   const [rejectReason, setRejectReason] = useState("");
-  const [decisionLoading, setDecisionLoading] = useState(false);
-  const [rawDocumentStatuses, setRawDocumentStatuses] = useState<DocumentStatusPayload>({
-    cnicStatus: "PENDING",
-    licenseStatus: "PENDING",
-    vehicleStatus: "PENDING"
+
+  const decisionMutation = useApiMutation<
+    void,
+    { driverId: number; payload: DocumentStatusPayload }
+  >({
+    mutationFn: ({ token, variables }) =>
+      updateDriverDocumentStatus(variables.driverId, variables.payload, { token }),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["users", "documents", "queue"] });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.users.driverDocuments(variables.driverId)
+      });
+    }
   });
 
-  const loadDrivers = useCallback(async () => {
-    setLoading(true);
-    try {
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${pageSize}`;
-      if (statusFilter !== "all") url += `&status=${statusFilter}`;
-      if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-
-      const response = await fetcher<DriversResponse>(url, { token });
-      setDrivers(response.content);
-      setTotalPages(response.totalPages || 1);
-
-      const statusEntries = await Promise.all(
-        response.content.map(async (driver) => {
-          try {
-            const docUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/${driver.id}`;
-            const docResponse = await fetcher<
-              DriverDocumentsResponse | ApiEnvelope<DriverDocumentsResponse>
-            >(docUrl, { token });
-            const docPayload =
-              docResponse &&
-              typeof docResponse === "object" &&
-              "data" in docResponse &&
-              docResponse.data
-                ? docResponse.data
-                : (docResponse as DriverDocumentsResponse);
-            return [driver.id, summarizeDocumentVerificationStatus(docPayload)] as const;
-          } catch {
-            return [driver.id, "PENDING" as ApiDocStatus] as const;
-          }
-        })
-      );
-
-      setDocumentStatusByDriverId(Object.fromEntries(statusEntries));
-    } catch {
-      setDrivers([]);
-      setDocumentStatusByDriverId({});
-    } finally {
-      setLoading(false);
-    }
-  }, [token, page, pageSize, statusFilter, search]);
-
-  useEffect(() => {
-    void loadDrivers();
-  }, [loadDrivers]);
+  const decisionLoading = decisionMutation.isPending;
 
   const selectedDocument = previewDocuments.find((doc) => doc.id === selectedDocumentId) ?? previewDocuments[0];
   const selectedDocIsFinalized = isFinalDecisionStatus(selectedDocument?.status);
 
-  const loadPreviewDocuments = useCallback(async (driverId: number) => {
-    setPreviewLoading(true);
-    try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/${driverId}`;
-      const response = await fetcher<DriverDocumentsResponse | ApiEnvelope<DriverDocumentsResponse>>(url, { token });
-      const payload =
-        response && typeof response === "object" && "data" in response && response.data
-          ? response.data
-          : (response as DriverDocumentsResponse);
-
-      const payloadRecord = payload as unknown as Record<string, unknown>;
-      const vehicleStatusRaw = pickVehicleStatus(payloadRecord);
-
-      setRawDocumentStatuses({
-        cnicStatus: mapRawStatus(payload?.cnicStatus),
-        licenseStatus: mapRawStatus(payload?.licenseStatus),
-        vehicleStatus: mapRawStatus(vehicleStatusRaw)
-      });
-
-      const docs: PreviewDocument[] = [
-        {
-          id: "driver-license",
-          type: "DRIVER_LICENSE",
-          fileName: "driver-license.jpg",
-          frontUrl: safeImageUrl(payload?.licenseFront) || fallbackByType.DRIVER_LICENSE,
-          backUrl: safeImageUrl(payload?.licenseBack) || fallbackByType.DRIVER_LICENSE,
-          status: normalizeDocumentStatus(payload?.licenseStatus)
-        },
-        {
-          id: "vehicle-registration",
-          type: "VEHICLE_REGISTRATION",
-          fileName: "vehicle-registration.jpg",
-          frontUrl:
-            safeImageUrl(payload?.registrationFront) || fallbackByType.VEHICLE_REGISTRATION,
-          backUrl:
-            safeImageUrl(payload?.registrationBack) || fallbackByType.VEHICLE_REGISTRATION,
-          status: normalizeDocumentStatus(vehicleStatusRaw)
-        },
-        {
-          id: "id-document",
-          type: "ID_DOCUMENT",
-          fileName: "id-document.jpg",
-          frontUrl: safeImageUrl(payload?.cnicFront) || fallbackByType.ID_DOCUMENT,
-          backUrl: safeImageUrl(payload?.cnicBack) || fallbackByType.ID_DOCUMENT,
-          status: normalizeDocumentStatus(payload?.cnicStatus)
-        }
-      ];
-      setPreviewDocuments(docs);
-      setPreviewSrc(docs[0].frontUrl);
-    } catch {
-      setPreviewDocuments([]);
-      error("Failed to load documents preview.");
-    } finally {
-      setPreviewLoading(false);
+  useEffect(() => {
+    if (previewDocuments.length > 0) {
+      setPreviewSrc(previewDocuments[0].frontUrl);
     }
-  }, [token, error]);
+  }, [previewDocuments]);
 
-  const openPreview = async (driver: DriverRow) => {
+  const openPreview = (driver: DriverRow) => {
     setPreviewDriver(driver);
     setPreviewOpen(true);
     setSelectedDocumentId("driver-license");
     setPreviewSrc(fallbackImage);
-    await loadPreviewDocuments(driver.id);
   };
 
   const openDecision = (driver: DriverRow, type: DecisionType) => {
@@ -361,14 +208,13 @@ export default function DocumentsQueuePage() {
     [error]
   );
 
-  const applyDecision = async (
-    driver: DriverRow,
+  const buildDecisionPayload = (
     type: DecisionType,
     scope: "table" | "preview",
     selectedId: PreviewDocument["id"],
     rejectedValue: "REJECTED" | "REJECT" = "REJECTED",
     rejectionReasonText?: string
-  ) => {
+  ): DocumentStatusPayload => {
     let payload: DocumentStatusPayload;
 
     if (scope === "table") {
@@ -400,42 +246,48 @@ export default function DocumentsQueuePage() {
       payload.rejectionReason = rejectionReasonText;
     }
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/status/${driver.id}`;
-    await fetcher(url, {
-      method: "PUT",
-      token,
-      body: JSON.stringify(payload)
-    });
+    return payload;
+  };
+
+  const submitDecision = async (
+    driver: DriverRow,
+    type: DecisionType,
+    rejectedValue: "REJECTED" | "REJECT",
+    rejectionReasonText?: string
+  ) => {
+    const payload = buildDecisionPayload(
+      type,
+      decisionScope,
+      selectedDocumentId,
+      rejectedValue,
+      rejectionReasonText
+    );
+    await decisionMutation.mutateAsync({ driverId: driver.id, payload });
   };
 
   const onDecisionConfirm = () => {
     if (!decisionDriver || !decisionType) return;
-    const run = async () => {
-      setDecisionLoading(true);
-      try {
-        const trimmedRejectReason = rejectReason.trim();
-        if (decisionType === "REJECT" && !trimmedRejectReason) {
-          error("Please add rejection reason.");
-          return;
-        }
 
+    const run = async () => {
+      const trimmedRejectReason = rejectReason.trim();
+      if (decisionType === "REJECT" && !trimmedRejectReason) {
+        error("Please add rejection reason.");
+        return;
+      }
+
+      try {
         try {
-          await applyDecision(
+          await submitDecision(
             decisionDriver,
             decisionType,
-            decisionScope,
-            selectedDocumentId,
             "REJECTED",
             trimmedRejectReason
           );
         } catch {
-          // Compatibility fallback: some backends expect `REJECT` instead of `REJECTED`.
           if (decisionType !== "REJECT") throw new Error("reject-failed");
-          await applyDecision(
+          await submitDecision(
             decisionDriver,
             decisionType,
-            decisionScope,
-            selectedDocumentId,
             "REJECT",
             trimmedRejectReason
           );
@@ -453,15 +305,9 @@ export default function DocumentsQueuePage() {
               : `${previewDocLabel(selectedDocumentId)} rejected successfully.`
           );
         }
-        await loadDrivers();
-        if (previewDriver?.id === decisionDriver.id) {
-          await loadPreviewDocuments(decisionDriver.id);
-        }
         setDecisionDialogOpen(false);
       } catch {
         error("Failed to update document status.");
-      } finally {
-        setDecisionLoading(false);
       }
     };
     void run();

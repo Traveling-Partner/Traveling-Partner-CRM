@@ -1,12 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { fetcher } from "@/lib/fetcher";
-import { useAppSelector } from "@/store/hooks";
+import { useAuthToken } from "@/hooks/api/use-auth-token";
+import {
+  useVehicleTypesQuery,
+  useVehicleModelsQuery,
+  useVehicleColorsQuery,
+  useVehicleBrandsQuery
+} from "@/hooks/queries";
+import {
+  createVehicleType,
+  updateVehicleType,
+  deleteVehicleType,
+  createVehicleModel,
+  updateVehicleModel,
+  deleteVehicleModel,
+  createVehicleColor,
+  updateVehicleColor,
+  deleteVehicleColor,
+  createVehicleBrand,
+  updateVehicleBrand,
+  deleteVehicleBrand
+} from "@/services/vehicle";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { FormField } from "@/components/common/FormField";
@@ -171,21 +191,9 @@ const DEFAULT_PAGE_SIZE = 6;
 export default function VehicleTypesPage() {
   const { success, error } = useToast();
 
-  const token = useAppSelector((state) => state.auth.token);
+  const token = useAuthToken();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<TabValue>("vehicleTypes");
-
-  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [typeTotalPages, setTypeTotalPages] = useState(1);
-  const [typeLoading, setTypeLoading] = useState(false);
-  const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
-  const [modelTotalPages, setModelTotalPages] = useState(1);
-  const [modelLoading, setModelLoading] = useState(false);
-  const [vehicleColors, setVehicleColors] = useState<VehicleColor[]>([]);
-  const [colorTotalPages, setColorTotalPages] = useState(1);
-  const [colorLoading, setColorLoading] = useState(false);
-  const [vehicleBrands, setVehicleBrands] = useState<VehicleBrand[]>([]);
-  const [brandTotalPages, setBrandTotalPages] = useState(1);
-  const [brandLoading, setBrandLoading] = useState(false);
 
   const [typeSearch, setTypeSearch] = useState("");
   const [modelSearch, setModelSearch] = useState("");
@@ -200,6 +208,27 @@ export default function VehicleTypesPage() {
   const [modelPageSize, setModelPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [colorPageSize, setColorPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [brandPageSize, setBrandPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const typesQuery = useVehicleTypesQuery(typePage, typePageSize, typeSearch);
+  const modelsQuery = useVehicleModelsQuery(modelPage, modelPageSize, modelSearch);
+  const colorsQuery = useVehicleColorsQuery(colorPage, colorPageSize, colorSearch);
+  const brandsQuery = useVehicleBrandsQuery(brandPage, brandPageSize, brandSearch);
+
+  const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleType[];
+  const typeTotalPages = typesQuery.data?.totalPages ?? 1;
+  const typeLoading = typesQuery.isLoading || typesQuery.isFetching;
+
+  const vehicleModels = (modelsQuery.data?.content ?? []) as VehicleModel[];
+  const modelTotalPages = modelsQuery.data?.totalPages ?? 1;
+  const modelLoading = modelsQuery.isLoading || modelsQuery.isFetching;
+
+  const vehicleColors = (colorsQuery.data?.content ?? []) as VehicleColor[];
+  const colorTotalPages = colorsQuery.data?.totalPages ?? 1;
+  const colorLoading = colorsQuery.isLoading || colorsQuery.isFetching;
+
+  const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
+  const brandTotalPages = brandsQuery.data?.totalPages ?? 1;
+  const brandLoading = brandsQuery.isLoading || brandsQuery.isFetching;
 
   const [editingTypeId, setEditingTypeId] = useState<number | string | null>(null);
   const [editingModelId, setEditingModelId] = useState<number | string | null>(null);
@@ -232,97 +261,9 @@ export default function VehicleTypesPage() {
     defaultValues: { name: "", vehicleTypeId: 0, status: "PENDING", image: "" }
   });
 
-  const fetchVehicleTypes = async (page: number, search: string) => {
-    setTypeLoading(true);
-    try {
-      const apiPage = page - 1;
-      const res = await fetcher<VehicleTypesApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/getAll?page=${apiPage}&size=${typePageSize}&search=${encodeURIComponent(search)}`,
-        { token }
-      );
-      setVehicleTypes(res.data.content);
-      setTypeTotalPages(Math.max(1, res.data.totalPages));
-    } catch (err) {
-      error(err instanceof Error ? err.message : "Failed to load vehicle types.");
-    } finally {
-      setTypeLoading(false);
-    }
+  const invalidateVehicleTab = async (tabKey: "types" | "models" | "colors" | "brands") => {
+    await queryClient.invalidateQueries({ queryKey: ["vehicle", tabKey] });
   };
-
-  useEffect(() => {
-    if (token) {
-      fetchVehicleTypes(typePage, typeSearch);
-    }
-  }, [token, typePage, typeSearch, typePageSize]);
-
-  const fetchVehicleModels = async (page: number, search: string) => {
-    setModelLoading(true);
-    try {
-      const apiPage = page - 1;
-      const res = await fetcher<VehicleModelsApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/getAll?page=${apiPage}&size=${modelPageSize}&search=${encodeURIComponent(search)}`,
-        { token }
-      );
-      setVehicleModels(res.data.content);
-      setModelTotalPages(Math.max(1, res.data.totalPages));
-    } catch (err) {
-      error(err instanceof Error ? err.message : "Failed to load vehicle models.");
-    } finally {
-      setModelLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchVehicleModels(modelPage, modelSearch);
-    }
-  }, [token, modelPage, modelSearch, modelPageSize]);
-
-  const fetchVehicleColors = async (page: number, search: string) => {
-    setColorLoading(true);
-    try {
-      const apiPage = page - 1;
-      const res = await fetcher<VehicleColorsApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/colors/getAll?page=${apiPage}&size=${colorPageSize}&search=${encodeURIComponent(search)}`,
-        { token }
-      );
-      setVehicleColors(res.data.content);
-      setColorTotalPages(Math.max(1, res.data.totalPages));
-    } catch (err) {
-      error(err instanceof Error ? err.message : "Failed to load vehicle colors.");
-    } finally {
-      setColorLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchVehicleColors(colorPage, colorSearch);
-    }
-  }, [token, colorPage, colorSearch, colorPageSize]);
-
-  const fetchVehicleBrands = async (page: number, search: string) => {
-    setBrandLoading(true);
-    try {
-      const apiPage = page - 1;
-      const res = await fetcher<VehicleBrandsApiResponse>(
-        `${process.env.NEXT_PUBLIC_API_URL}/brands/getAll?page=${apiPage}&size=${brandPageSize}&search=${encodeURIComponent(search)}`,
-        { token }
-      );
-      setVehicleBrands(res.data.content);
-      setBrandTotalPages(Math.max(1, res.data.totalPages));
-    } catch (err) {
-      error(err instanceof Error ? err.message : "Failed to load vehicle brands.");
-    } finally {
-      setBrandLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchVehicleBrands(brandPage, brandSearch);
-    }
-  }, [token, brandPage, brandSearch, brandPageSize]);
 
   const openAddType = () => {
     setEditingTypeId(null);
@@ -388,24 +329,19 @@ export default function VehicleTypesPage() {
   const [typeSubmitting, setTypeSubmitting] = useState(false);
 
   const submitType = async (values: VehicleTypeForm) => {
+    if (!token) return;
     setTypeSubmitting(true);
     try {
       const typePayload = { name: values.name, status: values.status, image: values.image };
       if (editingTypeId) {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/update/${editingTypeId}`,
-          { method: "PUT", token, body: JSON.stringify(typePayload) }
-        );
+        await updateVehicleType(editingTypeId, typePayload, { token });
         success("Vehicle type updated successfully.");
       } else {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/create`,
-          { method: "POST", token, body: JSON.stringify(typePayload) }
-        );
+        await createVehicleType(typePayload, { token });
         success("Vehicle type created successfully.");
       }
       setShowTypeModal(false);
-      await fetchVehicleTypes(typePage, typeSearch);
+      await invalidateVehicleTab("types");
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to save vehicle type.");
     } finally {
@@ -416,24 +352,19 @@ export default function VehicleTypesPage() {
   const [modelSubmitting, setModelSubmitting] = useState(false);
 
   const submitModel = async (values: ModelForm) => {
+    if (!token) return;
     setModelSubmitting(true);
     try {
       const payload = { name: values.name, status: values.status, image: values.image };
       if (editingModelId) {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/update/${editingModelId}`,
-          { method: "PUT", token, body: JSON.stringify(payload) }
-        );
+        await updateVehicleModel(editingModelId, payload, { token });
         success("Vehicle model updated successfully.");
       } else {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/create`,
-          { method: "POST", token, body: JSON.stringify(payload) }
-        );
+        await createVehicleModel(payload, { token });
         success("Vehicle model created successfully.");
       }
       setShowModelModal(false);
-      await fetchVehicleModels(modelPage, modelSearch);
+      await invalidateVehicleTab("models");
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to save vehicle model.");
     } finally {
@@ -444,24 +375,19 @@ export default function VehicleTypesPage() {
   const [colorSubmitting, setColorSubmitting] = useState(false);
 
   const submitColor = async (values: ColorForm) => {
+    if (!token) return;
     setColorSubmitting(true);
     try {
       const payload = { name: values.name, status: values.status, image: values.image };
       if (editingColorId) {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/colors/update/${editingColorId}`,
-          { method: "PUT", token, body: JSON.stringify(payload) }
-        );
+        await updateVehicleColor(editingColorId, payload, { token });
         success("Vehicle color updated successfully.");
       } else {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/colors/create`,
-          { method: "POST", token, body: JSON.stringify(payload) }
-        );
+        await createVehicleColor(payload, { token });
         success("Vehicle color created successfully.");
       }
       setShowColorModal(false);
-      await fetchVehicleColors(colorPage, colorSearch);
+      await invalidateVehicleTab("colors");
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to save vehicle color.");
     } finally {
@@ -472,6 +398,7 @@ export default function VehicleTypesPage() {
   const [brandSubmitting, setBrandSubmitting] = useState(false);
 
   const submitBrand = async (values: BrandForm) => {
+    if (!token) return;
     setBrandSubmitting(true);
     try {
       const payload = {
@@ -481,20 +408,14 @@ export default function VehicleTypesPage() {
         image: values.image
       };
       if (editingBrandId) {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/brands/update/${editingBrandId}`,
-          { method: "PUT", token, body: JSON.stringify(payload) }
-        );
+        await updateVehicleBrand(editingBrandId, payload, { token });
         success("Vehicle brand updated successfully.");
       } else {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/brands/create`,
-          { method: "POST", token, body: JSON.stringify(payload) }
-        );
+        await createVehicleBrand(payload, { token });
         success("Vehicle brand created successfully.");
       }
       setShowBrandModal(false);
-      await fetchVehicleBrands(brandPage, brandSearch);
+      await invalidateVehicleTab("brands");
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to save vehicle brand.");
     } finally {
@@ -505,83 +426,34 @@ export default function VehicleTypesPage() {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !token) return;
 
-    if (deleteTarget.tab === "vehicleTypes") {
-      setDeleting(true);
-      try {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/vehicleTypes/delete/${deleteTarget.id}`,
-          { method: "DELETE", token }
-        );
+    setDeleting(true);
+    try {
+      if (deleteTarget.tab === "vehicleTypes") {
+        await deleteVehicleType(deleteTarget.id, { token });
         success("Vehicle type deleted successfully.");
-        setDeleteTarget(null);
-        await fetchVehicleTypes(typePage, typeSearch);
-      } catch (err) {
-        error(err instanceof Error ? err.message : "Failed to delete vehicle type.");
-        setDeleteTarget(null);
-      } finally {
-        setDeleting(false);
-      }
-      return;
-    }
-
-    if (deleteTarget.tab === "vehicleModels") {
-      setDeleting(true);
-      try {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/modelNumbers/delete/${deleteTarget.id}`,
-          { method: "DELETE", token }
-        );
+        await invalidateVehicleTab("types");
+      } else if (deleteTarget.tab === "vehicleModels") {
+        await deleteVehicleModel(deleteTarget.id, { token });
         success("Vehicle model deleted successfully.");
-        setDeleteTarget(null);
-        await fetchVehicleModels(modelPage, modelSearch);
-      } catch (err) {
-        error(err instanceof Error ? err.message : "Failed to delete vehicle model.");
-        setDeleteTarget(null);
-      } finally {
-        setDeleting(false);
-      }
-      return;
-    }
-
-    if (deleteTarget.tab === "vehicleColors") {
-      setDeleting(true);
-      try {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/colors/delete/${deleteTarget.id}`,
-          { method: "DELETE", token }
-        );
+        await invalidateVehicleTab("models");
+      } else if (deleteTarget.tab === "vehicleColors") {
+        await deleteVehicleColor(deleteTarget.id, { token });
         success("Vehicle color deleted successfully.");
-        setDeleteTarget(null);
-        await fetchVehicleColors(colorPage, colorSearch);
-      } catch (err) {
-        error(err instanceof Error ? err.message : "Failed to delete vehicle color.");
-        setDeleteTarget(null);
-      } finally {
-        setDeleting(false);
-      }
-      return;
-    }
-    if (deleteTarget.tab === "vehicleBrands") {
-      setDeleting(true);
-      try {
-        await fetcher(
-          `${process.env.NEXT_PUBLIC_API_URL}/brands/delete/${deleteTarget.id}`,
-          { method: "DELETE", token }
-        );
+        await invalidateVehicleTab("colors");
+      } else if (deleteTarget.tab === "vehicleBrands") {
+        await deleteVehicleBrand(deleteTarget.id, { token });
         success("Vehicle brand deleted successfully.");
-        setDeleteTarget(null);
-        await fetchVehicleBrands(brandPage, brandSearch);
-      } catch (err) {
-        error(err instanceof Error ? err.message : "Failed to delete vehicle brand.");
-        setDeleteTarget(null);
-      } finally {
-        setDeleting(false);
+        await invalidateVehicleTab("brands");
       }
-      return;
+      setDeleteTarget(null);
+    } catch (err) {
+      error(err instanceof Error ? err.message : "Failed to delete item.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
-    setDeleteTarget(null);
   };
 
   return (

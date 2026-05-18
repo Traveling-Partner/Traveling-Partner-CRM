@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -13,74 +13,35 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
+import { useDriversListQuery } from "@/hooks/queries/use-drivers-list-query";
+import type { DriverRow } from "@/services/users";
 import { Search, Filter } from "lucide-react";
-
-interface DriverRow {
-  id: number;
-  email: string | null;
-  name: string | null;
-  username: string | null;
-  mobileNumber: string;
-  status: string;
-  cnicNumber?: string | null;
-  createdAt: string | null;
-}
-
-interface DriversApiResponse {
-  content: DriverRow[];
-  totalPages: number;
-  totalElements: number;
-  number: number;
-}
 
 const DEFAULT_PAGE_SIZE = 6;
 
 export default function AdminDriversPage() {
   const router = useRouter();
-  const token = useAppSelector((state) => state.auth.token);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [drivers, setDrivers] = useState<DriverRow[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
 
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { data, isLoading, isFetching, error } = useDriversListQuery({
+    page,
+    pageSize,
+    status: statusFilter,
+    search
+  });
+
+  const drivers: DriverRow[] = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const loading = isLoading || isFetching;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setPage(0);
-      setDebouncedSearch(value);
-    }, 400);
+    setPage(0);
   };
-
-  const fetchDrivers = useCallback(async () => {
-    setLoading(true);
-    try {
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers?page=${page}&size=${pageSize}`;
-      if (statusFilter !== "all") url += `&status=${statusFilter}`;
-      if (debouncedSearch.trim()) url += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
-
-      const res = await fetcher<DriversApiResponse>(url, { token });
-      setDrivers(res.content);
-      setTotalPages(res.totalPages || 1);
-    } catch {
-      setDrivers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, statusFilter, debouncedSearch, token]);
-
-  useEffect(() => {
-    fetchDrivers();
-  }, [fetchDrivers]);
 
   const columns: ColumnDef<DriverRow>[] = [
     {
@@ -156,6 +117,11 @@ export default function AdminDriversPage() {
           title="Driver directory"
           description="Search, filter, and review all drivers in your Traveling Partner network."
         >
+          {error ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error.message}
+            </p>
+          ) : null}
           {/* Filters */}
           <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-sm">
