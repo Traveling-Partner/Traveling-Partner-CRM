@@ -14,67 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
+import { useApiMutation } from "@/hooks/api";
+import { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";
+import { queryKeys } from "@/lib/api/query-keys";
+import { updateUserStatus } from "@/services/users";
 
 type DriverStatus = "PENDING" | "APPROVED" | "RESTRICTED";
-
-interface DriverDetailResponse {
-  id: number;
-  email: string | null;
-  username: string | null;
-  mobileNumber: string | null;
-  status: string;
-  platform: string | null;
-  roles: string[];
-  otp: string | null;
-  token: string | null;
-  referralCode: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-  basicInformation?: {
-    userId: number;
-    firstName: string | null;
-    lastName: string | null;
-    gender: string | null;
-    whatsApp: string | null;
-    email: string | null;
-    cnicNumber: string | null;
-    cnicFront: string | null;
-    cnicBack: string | null;
-    profilePicture: string | null;
-    referralCode: string | null;
-    acceptTerm: boolean | null;
-    city: string | null;
-    filterDeleted: boolean | null;
-  } | null;
-  license?: {
-    userId: number;
-    licenseNo: string | null;
-    licenseFront: string | null;
-    licenseBack: string | null;
-    licenseVerified: boolean | null;
-    filterVerified: boolean | null;
-  } | null;
-  vehicle?: {
-    id: number;
-    modelNumberId: number | null;
-    modelNumberName?: string | null;
-    colorId: number | null;
-    colorName?: string | null;
-    registrationNo: string | null;
-    registrationFront: string | null;
-    registrationBack: string | null;
-    outdoorImages: string | null;
-    indoorImages: string | null;
-    ac: boolean | null;
-    petsAllowed: boolean | null;
-    smokingAllowed: boolean | null;
-    vehicleVerified: boolean | null;
-    brandId: number | null;
-    userId: number;
-  } | null;
-}
 
 interface DriverDocument {
   id: string;
@@ -83,18 +28,6 @@ interface DriverDocument {
   frontUrl: string;
   backUrl: string;
   status: string;
-}
-
-interface DriverDocumentsResponse {
-  cnicStatus?: string | null;
-  licenseStatus?: string | null;
-  vehicleStatus?: string | null;
-  vehicleDocStatus?: string | null;
-  registrationStatus?: string | null;
-}
-
-interface ApiEnvelope<T> {
-  data?: T;
 }
 
 const fallbackImage = "/mock-images/document-fallback.svg";
@@ -111,30 +44,6 @@ function prettyDate(value?: string | null) {
   return d.toLocaleDateString();
 }
 
-function normalizeDocumentStatus(value: unknown): string {
-  if (typeof value !== "string") return "PENDING";
-  const normalized = value.trim().toUpperCase();
-  if (!normalized) return "PENDING";
-  if (normalized === "REJECT") return "REJECTED";
-  if (normalized === "VERIFIED") return "APPROVED";
-  return normalized;
-}
-
-function pickVehicleStatus(payload: Record<string, unknown>): unknown {
-  const keys = [
-    "vehicleDocStatus",
-    "vehicleStatus",
-    "registrationStatus",
-    "vehicleRegistrationStatus",
-    "registrationDocumentsStatus"
-  ] as const;
-  for (const key of keys) {
-    const value = payload[key];
-    if (value !== undefined && value !== null && String(value).trim() !== "") return value;
-  }
-  return null;
-}
-
 const statusPayloadMap: Record<DriverStatus, "ACTIVE" | "INACTIVE" | "BLOCKED"> = {
   APPROVED: "ACTIVE",
   RESTRICTED: "INACTIVE",
@@ -145,77 +54,34 @@ export default function AdminDriverDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { success, error } = useToast();
-  const token = useAppSelector((state) => state.auth.token);
 
-  const [loading, setLoading] = useState(true);
-  const [driver, setDriver] = useState<DriverDetailResponse | null>(null);
+  const { data, isLoading, isError } = useDriverDetailQuery(params.id);
+  const driver = data?.driver ?? null;
+  const docStatuses = data?.docStatuses ?? { cnic: "PENDING", license: "PENDING", vehicle: "PENDING" };
+  const loading = isLoading;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<DriverStatus | null>(null);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("driver-license");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
-  const [docStatuses, setDocStatuses] = useState<{
-    cnic: string;
-    license: string;
-    vehicle: string;
-  }>({
-    cnic: "PENDING",
-    license: "PENDING",
-    vehicle: "PENDING"
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+
+  const statusMutation = useApiMutation<void, { userId: number; status: string }>({
+    mutationFn: ({ token, variables }) =>
+      updateUserStatus(variables.userId, variables.status, { token }),
+    invalidateKeys: [queryKeys.users.driverDetail(params.id)],
+    onSuccess: (_data, variables) => {
+      setOptimisticStatus(variables.status);
+      success(`Driver status updated to ${variables.status}.`);
+      setDialogOpen(false);
+    },
+    onError: (err) => {
+      error(err.message);
+    }
   });
 
-  useEffect(() => {
-    let active = true;
-    const loadDriver = async () => {
-      setLoading(true);
-      try {
-        const driverUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/drivers/${params.id}`;
-        const docUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/documents/${params.id}`;
-        const [response, documentsResponse] = await Promise.all([
-          fetcher<DriverDetailResponse>(driverUrl, { token }),
-          fetcher<DriverDocumentsResponse | ApiEnvelope<DriverDocumentsResponse>>(docUrl, { token })
-        ]);
-        const documentsPayload =
-          documentsResponse &&
-          typeof documentsResponse === "object" &&
-          "data" in documentsResponse &&
-          documentsResponse.data
-            ? documentsResponse.data
-            : (documentsResponse as DriverDocumentsResponse);
-        const vehicleStatusRaw = pickVehicleStatus(
-          documentsPayload as unknown as Record<string, unknown>
-        );
-        if (active) {
-          setDriver(response);
-          setDocStatuses({
-            cnic: normalizeDocumentStatus(documentsPayload?.cnicStatus),
-            license: normalizeDocumentStatus(documentsPayload?.licenseStatus),
-            vehicle: normalizeDocumentStatus(vehicleStatusRaw)
-          });
-        }
-      } catch {
-        if (active) {
-          setDriver(null);
-          setDocStatuses({
-            cnic: "PENDING",
-            license: "PENDING",
-            vehicle: "PENDING"
-          });
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadDriver();
-
-    return () => {
-      active = false;
-    };
-  }, [params.id, token]);
+  const updatingStatus = statusMutation.isPending;
 
   const documents = useMemo<DriverDocument[]>(() => {
     if (!driver) return [];
@@ -256,11 +122,12 @@ export default function AdminDriverDetailPage() {
 
   const selectedDocument = documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
   const displayName = driver?.username || driver?.basicInformation?.firstName || "Driver";
-  const currentStatus = String(driver?.status || "").trim().toUpperCase();
+  const displayStatus = optimisticStatus ?? driver?.status ?? "PENDING";
+  const currentStatus = String(displayStatus).trim().toUpperCase();
   const showApproveAction = currentStatus === "INACTIVE";
   const showRestrictAction = currentStatus === "ACTIVE";
 
-  if (!loading && !driver) {
+  if (!loading && (isError || !driver)) {
     return (
       <AppShell title="Driver detail">
         <PageContainer>
@@ -282,29 +149,10 @@ export default function AdminDriverDetailPage() {
 
   const confirmStatusChange = () => {
     if (!pendingAction || !driver?.id) return;
-
-    const updateStatus = async () => {
-      setUpdatingStatus(true);
-      try {
-        const payloadStatus = statusPayloadMap[pendingAction];
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/status/${driver.id}`;
-        await fetcher(url, {
-          method: "PUT",
-          token,
-          body: JSON.stringify({ status: payloadStatus })
-        });
-
-        setDriver((prev) => (prev ? { ...prev, status: payloadStatus } : prev));
-        success(`Driver status updated to ${payloadStatus}.`);
-        setDialogOpen(false);
-      } catch (err) {
-        error(err instanceof Error ? err.message : "Failed to update driver status.");
-      } finally {
-        setUpdatingStatus(false);
-      }
-    };
-
-    void updateStatus();
+    statusMutation.mutate({
+      userId: driver.id,
+      status: statusPayloadMap[pendingAction]
+    });
   };
 
   return (
@@ -362,7 +210,7 @@ export default function AdminDriverDetailPage() {
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</p>
                   <div className="mt-0.5">
-                    <StatusBadge status={driver?.status || "PENDING"} />
+                    <StatusBadge status={displayStatus} />
                   </div>
                 </div>
               </div>
@@ -617,7 +465,7 @@ export default function AdminDriverDetailPage() {
                 <div className="mt-0.5 h-2 w-2 rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813]" />
                 <div>
                   <p className="font-medium">
-                    {driver?.status || "—"} • {prettyDate(driver?.updatedAt)}
+                    {displayStatus || "—"} • {prettyDate(driver?.updatedAt)}
                   </p>
                   <p className="text-[0.7rem] text-muted-foreground">
                     by system

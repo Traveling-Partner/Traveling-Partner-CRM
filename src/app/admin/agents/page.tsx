@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,61 +20,29 @@ import {
 } from "@/components/ui/select";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { Search, Filter } from "lucide-react";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
-
-interface AgentRow {
-  id: number;
-  name: string | null;
-  email: string | null;
-  mobileNumber: string | null;
-  cnicNumber?: string | null;
-  status: string;
-}
-
-interface AgentsResponse {
-  content: AgentRow[];
-  totalPages: number;
-  totalElements: number;
-}
+import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
+import type { AgentRow } from "@/services/users";
 
 const DEFAULT_PAGE_SIZE = 6;
 
 export default function AdminAgentsPage() {
   const router = useRouter();
-  const token = useAppSelector((state) => state.auth.token);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [agentRows, setAgentRows] = useState<AgentRow[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(false);
 
-  const fetchAgents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const statusParam = statusFilter === "all" ? "" : statusFilter;
-      const searchParam = search.trim();
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents?page=${page}&size=${pageSize}&search=${encodeURIComponent(searchParam)}&status=${encodeURIComponent(statusParam)}`;
+  const { data, isLoading, isFetching, error } = useAgentsListQuery({
+    page,
+    pageSize,
+    status: statusFilter,
+    search
+  });
 
-      const res = await fetcher<AgentsResponse>(url, { token });
-      setAgentRows(res.content ?? []);
-      setTotalPages(res.totalPages || 1);
-      setTotalElements(res.totalElements || 0);
-    } catch {
-      setAgentRows([]);
-      setTotalPages(1);
-      setTotalElements(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, statusFilter, token]);
-
-  useEffect(() => {
-    void fetchAgents();
-  }, [fetchAgents]);
+  const agentRows: AgentRow[] = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalElements = data?.totalElements ?? 0;
+  const loading = isLoading || isFetching;
 
   const columns: ColumnDef<AgentRow>[] = [
     {
@@ -143,6 +111,11 @@ export default function AdminAgentsPage() {
             </Button>
           }
         >
+          {error ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error.message}
+            </p>
+          ) : null}
           <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

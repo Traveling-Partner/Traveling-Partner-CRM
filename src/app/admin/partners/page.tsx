@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,66 +20,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { Search, Filter } from "lucide-react";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
-
-interface PartnerRow {
-  id: number;
-  name: string | null;
-  email: string | null;
-  mobileNumber: string | null;
-  status: string;
-  profilePicture?: string | null;
-  createdAt?: string | null;
-}
+import { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
+import type { PartnerRow } from "@/services/users";
 
 const DEFAULT_PAGE_SIZE = 6;
 
-interface PartnersResponse {
-  content: PartnerRow[];
-  totalPages: number;
-  totalElements: number;
-}
-
 export default function AdminPartnersPage() {
   const router = useRouter();
-  const token = useAppSelector((state) => state.auth.token);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(false);
 
-  // Fetch partners from backend with filters + pagination
-  const fetchPartners = useCallback(async () => {
-    setLoading(true);
-    try {
-      const statusParam = statusFilter === "all" ? "" : statusFilter;
-      const searchParam = search.trim();
+  const { data, isLoading, isFetching, error } = usePartnersListQuery({
+    page,
+    pageSize,
+    status: statusFilter,
+    search
+  });
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/users/partners?page=${page}&size=${pageSize}&status=${encodeURIComponent(
-        statusParam
-      )}&city=&search=${encodeURIComponent(searchParam)}`;
-
-      const res = await fetcher<PartnersResponse>(url, { token });
-      setPartnerRows(res.content);
-      setTotalPages(res.totalPages || 1);
-      setTotalElements(res.totalElements || 0);
-    } catch {
-      setPartnerRows([]);
-      setTotalPages(1);
-      setTotalElements(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, statusFilter, search, token]);
-
-  useEffect(() => {
-    void fetchPartners();
-  }, [fetchPartners]);
+  const partnerRows: PartnerRow[] = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalElements = data?.totalElements ?? 0;
+  const loading = isLoading || isFetching;
 
   const columns: ColumnDef<PartnerRow>[] = useMemo(
     () => [
@@ -141,6 +104,11 @@ export default function AdminPartnersPage() {
           title="Partner management"
           description="Manage fleet and corporate partners across your operating regions."
         >
+          {error ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error.message}
+            </p>
+          ) : null}
           <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

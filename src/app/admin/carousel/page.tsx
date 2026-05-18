@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,59 +20,40 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/components/ui/toast";
-import { useAppSelector } from "@/store/hooks";
-import {
-  deleteBanner,
-  getAllBanners,
-  getCarouselPublishedIds,
-  type BannerRecord
-} from "@/services/carousel";
+import { useApiMutation } from "@/hooks/api";
+import { useCarouselBannersQuery, type BannerRow } from "@/hooks/queries/use-carousel-banners-query";
+import { queryKeys } from "@/lib/api/query-keys";
+import { deleteBanner } from "@/services/carousel";
 
 const DEFAULT_PAGE_SIZE = 6;
 
-type BannerStatus = "Published" | "Draft";
-
-interface BannerRow extends BannerRecord {
-  status: BannerStatus;
-}
-
 export default function AdminCarouselListPage() {
-  const token = useAppSelector((state) => state.auth.token);
   const { success, error: showError } = useToast();
 
-  const [rows, setRows] = useState<BannerRow[]>([]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [loading, setLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<BannerRow | null>(null);
 
-  const fetchRows = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [allBanners, publishedIds] = await Promise.all([
-        getAllBanners(token),
-        getCarouselPublishedIds(token)
-      ]);
+  const { data: rows = [], isLoading, error: loadError } = useCarouselBannersQuery();
+  const loading = isLoading;
 
-      const mapped = allBanners.map<BannerRow>((item) => ({
-        ...item,
-        status: publishedIds.has(item.id) ? "Published" : "Draft"
-      }));
-      setRows(mapped);
-      setPage(0);
-    } catch (e) {
-      setRows([]);
-      showError(e instanceof Error ? e.message : "Failed to load banners.");
-    } finally {
-      setLoading(false);
+  const deleteMutation = useApiMutation<void, number>({
+    mutationFn: async ({ token, variables: id }) => {
+      await deleteBanner(id, token);
+    },
+    invalidateKeys: [queryKeys.carousel.banners()],
+    onSuccess: () => {
+      success("Banner deleted.");
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: (err) => {
+      showError(err.message);
     }
-  }, [token, showError]);
+  });
 
-  useEffect(() => {
-    void fetchRows();
-  }, [fetchRows]);
+  const deleteLoading = deleteMutation.isPending;
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageRows = useMemo(
@@ -85,21 +66,10 @@ export default function AdminCarouselListPage() {
     setDeleteDialogOpen(true);
   }, []);
 
-  const handleDeleteConfirm = useCallback(async () => {
+  const handleDeleteConfirm = useCallback(() => {
     if (!deleteTarget?.id) return;
-    setDeleteLoading(true);
-    try {
-      await deleteBanner(deleteTarget.id, token);
-      success("Banner deleted.");
-      setDeleteDialogOpen(false);
-      setDeleteTarget(null);
-      await fetchRows();
-    } catch (e) {
-      showError(e instanceof Error ? e.message : "Failed to delete banner.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [deleteTarget, token, success, showError, fetchRows]);
+    deleteMutation.mutate(deleteTarget.id);
+  }, [deleteTarget, deleteMutation]);
 
   const columns: ColumnDef<BannerRow>[] = useMemo(
     () => [
@@ -173,6 +143,11 @@ export default function AdminCarouselListPage() {
             </Button>
           }
         >
+          {loadError ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {loadError.message}
+            </p>
+          ) : null}
           {loading ? (
             <div className="space-y-2 py-3">
               {Array.from({ length: 3 }).map((_, i) => (

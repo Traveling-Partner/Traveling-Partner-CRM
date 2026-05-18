@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetcher } from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/store/hooks";
+import { useAdminDashboardQuery } from "@/hooks/queries/use-admin-dashboard-query";
 import {
   Users,
   Briefcase,
@@ -33,50 +33,6 @@ import {
   Cell
 } from "recharts";
 import { format, parseISO } from "date-fns";
-
-interface CountsResponse {
-  totalDrivers: number;
-  totalPartners: number;
-  totalSalesAgents: number;
-  totalRidePlans: number;
-}
-
-interface DriverStatusCountsResponse {
-  active: number;
-  inactive: number;
-  blocked: number;
-  pending: number;
-  approved: number;
-}
-
-interface Last14DaysGraphResponse {
-  dates: string[];
-  counts: number[];
-}
-
-interface RideStatusCountResponse {
-  requested: number;
-  accepted: number;
-  started: number;
-  completed: number;
-  canceled: number;
-}
-
-interface AuditLogItem {
-  id: number;
-  userType: string | null;
-  description: string | null;
-  createdAt: string;
-  mobileNumber: string | null;
-}
-
-interface AuditLogsResponse {
-  content: AuditLogItem[];
-  totalPages: number;
-}
-
-const DASHBOARD_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
-const RECENT_ACTIVITY_LIMIT = 10;
 
 const PIE_COLORS = ["#fdb813", "#ef4444", "#22c55e"];
 const BAR_COLORS = ["#fdb813", "#ef4444", "#22c55e"];
@@ -112,116 +68,15 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ n
 }
 
 export default function AdminDashboardPage() {
-  const token = useAppSelector((state) => state.auth.token);
-  const [isLoading, setIsLoading] = useState(true);
-  const [counts, setCounts] = useState<CountsResponse>({
-    totalDrivers: 0,
-    totalPartners: 0,
-    totalSalesAgents: 0,
-    totalRidePlans: 0
-  });
-  const [driverStatusCounts, setDriverStatusCounts] = useState<DriverStatusCountsResponse>({
-    active: 0,
-    inactive: 0,
-    blocked: 0,
-    pending: 0,
-    approved: 0
-  });
-  const [ridesTrend, setRidesTrend] = useState<Array<{ day: string; count: number }>>([]);
-  const [rideStatusBreakdown, setRideStatusBreakdown] = useState<
-    Array<{ status: "ACCEPTED" | "CANCELED" | "COMPLETED"; count: number }>
-  >([
-    { status: "ACCEPTED", count: 0 },
-    { status: "CANCELED", count: 0 },
-    { status: "COMPLETED", count: 0 }
-  ]);
-  const [recentActivity, setRecentActivity] = useState<AuditLogItem[]>([]);
+  const { data, loading: isLoading, error } = useAdminDashboardQuery();
 
-  const loadDashboard = useCallback(async () => {
-    try {
-      const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes, auditLogsRes] =
-        await Promise.all([
-        fetcher<CountsResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/counts`, { token }),
-        fetcher<DriverStatusCountsResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/driver-status-counts`,
-          { token }
-        ),
-        fetcher<Last14DaysGraphResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/graph/last-14-days`,
-          { token }
-        ),
-        fetcher<RideStatusCountResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/ride-status-count`,
-          { token }
-        ),
-        fetcher<AuditLogsResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/audit-logs/getAll?page=0&size=${RECENT_ACTIVITY_LIMIT}`,
-          { token }
-        )
-        ]);
-
-      setCounts(countsRes);
-      setDriverStatusCounts(driverStatusRes);
-      setRidesTrend(
-        (ridesTrendRes.dates ?? []).map((date, idx) => ({
-          day: format(parseISO(date), "MMM d"),
-          count: ridesTrendRes.counts?.[idx] ?? 0
-        }))
-      );
-      setRideStatusBreakdown([
-        { status: "ACCEPTED", count: rideStatusRes.accepted ?? 0 },
-        { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
-        { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
-      ]);
-      const sortedActivity = [...(auditLogsRes.content ?? [])]
-        .sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        .slice(0, RECENT_ACTIVITY_LIMIT);
-      setRecentActivity(sortedActivity);
-    } catch {
-      setCounts({
-        totalDrivers: 0,
-        totalPartners: 0,
-        totalSalesAgents: 0,
-        totalRidePlans: 0
-      });
-      setDriverStatusCounts({
-        active: 0,
-        inactive: 0,
-        blocked: 0,
-        pending: 0,
-        approved: 0
-      });
-      setRidesTrend([]);
-      setRideStatusBreakdown([
-        { status: "ACCEPTED", count: 0 },
-        { status: "CANCELED", count: 0 },
-        { status: "COMPLETED", count: 0 }
-      ]);
-      setRecentActivity([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    let mounted = true;
-    const runRefresh = async () => {
-      if (!mounted) return;
-      await loadDashboard();
-    };
-
-    void runRefresh();
-    const intervalId = window.setInterval(() => {
-      void runRefresh();
-    }, DASHBOARD_REFRESH_INTERVAL_MS);
-
-    return () => {
-      mounted = false;
-      window.clearInterval(intervalId);
-    };
-  }, [loadDashboard]);
+  const {
+    counts,
+    driverStatusCounts,
+    ridesTrend,
+    rideStatusBreakdown,
+    recentActivity
+  } = data;
 
   const statusRows = useMemo(
     () => [
@@ -270,6 +125,11 @@ export default function AdminDashboardPage() {
   return (
     <AppShell title="Admin Dashboard">
       <PageContainer>
+        {error ? (
+          <p className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         {/* ── Stat Cards ── */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat) => (
@@ -482,7 +342,7 @@ export default function AdminDashboardPage() {
           <div className="px-4 py-2 sm:px-5">
             {recentActivity.length === 0 ? (
               <div className="rounded-lg bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                No recent activity found.
+                {isLoading ? "Loading recent activity…" : "No recent activity found."}
               </div>
             ) : (
               <div className="relative">

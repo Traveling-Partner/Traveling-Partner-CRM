@@ -22,6 +22,7 @@ NEXT_PUBLIC_API_URL=https://your-api-host   # may include or omit trailing /api;
 
 ## Documentation
 
+- **[docs/API-FETCHING.md](./docs/API-FETCHING.md)** — How to add APIs with TanStack Query (deduplication, caching, mutations).
 - **[TESTING.md](./TESTING.md)** — Manual test cases, edge cases, and cross-module checks (auth, dashboard, drivers, partners, documents, blog, vehicle management, etc.). Use this for QA and regression before releases.
 
 ## Architecture (high level)

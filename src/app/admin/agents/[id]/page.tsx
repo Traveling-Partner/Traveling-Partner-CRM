@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -11,59 +10,16 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAppSelector } from "@/store/hooks";
-import { fetcher } from "@/lib/fetcher";
-
-interface AgentDetailResponse {
-  id: number;
-  email: string | null;
-  username: string | null;
-  mobileNumber: string | null;
-  name: string | null;
-  status: string;
-  cnicNumber?: string | null;
-  cnicFront?: string | null;
-  cnicBack?: string | null;
-}
-
-interface ApiEnvelope<T> {
-  data?: T;
-}
+import { useAgentDetailQuery } from "@/hooks/queries/use-agent-detail-query";
 
 export default function AdminAgentDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const token = useAppSelector((state) => state.auth.token);
-
-  const [loading, setLoading] = useState(true);
-  const [agent, setAgent] = useState<AgentDetailResponse | null>(null);
+  const { data: agent, isLoading, isError } = useAgentDetailQuery(params.id);
+  const loading = isLoading;
   const fallbackCnicImage = "/mock-images/id-document.svg";
 
-  useEffect(() => {
-    let active = true;
-    const loadAgent = async () => {
-      setLoading(true);
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents/${params.id}`;
-        const response = await fetcher<AgentDetailResponse | ApiEnvelope<AgentDetailResponse>>(url, { token });
-        const payload =
-          response && typeof response === "object" && "data" in response && response.data
-            ? response.data
-            : (response as AgentDetailResponse);
-        if (active) setAgent(payload);
-      } catch {
-        if (active) setAgent(null);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    void loadAgent();
-    return () => {
-      active = false;
-    };
-  }, [params.id, token]);
-
-  if (!loading && !agent) {
+  if (!loading && (isError || !agent)) {
     return (
       <AppShell title="Agent detail">
         <PageContainer>
