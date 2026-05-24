@@ -9,6 +9,8 @@ export { useAgentDetailQuery } from "@/hooks/queries/use-agent-detail-query";
 export { useDocumentsQueueQuery } from "@/hooks/queries/use-documents-queue-query";
 export { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 export { useBlogListQuery } from "@/hooks/queries/use-blog-list-query";
+export { useNewsletterListQuery } from "@/hooks/queries/use-newsletter-list-query";
+export { useNewsletterDetailQuery } from "@/hooks/queries/use-newsletter-detail-query";
 export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
