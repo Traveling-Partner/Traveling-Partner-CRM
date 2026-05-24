@@ -40,6 +40,11 @@ export const queryKeys = {
     detail: (id: number) => ["blog", "detail", id] as const,
     categories: () => ["blog", "categories"] as const
   },
+  newsletter: {
+    all: ["newsletter"] as const,
+    list: (filters: NewsletterListFilters) => ["newsletter", "list", filters] as const,
+    detail: (id: number) => ["newsletter", "detail", id] as const
+  },
   carousel: {
     banners: () => ["carousel", "banners"] as const,
     publishedIds: () => ["carousel", "published-ids"] as const,
@@ -79,6 +84,13 @@ export interface DocumentsQueueFilters {
 }
 
 export interface BlogListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+  status: string;
+}
+
+export interface NewsletterListFilters {
   page: number;
   pageSize: number;
   search: string;
