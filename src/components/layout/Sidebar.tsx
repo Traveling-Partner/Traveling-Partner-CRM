@@ -16,7 +16,10 @@ import {
   Mail,
   Images,
   Settings,
-  UserCircle2
+  UserCircle2,
+  Receipt,
+  Shield,
+  Coins
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -38,6 +41,10 @@ const adminItems: SidebarItem[] = [
   // { label: "Commissions", href: "/admin/commissions", icon: BadgeDollarSign },
   // { label: "Rides", href: "/admin/rides", icon: Car },
   { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
+  { label: "Tax Management", href: "/admin/tax-management", icon: Receipt },
+  { label: "Commission Management", href: "/admin/commission-management", icon: BadgeDollarSign },
+  { label: "Insurance Management", href: "/admin/insurance-management", icon: Shield },
+  { label: "Platform Fee Management", href: "/admin/platform-fee-management", icon: Coins },
   // { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
   // { label: "Notifications", href: "/admin/notifications", icon: Bell },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },
