@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
+import { CoverImageUploadPanel } from "@/components/common/CoverImageUploadPanel";
 import { useAppSelector } from "@/store/hooks";
 import {
   createBanner,
@@ -37,6 +38,7 @@ export default function AdminCarouselCreatePage() {
     register,
     watch,
     handleSubmit,
+    setValue,
     formState: { errors }
   } = useForm<CarouselFormValues>({
     resolver: zodResolver(carouselFormSchema),
@@ -110,8 +112,9 @@ export default function AdminCarouselCreatePage() {
                 <Input
                   id="bannerImage"
                   placeholder="https://example.com/banner.jpg"
-                  {...register("bannerImage")}
-                  onBlur={(e) => setImagePreview(e.target.value.trim())}
+                  {...register("bannerImage", {
+                    onChange: (event) => setImagePreview(event.target.value.trim())
+                  })}
                 />
               </FormField>
 
@@ -132,21 +135,20 @@ export default function AdminCarouselCreatePage() {
           </SectionCard>
 
           <div className="space-y-4">
-            <SectionCard title="Preview" description="Live preview based on the cover image URL.">
-              {(imagePreview || watchedImage) ? (
-                <div className="overflow-hidden rounded-md border border-border/70">
-                  <img
-                    src={(imagePreview || watchedImage).trim()}
-                    alt="Banner preview"
-                    className="h-44 w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Add a cover image URL to see a preview.
-                </p>
-              )}
-            </SectionCard>
+            <CoverImageUploadPanel
+              imageUrl={imagePreview || watchedImage}
+              onImageUrlChange={(url) => {
+                setValue("bannerImage", url, { shouldValidate: true, shouldDirty: true });
+                setImagePreview(url);
+              }}
+              token={token}
+              disabled={submitting}
+              onError={showError}
+              title="Preview"
+              description="Upload an image or paste a URL on the left."
+              emptyMessage="Add a cover image URL or upload an image to see a preview."
+              previewHeightClassName="h-44"
+            />
 
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => void saveDraft()} disabled={submitting}>

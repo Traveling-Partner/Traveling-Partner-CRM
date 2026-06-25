@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentType } from "react";
+import { type ComponentType, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,61 +10,292 @@ import {
   Briefcase,
   BadgeDollarSign,
   Car,
-  ListChecks,
-  Bell,
   Newspaper,
   Mail,
   Images,
+  Contact,
   Settings,
   UserCircle2,
   Receipt,
   Shield,
-  Coins
+  Coins,
+  ChevronDown,
+  FolderOpen,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
-type SidebarItem = {
+type SidebarLink = {
   label: string;
   href: string;
   icon: ComponentType<{ className?: string }>;
 };
 
-const adminItems: SidebarItem[] = [
+type SidebarGroup = {
+  id: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  items: SidebarLink[];
+};
+
+type SidebarEntry = SidebarLink | SidebarGroup;
+
+const adminNav: SidebarEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Drivers", href: "/admin/drivers", icon: Users },
-  { label: "Documents", href: "/admin/documents", icon: FileText },
-  { label: "Partners", href: "/admin/partners", icon: Briefcase },
-  { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
-  // { label: "Commissions", href: "/admin/commissions", icon: BadgeDollarSign },
-  // { label: "Rides", href: "/admin/rides", icon: Car },
-  { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
-  { label: "Tax Management", href: "/admin/tax-management", icon: Receipt },
-  { label: "Commission Management", href: "/admin/commission-management", icon: BadgeDollarSign },
-  { label: "Insurance Management", href: "/admin/insurance-management", icon: Shield },
-  { label: "Platform Fee Management", href: "/admin/platform-fee-management", icon: Coins },
-  // { label: "Audit Logs", href: "/admin/audit-logs", icon: ListChecks },
-  // { label: "Notifications", href: "/admin/notifications", icon: Bell },
-  { label: "Blog", href: "/admin/blog", icon: Newspaper },
-  { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
-  { label: "Carousel", href: "/admin/carousel", icon: Images },
-  { label: "Settings", href: "/admin/settings", icon: Settings }
+  {
+    id: "user-management",
+    label: "User Management",
+    icon: Users,
+    items: [
+      { label: "Drivers", href: "/admin/drivers", icon: Users },
+      { label: "Partners", href: "/admin/partners", icon: Briefcase },
+      { label: "Agents", href: "/admin/agents", icon: UserCircle2 }
+    ]
+  },
+  {
+    id: "content-management",
+    label: "Content Management",
+    icon: FolderOpen,
+    items: [
+      { label: "Blog", href: "/admin/blog", icon: Newspaper },
+      { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
+      { label: "Newsletter Subscribers", href: "/admin/newsletter-subscribers", icon: Contact },
+      { label: "Carousel", href: "/admin/carousel", icon: Images }
+    ]
+  },
+  {
+    id: "financial-management",
+    label: "Financial Management",
+    icon: BadgeDollarSign,
+    items: [
+      { label: "Tax Management", href: "/admin/tax-management", icon: Receipt },
+      {
+        label: "Commission Management",
+        href: "/admin/commission-management",
+        icon: BadgeDollarSign
+      },
+      { label: "Insurance Management", href: "/admin/insurance-management", icon: Shield },
+      {
+        label: "Platform Fee Management",
+        href: "/admin/platform-fee-management",
+        icon: Coins
+      }
+    ]
+  },
+  {
+    id: "fleet-management",
+    label: "Fleet Management",
+    icon: Truck,
+    items: [
+      { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
+      { label: "Documents", href: "/admin/documents", icon: FileText }
+    ]
+  },
+  {
+    id: "system",
+    label: "System",
+    icon: Settings,
+    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }]
+  }
 ];
 
-const agentItems: SidebarItem[] = [
+const agentItems: SidebarLink[] = [
   { label: "Dashboard", href: "/agent/dashboard", icon: LayoutDashboard },
   { label: "My Listings", href: "/agent/listings", icon: Briefcase },
   { label: "My Commissions", href: "/agent/commissions", icon: BadgeDollarSign },
   { label: "Profile", href: "/agent/profile", icon: UserCircle2 }
 ];
 
+function isSidebarGroup(entry: SidebarEntry): entry is SidebarGroup {
+  return "items" in entry;
+}
+
+function isLinkActive(pathname: string, href: string) {
+  if (pathname === href) return true;
+
+  // Match nested routes only (e.g. /admin/newsletter/create), not sibling paths
+  // like /admin/newsletter-subscribers that share a common prefix.
+  if (href === "/admin/dashboard" || href === "/agent/dashboard") {
+    return false;
+  }
+
+  return pathname.startsWith(`${href}/`);
+}
+
+function groupHasActiveChild(pathname: string, items: SidebarLink[]) {
+  return items.some((item) => isLinkActive(pathname, item.href));
+}
+
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
+}
+
+interface NavLinkProps {
+  item: SidebarLink;
+  pathname: string;
+  collapsed: boolean;
+  nested?: boolean;
+  onNavigate: () => void;
+}
+
+function NavLink({ item, pathname, collapsed, nested, onNavigate }: NavLinkProps) {
+  const isActive = isLinkActive(pathname, item.href);
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "group flex items-center gap-2.5 rounded-xl py-2.5 text-sm font-medium transition-all duration-200",
+        nested ? "px-2" : "px-2.5",
+        collapsed && !nested && "justify-center px-0",
+        isActive
+          ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 shadow-md shadow-yellow-500/20 ring-1 ring-yellow-300/60"
+          : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+      )}
+      onClick={onNavigate}
+    >
+      <item.icon
+        className={cn(
+          "h-[18px] w-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-105",
+          nested && "h-4 w-4",
+          isActive ? "text-slate-900" : "text-slate-400 group-hover:text-white"
+        )}
+      />
+      {(!collapsed || nested) && <span className="truncate">{item.label}</span>}
+    </Link>
+  );
+}
+
+interface NavGroupProps {
+  group: SidebarGroup;
+  pathname: string;
+  collapsed: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+}
+
+function NavGroup({
+  group,
+  pathname,
+  collapsed,
+  isOpen,
+  onToggle,
+  onNavigate
+}: NavGroupProps) {
+  const hasActiveChild = groupHasActiveChild(pathname, group.items);
+
+  if (collapsed) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "group flex w-full items-center justify-center rounded-xl px-0 py-2.5 text-sm font-medium transition-all duration-200",
+              hasActiveChild
+                ? "bg-slate-800/90 text-white ring-1 ring-yellow-300/40"
+                : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+            )}
+            aria-label={group.label}
+          >
+            <group.icon
+              className={cn(
+                "h-[18px] w-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-105",
+                hasActiveChild ? "text-[#fdb813]" : "text-slate-400 group-hover:text-white"
+              )}
+            />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          side="right"
+          align="start"
+          sideOffset={8}
+          className="z-50 min-w-[12rem] border-slate-800 bg-slate-900 text-slate-100"
+        >
+          <div className="px-2 py-1.5 text-xs font-semibold text-slate-400">{group.label}</div>
+          {group.items.map((item) => (
+            <DropdownMenuItem key={item.href} asChild>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm",
+                  isLinkActive(pathname, item.href)
+                    ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 focus:text-slate-900"
+                    : "text-slate-300 focus:bg-slate-800 focus:text-white"
+                )}
+                onClick={onNavigate}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          "group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
+          hasActiveChild
+            ? "bg-slate-800/90 text-white"
+            : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+        )}
+        aria-expanded={isOpen}
+      >
+        <group.icon
+          className={cn(
+            "h-[18px] w-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-105",
+            hasActiveChild ? "text-[#fdb813]" : "text-slate-400 group-hover:text-white"
+          )}
+        />
+        <span className="flex-1 truncate text-left">{group.label}</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="relative ml-3 space-y-0.5 py-0.5 pl-2">
+          <div
+            className="absolute bottom-1 left-0 top-1 w-0.5 rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813]"
+            aria-hidden
+          />
+          {group.items.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              collapsed={collapsed}
+              nested
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Sidebar({
@@ -75,8 +306,32 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const isAdmin = user?.role === "ADMIN";
+  const effectiveCollapsed = collapsed && !mobileOpen;
 
-  const items = user?.role === "ADMIN" ? adminItems : agentItems;
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    adminNav.forEach((entry) => {
+      if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
+        initial[entry.id] = true;
+      }
+    });
+    return initial;
+  });
+
+  useEffect(() => {
+    adminNav.forEach((entry) => {
+      if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
+        setOpenGroups((prev) => ({ ...prev, [entry.id]: true }));
+      }
+    });
+  }, [pathname]);
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
+  const handleNavigate = () => onMobileOpenChange(false);
 
   const sidebarContent = (
     <div
@@ -87,12 +342,11 @@ export function Sidebar({
         mobileOpen ? "w-full" : collapsed ? "w-[4.25rem]" : "w-64"
       )}
     >
-      {/* Brand header */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-slate-800/60 px-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#fce001] to-[#f59e0b] shadow-md shadow-yellow-500/20">
           <span className="text-xs font-bold text-slate-900">TP</span>
         </div>
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <div className="min-w-0">
             <p className="truncate text-sm font-heading font-semibold text-white">
               Traveling Partner
@@ -102,36 +356,40 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-0.5 px-2 py-3" role="navigation">
-        {items.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && item.href !== "/agent/dashboard" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
-                collapsed && "justify-center px-0",
-                isActive
-                  ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 shadow-md shadow-yellow-500/20 ring-1 ring-yellow-300/60"
-                  : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
-              )}
-              onClick={() => onMobileOpenChange(false)}
-            >
-              <item.icon
-                className={cn(
-                  "h-[18px] w-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-105",
-                  isActive ? "text-slate-900" : "text-slate-400 group-hover:text-white"
-                )}
+        {isAdmin
+          ? adminNav.map((entry) =>
+              isSidebarGroup(entry) ? (
+                <NavGroup
+                  key={entry.id}
+                  group={entry}
+                  pathname={pathname}
+                  collapsed={effectiveCollapsed}
+                  isOpen={Boolean(openGroups[entry.id])}
+                  onToggle={() => toggleGroup(entry.id)}
+                  onNavigate={handleNavigate}
+                />
+              ) : (
+                <NavLink
+                  key={entry.href}
+                  item={entry}
+                  pathname={pathname}
+                  collapsed={effectiveCollapsed}
+                  onNavigate={handleNavigate}
+                />
+              )
+            )
+          : agentItems.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                collapsed={effectiveCollapsed}
+                onNavigate={handleNavigate}
               />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </Link>
-          );
-        })}
+            ))}
       </nav>
 
-      {/* Collapse toggle */}
       <div className="border-t border-slate-800/60 px-3 py-2.5">
         <Button
           variant="ghost"
@@ -153,15 +411,11 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop: fixed vertical sidebar */}
       <div className="hidden md:block">{sidebarContent}</div>
 
-      {/* Mobile: drawer overlay */}
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="left-0 top-0 h-[100dvh] w-[280px] max-h-[100dvh] max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 data-[state=open]:slide-in-from-left-full data-[state=closed]:slide-out-to-left-full md:hidden">
-          <div className="relative h-full w-full">
-            {sidebarContent}
-          </div>
+        <DialogContent className="left-0 top-0 z-50 h-[100dvh] w-[280px] max-h-[100dvh] max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 data-[state=open]:slide-in-from-left-full data-[state=closed]:slide-out-to-left-full md:hidden">
+          <div className="relative h-full w-full">{sidebarContent}</div>
         </DialogContent>
       </Dialog>
     </>
