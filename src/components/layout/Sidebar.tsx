@@ -13,6 +13,7 @@ import {
   Newspaper,
   Mail,
   Images,
+  Contact,
   Settings,
   UserCircle2,
   Receipt,
@@ -67,6 +68,7 @@ const adminNav: SidebarEntry[] = [
     items: [
       { label: "Blog", href: "/admin/blog", icon: Newspaper },
       { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
+      { label: "Newsletter Subscribers", href: "/admin/newsletter-subscribers", icon: Contact },
       { label: "Carousel", href: "/admin/carousel", icon: Images }
     ]
   },
@@ -118,12 +120,15 @@ function isSidebarGroup(entry: SidebarEntry): entry is SidebarGroup {
 }
 
 function isLinkActive(pathname: string, href: string) {
-  return (
-    pathname === href ||
-    (href !== "/admin/dashboard" &&
-      href !== "/agent/dashboard" &&
-      pathname.startsWith(href))
-  );
+  if (pathname === href) return true;
+
+  // Match nested routes only (e.g. /admin/newsletter/create), not sibling paths
+  // like /admin/newsletter-subscribers that share a common prefix.
+  if (href === "/admin/dashboard" || href === "/agent/dashboard") {
+    return false;
+  }
+
+  return pathname.startsWith(`${href}/`);
 }
 
 function groupHasActiveChild(pathname: string, items: SidebarLink[]) {
@@ -218,7 +223,7 @@ function NavGroup({
           side="right"
           align="start"
           sideOffset={8}
-          className="min-w-[12rem] border-slate-800 bg-slate-900 text-slate-100"
+          className="z-50 min-w-[12rem] border-slate-800 bg-slate-900 text-slate-100"
         >
           <div className="px-2 py-1.5 text-xs font-semibold text-slate-400">{group.label}</div>
           {group.items.map((item) => (
@@ -271,27 +276,24 @@ function NavGroup({
         />
       </button>
 
-      <div
-        className={cn(
-          "grid transition-[grid-template-rows] duration-200 ease-out",
-          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="ml-3 space-y-0.5 border-l border-slate-700/80 py-0.5 pl-2">
-            {group.items.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                collapsed={collapsed}
-                nested
-                onNavigate={onNavigate}
-              />
-            ))}
-          </div>
+      {isOpen && (
+        <div className="relative ml-3 space-y-0.5 py-0.5 pl-2">
+          <div
+            className="absolute bottom-1 left-0 top-1 w-0.5 rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813]"
+            aria-hidden
+          />
+          {group.items.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              collapsed={collapsed}
+              nested
+              onNavigate={onNavigate}
+            />
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -305,6 +307,7 @@ export function Sidebar({
   const pathname = usePathname();
   const { user } = useAuthStore();
   const isAdmin = user?.role === "ADMIN";
+  const effectiveCollapsed = collapsed && !mobileOpen;
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -329,7 +332,6 @@ export function Sidebar({
   };
 
   const handleNavigate = () => onMobileOpenChange(false);
-  const effectiveCollapsed = collapsed && !mobileOpen;
 
   const sidebarContent = (
     <div
@@ -340,7 +342,6 @@ export function Sidebar({
         mobileOpen ? "w-full" : collapsed ? "w-[4.25rem]" : "w-64"
       )}
     >
-      {/* Brand header */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-slate-800/60 px-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#fce001] to-[#f59e0b] shadow-md shadow-yellow-500/20">
           <span className="text-xs font-bold text-slate-900">TP</span>
@@ -355,7 +356,6 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-0.5 px-2 py-3" role="navigation">
         {isAdmin
           ? adminNav.map((entry) =>
@@ -390,7 +390,6 @@ export function Sidebar({
             ))}
       </nav>
 
-      {/* Collapse toggle */}
       <div className="border-t border-slate-800/60 px-3 py-2.5">
         <Button
           variant="ghost"
@@ -412,12 +411,10 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop: fixed vertical sidebar */}
       <div className="hidden md:block">{sidebarContent}</div>
 
-      {/* Mobile: drawer overlay */}
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="left-0 top-0 h-[100dvh] w-[280px] max-h-[100dvh] max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 data-[state=open]:slide-in-from-left-full data-[state=closed]:slide-out-to-left-full md:hidden">
+        <DialogContent className="left-0 top-0 z-50 h-[100dvh] w-[280px] max-h-[100dvh] max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 data-[state=open]:slide-in-from-left-full data-[state=closed]:slide-out-to-left-full md:hidden">
           <div className="relative h-full w-full">{sidebarContent}</div>
         </DialogContent>
       </Dialog>
