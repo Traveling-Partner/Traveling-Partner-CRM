@@ -9,6 +9,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { FormField } from "@/components/common/FormField";
+import { ActiveInactiveStatusField } from "@/components/common/ActiveInactiveStatusField";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
@@ -299,18 +300,7 @@ export function PercentageManagementView({
             name="status"
             control={form.control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ActiveInactiveStatusField value={field.value} onChange={field.onChange} />
             )}
           />
         </FormField>
