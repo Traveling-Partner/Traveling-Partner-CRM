@@ -21,7 +21,9 @@ import {
   Coins,
   ChevronDown,
   FolderOpen,
-  Truck
+  Layers,
+  Palette,
+  Tags
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -58,7 +60,8 @@ const adminNav: SidebarEntry[] = [
     items: [
       { label: "Drivers", href: "/admin/drivers", icon: Users },
       { label: "Partners", href: "/admin/partners", icon: Briefcase },
-      { label: "Agents", href: "/admin/agents", icon: UserCircle2 }
+      { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
+      { label: "Documents", href: "/admin/documents", icon: FileText }
     ]
   },
   {
@@ -92,12 +95,14 @@ const adminNav: SidebarEntry[] = [
     ]
   },
   {
-    id: "fleet-management",
-    label: "Fleet Management",
-    icon: Truck,
+    id: "vehicle-management",
+    label: "Vehicle Management",
+    icon: Car,
     items: [
-      { label: "Vehicle types", href: "/admin/vehicle-types", icon: Car },
-      { label: "Documents", href: "/admin/documents", icon: FileText }
+      { label: "Vehicle Types", href: "/admin/vehicle-types", icon: Car },
+      { label: "Vehicle Models", href: "/admin/vehicle-models", icon: Layers },
+      { label: "Vehicle Colors", href: "/admin/vehicle-colors", icon: Palette },
+      { label: "Vehicle Brands", href: "/admin/vehicle-brands", icon: Tags }
     ]
   },
   {
@@ -122,8 +127,6 @@ function isSidebarGroup(entry: SidebarEntry): entry is SidebarGroup {
 function isLinkActive(pathname: string, href: string) {
   if (pathname === href) return true;
 
-  // Match nested routes only (e.g. /admin/newsletter/create), not sibling paths
-  // like /admin/newsletter-subscribers that share a common prefix.
   if (href === "/admin/dashboard" || href === "/agent/dashboard") {
     return false;
   }
