@@ -123,6 +123,85 @@ export const newsletterSubscribers: NewsletterSubscriber[] = [
     subscriptionDate: "2026-01-05T10:05:00.000Z",
     status: "ACTIVE",
     sentNewsletters: []
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+  },
+  {
+    id: "sub-11",
+    name: "Nadia Hussain",
+    email: "nadia.hussain@example.com",
+    subscriptionDate: "2025-03-14T08:20:00.000Z",
+    status: "ACTIVE",
+    sentNewsletters: [sentFromCatalog(101, "2025-03-15T10:00:00.000Z")]
+  },
+  {
+    id: "sub-12",
+    name: "Kamran Shah",
+    email: "kamran.shah@example.com",
+    subscriptionDate: "2025-04-22T16:45:00.000Z",
+    status: "UNSUBSCRIBED",
+    sentNewsletters: [sentFromCatalog(102, "2025-04-23T10:00:00.000Z")]
+  },
+  {
+    id: "sub-13",
+    name: "Mehwish Tariq",
+    email: "mehwish.tariq@example.com",
+    subscriptionDate: "2025-05-30T11:30:00.000Z",
+    status: "ACTIVE",
+    sentNewsletters: [
+      sentFromCatalog(103, "2025-05-31T10:00:00.000Z"),
+      sentFromCatalog(104, "2025-12-01T10:00:00.000Z")
+    ]
+  },
+  {
+    id: "sub-14",
+    name: null,
+    email: "updates@travelpartner.io",
+    subscriptionDate: "2025-07-12T09:00:00.000Z",
+    status: "ACTIVE",
+    sentNewsletters: [sentFromCatalog(104, "2025-12-01T10:00:00.000Z")]
+  },
+  {
+    id: "sub-15",
+    name: "Rashid Mehmood",
+    email: "rashid.mehmood@example.com",
+    subscriptionDate: "2025-08-25T14:15:00.000Z",
+    status: "ACTIVE",
+    sentNewsletters: [
+      sentFromCatalog(105, "2026-02-14T10:00:00.000Z"),
+      sentFromCatalog(106, "2026-01-20T10:00:00.000Z")
+    ]
+  },
+  {
+    id: "sub-16",
+    name: "Sana Iqbal",
+    email: "sana.iqbal@example.com",
+    subscriptionDate: "2025-09-18T10:40:00.000Z",
+    status: "UNSUBSCRIBED",
+    sentNewsletters: []
+  },
+  {
+    id: "sub-17",
+    name: "Tariq Jamil",
+    email: "tariq.jamil@example.com",
+    subscriptionDate: "2025-10-02T07:25:00.000Z",
+    status: "ACTIVE",
+    sentNewsletters: [sentFromCatalog(106, "2026-01-20T10:00:00.000Z")]
+  },
+  {
+    id: "sub-18",
+    name: "Hina Sheikh",
+    email: "hina.sheikh@example.com",
+    subscriptionDate: "2025-11-08T13:55:00.000Z",
+    status: "ACTIVE",
+    sentNewsletters: [
+      sentFromCatalog(101, "2025-03-02T10:00:00.000Z"),
+      sentFromCatalog(105, "2026-02-14T10:00:00.000Z")
+    ]
+=======
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
   }
 ];
 

@@ -188,7 +188,15 @@ export default function NewsletterSubscribersPage() {
 
           {!isLoading && totalSubscribers > 0 && (
             <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+<<<<<<< Updated upstream
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
+=======
+<<<<<<< HEAD
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+=======
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
                 <span>Show</span>
                 <Select
                   value={String(pageSize)}
@@ -205,8 +213,19 @@ export default function NewsletterSubscribersPage() {
                   </SelectContent>
                 </Select>
                 <span>per page</span>
+<<<<<<< Updated upstream
                 <span className="hidden sm:inline">
                   · {totalSubscribers} subscriber{totalSubscribers === 1 ? "" : "s"}
+=======
+<<<<<<< HEAD
+                <span>
+                  · Showing {page * pageSize + 1}–
+                  {Math.min((page + 1) * pageSize, totalSubscribers)} of {totalSubscribers}
+=======
+                <span className="hidden sm:inline">
+                  · {totalSubscribers} subscriber{totalSubscribers === 1 ? "" : "s"}
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
                 </span>
               </div>
               <PaginationControls
@@ -219,7 +238,18 @@ export default function NewsletterSubscribersPage() {
 
           <p className="mt-4 text-xs text-muted-foreground">
             Manage newsletter content on the{" "}
+<<<<<<< Updated upstream
             <Link href="/admin/newsletter" className="font-medium text-foreground underline-offset-2 hover:underline">
+=======
+<<<<<<< HEAD
+            <Link
+              href="/admin/newsletter"
+              className="font-medium text-foreground underline-offset-2 hover:underline"
+            >
+=======
+            <Link href="/admin/newsletter" className="font-medium text-foreground underline-offset-2 hover:underline">
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
               Newsletter
             </Link>{" "}
             page.
