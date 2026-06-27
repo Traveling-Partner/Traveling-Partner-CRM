@@ -3,16 +3,34 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NewsletterSubscriber, NewsletterSubscriberStatus } from "@/types/newsletter-subscribers";
 
+<<<<<<< Updated upstream
 const DEFAULT_PAGE_SIZE = 10;
+=======
+<<<<<<< HEAD
+const DEFAULT_PAGE_SIZE = 6;
+=======
+const DEFAULT_PAGE_SIZE = 10;
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
 const INITIAL_LOAD_DELAY_MS = 500;
 
 interface UseNewsletterSubscribersMockOptions {
   initialData: NewsletterSubscriber[];
 }
 
+<<<<<<< Updated upstream
 export function useNewsletterSubscribersMock({
   initialData
 }: UseNewsletterSubscribersMockOptions) {
+=======
+<<<<<<< HEAD
+export function useNewsletterSubscribersMock({ initialData }: UseNewsletterSubscribersMockOptions) {
+=======
+export function useNewsletterSubscribersMock({
+  initialData
+}: UseNewsletterSubscribersMockOptions) {
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -43,6 +61,18 @@ export function useNewsletterSubscribersMock({
 
   const totalPages = Math.max(1, Math.ceil(filteredSubscribers.length / pageSize));
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+  useEffect(() => {
+    if (page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
+
+=======
+>>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
+>>>>>>> Stashed changes
   const paginatedSubscribers = useMemo(() => {
     const start = page * pageSize;
     return filteredSubscribers.slice(start, start + pageSize);
