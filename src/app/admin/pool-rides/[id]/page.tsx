@@ -87,8 +87,7 @@ export default function PoolRideDetailPage() {
         <Card className="overflow-hidden border-border/80 bg-gradient-to-b from-card to-muted/30 shadow-sm">
           <div className="h-1 w-full bg-gradient-to-r from-[#fce001] via-[#fdb813] to-[#fce001]/60" />
           <CardContent className="p-5 md:p-6">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0 flex-1 space-y-3">
+            <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <PoolRideBadge status={ride.rideStatus} variant="ride" />
                   <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] font-semibold text-foreground">
@@ -113,25 +112,33 @@ export default function PoolRideDetailPage() {
                     {ride.vehicleType}
                   </span>
                 </div>
-              </div>
-              <div className="grid w-full shrink-0 grid-cols-2 gap-3 sm:max-w-sm lg:w-auto">
-                <div className="rounded-xl border border-border/60 bg-gradient-to-b from-amber-50/80 to-card p-4 dark:from-amber-500/10">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Final amount
-                  </p>
-                  <p className="mt-1 font-heading text-xl font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
-                    {poolRideCurrency(ride.finalAmount)}
-                  </p>
+
+                <div className="grid grid-cols-2 gap-3 border-t border-border/40 pt-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-border/60 bg-gradient-to-b from-amber-50/80 to-card p-4 dark:from-amber-500/10">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Final amount
+                    </p>
+                    <p className="mt-1 font-heading text-xl font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
+                      {poolRideCurrency(ride.finalAmount)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {ride.rideStatus === "COMPLETED" ? "Distance" : "Est. distance"}
+                    </p>
+                    <p className="mt-1 font-heading text-xl font-semibold text-foreground tabular-nums">
+                      {ride.actualDistanceKm ?? ride.estimatedDistanceKm} km
+                    </p>
+                  </div>
+                  <div className="col-span-2 rounded-xl border border-border/60 bg-muted/20 p-4 sm:col-span-1">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {ride.rideStatus === "COMPLETED" ? "Actual time" : "Est. time"}
+                    </p>
+                    <p className="mt-1 font-heading text-xl font-semibold text-foreground tabular-nums">
+                      {ride.actualTimeMinutes ?? ride.estimatedTimeMinutes} min
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Distance
-                  </p>
-                  <p className="mt-1 font-heading text-xl font-semibold text-foreground tabular-nums">
-                    {ride.actualDistanceKm ?? ride.estimatedDistanceKm} km
-                  </p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

@@ -2,15 +2,11 @@
 
 import { useMemo, type CSSProperties } from "react";
 import {
-  Clock,
   ExternalLink,
   MapPin,
   Maximize2,
   Navigation,
-  Route,
-  User,
-  ZoomIn,
-  ZoomOut
+  Route
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PoolRide } from "@/types/pool-ride";
@@ -132,15 +128,6 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
 
   const googleMapsEmbedSimple = `https://maps.google.com/maps?saddr=${ride.startLat},${ride.startLng}&daddr=${ride.endLat},${ride.endLng}&hl=en&z=14&output=embed`;
 
-  const distanceLabel = isCompleted
-    ? ride.actualDistanceKm ?? ride.estimatedDistanceKm
-    : ride.estimatedDistanceKm;
-
-  const timeLabel =
-    isCompleted && ride.actualTimeMinutes != null
-      ? ride.actualTimeMinutes
-      : ride.estimatedTimeMinutes;
-
   const routePath = `M ${pickupPos.x} ${pickupPos.y} Q ${(pickupPos.x + dropoffPos.x) / 2} ${Math.min(pickupPos.y, dropoffPos.y) - 12} ${dropoffPos.x} ${dropoffPos.y}`;
 
   return (
@@ -253,27 +240,6 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
               style={{ left: `${dropoffPos.x}%`, top: `${dropoffPos.y}%` }}
             />
 
-            <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-2 sm:left-4 sm:top-4">
-              <div className="rounded-xl border border-border/60 bg-card/95 px-3 py-2 shadow-lg backdrop-blur-md">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Distance
-                </p>
-                <p className="font-heading text-lg font-bold text-foreground tabular-nums">
-                  {distanceLabel}{" "}
-                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">km</span>
-                </p>
-              </div>
-              <div className="rounded-xl border border-border/60 bg-card/95 px-3 py-2 shadow-lg backdrop-blur-md">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {isCompleted ? "Actual time" : "Est. time"}
-                </p>
-                <p className="font-heading text-lg font-bold text-foreground tabular-nums">
-                  {timeLabel}{" "}
-                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">min</span>
-                </p>
-              </div>
-            </div>
-
             <div className="absolute bottom-3 right-3 z-20 hidden rounded-xl border border-border/60 bg-card/95 p-2.5 shadow-lg backdrop-blur-md sm:block">
               <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Legend
@@ -338,99 +304,6 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
             </div>
           </div>
         </div>
-
-      {/* Trip tools — full width row below map */}
-      <div
-        className={cn(
-          "grid gap-3 sm:grid-cols-2 lg:grid-cols-4",
-          fullWidth && "px-3 md:px-6"
-        )}
-      >
-        <div className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/20 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Trip summary
-          </p>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2">
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Route className="h-4 w-4" />
-                Distance
-              </span>
-              <span className="font-semibold tabular-nums">{distanceLabel} km</span>
-            </div>
-            <div className="flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2">
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                Duration
-              </span>
-              <span className="font-semibold tabular-nums">{timeLabel} min</span>
-            </div>
-            <div
-              className={cn(
-                "rounded-xl px-3 py-2 text-center text-sm font-semibold",
-                isCompleted
-                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                  : "bg-amber-500/10 text-amber-800 dark:text-amber-300"
-              )}
-            >
-              {isCompleted ? "Route completed" : isLive ? "En route" : "Scheduled route"}
-            </div>
-          </div>
-        </div>
-
-        {ride.driverLat != null && ride.driverLng != null ? (
-          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-500/5 to-card p-4 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15">
-                <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Driver location
-                </p>
-                <p className="font-mono text-[11px] text-muted-foreground">
-                  {ride.driverLat.toFixed(5)}, {ride.driverLng.toFixed(5)}
-                </p>
-              </div>
-            </div>
-            <a
-              href={`https://www.google.com/maps?q=${ride.driverLat},${ride.driverLng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-card py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted/40"
-            >
-              <ZoomIn className="h-3.5 w-3.5" />
-              Track driver
-            </a>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Driver location
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">Not available for this ride</p>
-          </div>
-        )}
-
-        <a
-          href={`https://www.google.com/maps/@${ride.startLat},${ride.startLng},15z`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card py-4 text-sm font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/40 hover:text-foreground"
-        >
-          <ZoomIn className="h-4 w-4" />
-          Zoom in
-        </a>
-        <a
-          href={`https://www.google.com/maps/@${ride.startLat},${ride.startLng},11z`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card py-4 text-sm font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/40 hover:text-foreground"
-        >
-          <ZoomOut className="h-4 w-4" />
-          Zoom out
-        </a>
-      </div>
 
       {ride.intermediateStops?.length ? (
         <div
