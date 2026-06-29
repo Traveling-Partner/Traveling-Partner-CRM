@@ -3,13 +3,19 @@
 import { ChangeEvent, useState } from "react";
 import { Loader2, UploadCloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { uploadCarouselImage } from "@/lib/upload-carousel-image";
 
 interface ImageUploadFieldProps {
   id: string;
   value?: string;
   onChange: (value: string) => void;
   token?: string | null;
+}
+
+interface UploadResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: string;
 }
 
 export function ImageUploadField({ id, value, onChange, token }: ImageUploadFieldProps) {
@@ -24,8 +30,29 @@ export function ImageUploadField({ id, value, onChange, token }: ImageUploadFiel
     setUploadError("");
 
     try {
-      const url = await uploadCarouselImage(file, token ?? null);
-      onChange(url);
+      const storageToken =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const accessToken = token ?? storageToken;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/documents/Carousel`,
+        {
+          method: "POST",
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+          body: formData
+        }
+      );
+
+      const json: UploadResponse = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Upload failed.");
+      }
+
+      onChange(json.data);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Image upload failed.");
     } finally {

@@ -33,6 +33,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
           variant="ghost"
           size="icon"
           className="shrink-0 md:hidden"
+          aria-label="Open navigation menu"
           onClick={onToggleSidebarMobile}
         >
           <Menu className="h-5 w-5" />
