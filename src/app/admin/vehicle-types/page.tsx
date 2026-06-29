@@ -657,6 +657,8 @@ export default function VehicleTypesPage() {
                               setDeleteTarget({ tab: "vehicleModels", id: item.id, name: item.name })
                             }
                           >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
                         </div>
                       )
                     }
@@ -749,6 +751,8 @@ export default function VehicleTypesPage() {
                               setDeleteTarget({ tab: "vehicleColors", id: item.id, name: item.name })
                             }
                           >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
                         </div>
                       )
                     }
@@ -849,6 +853,8 @@ export default function VehicleTypesPage() {
                               setDeleteTarget({ tab: "vehicleBrands", id: item.id, name: item.name })
                             }
                           >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
                         </div>
                       )
                     }
