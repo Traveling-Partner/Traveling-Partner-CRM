@@ -22,7 +22,6 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { CoverImageUploadPanel } from "@/components/common/CoverImageUploadPanel";
 import { useAppSelector } from "@/store/hooks";
 import {
   getBlogById,
@@ -30,12 +29,20 @@ import {
   getAllBlogCategories,
   type BlogCategory
 } from "@/services/blog";
+import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
   type BlogEditorFormValues,
   buildBlogUpsertPayload,
   normalizeBlogStatusForForm
 } from "@/app/admin/blog/_blog-form-shared";
+
+interface UploadResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: string;
+}
 
 export default function AdminBlogEditPage() {
   const params = useParams<{ id: string }>();
@@ -49,6 +56,7 @@ export default function AdminBlogEditPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
 
   const {
@@ -161,6 +169,40 @@ export default function AdminBlogEditPage() {
 
   const saveDraft = handleSubmit((vals) => void submitWithStatus(vals, "DRAFT"));
   const publish = handleSubmit((vals) => void submitWithStatus(vals, "PUBLISHED"));
+
+  const onImageChange: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const inputEl = event.currentTarget;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setCoverUploading(true);
+    try {
+      const storageToken =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const accessToken = token ?? storageToken;
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(apiUrl("/documents/Carousel"), {
+        method: "POST",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: formData
+      });
+      const json: UploadResponse = await res.json();
+
+      if (!res.ok || !json.success || !json.data) {
+        throw new Error(json.message || "Cover upload failed.");
+      }
+
+      setValue("coverImage", json.data, { shouldValidate: true, shouldDirty: true });
+      setImagePreview(json.data);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to upload cover image.");
+    } finally {
+      setCoverUploading(false);
+      inputEl.value = "";
+    }
+  };
 
   if (loading) {
     return (
@@ -287,19 +329,31 @@ export default function AdminBlogEditPage() {
           </div>
 
           <div className="space-y-4">
-            <CoverImageUploadPanel
-              imageUrl={imagePreview}
-              onImageUrlChange={(url) => {
-                setValue("coverImage", url, { shouldValidate: true, shouldDirty: true });
-                setImagePreview(url);
-              }}
-              token={token}
-              disabled={submitting}
-              onError={showError}
+            <SectionCard
               title="Cover image preview"
               description="Upload a hero image."
-              emptyMessage="Choose an image to see a preview."
-            />
+            >
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onImageChange}
+                  disabled={coverUploading}
+                />
+                {coverUploading ? (
+                  <p className="text-xs text-muted-foreground">Uploading cover image...</p>
+                ) : null}
+                {imagePreview && (
+                  <div className="overflow-hidden rounded-lg border border-border/60">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-40 w-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </SectionCard>
 
             <div className="flex gap-2">
               <Button

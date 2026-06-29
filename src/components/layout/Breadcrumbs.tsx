@@ -3,13 +3,65 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+const SKIP_SEGMENTS = new Set(["admin", "agent"]);
+
+const SEGMENT_LABELS: Record<string, string> = {
+  dashboard: "Dashboard",
+  "pool-rides": "Pool Ride",
+  drivers: "Drivers",
+  partners: "Partners",
+  agents: "Agents",
+  documents: "Documents",
+  blog: "Blog",
+  newsletter: "Newsletter",
+  "newsletter-subscribers": "Newsletter Subscribers",
+  carousel: "Carousel",
+  "tax-management": "Tax Management",
+  "commission-management": "Commission Management",
+  "insurance-management": "Insurance Management",
+  "platform-fee-management": "Platform Fee Management",
+  "vehicle-types": "Vehicle Types",
+  "vehicle-models": "Vehicle Models",
+  "vehicle-colors": "Vehicle Colors",
+  "vehicle-brands": "Vehicle Brands",
+  settings: "Settings",
+  commissions: "Commissions",
+  create: "Create",
+  edit: "Edit",
+  listings: "My Listings",
+  profile: "Profile"
+};
+
+const GROUP_BY_SEGMENT: Record<string, string> = {
+  drivers: "User Management",
+  partners: "User Management",
+  agents: "User Management",
+  documents: "User Management",
+  blog: "Content Management",
+  newsletter: "Content Management",
+  "newsletter-subscribers": "Content Management",
+  carousel: "Content Management",
+  "tax-management": "Financial Management",
+  "commission-management": "Financial Management",
+  "insurance-management": "Financial Management",
+  "platform-fee-management": "Financial Management",
+  "vehicle-types": "Vehicle Management",
+  "vehicle-models": "Vehicle Management",
+  "vehicle-colors": "Vehicle Management",
+  "vehicle-brands": "Vehicle Management",
+  settings: "System"
+};
 
 function toTitle(segment: string): string {
-  return segment
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  if (/^\d+$/.test(segment)) return segment;
+  return (
+    SEGMENT_LABELS[segment] ??
+    segment
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
+  );
 }
 
 export function Breadcrumbs() {
@@ -20,15 +72,28 @@ export function Breadcrumbs() {
     return null;
   }
 
-  const items = segments.map((segment, index) => {
-    const href = "/" + segments.slice(0, index + 1).join("/");
-    const isLast = index === segments.length - 1;
+  const rolePrefix = segments[0] === "admin" || segments[0] === "agent" ? segments[0] : null;
+  const visibleSegments = segments.filter((segment) => !SKIP_SEGMENTS.has(segment));
 
-    return {
+  const items: Array<{ label: string; href?: string; isLast: boolean }> = [];
+  let groupInserted = false;
+
+  visibleSegments.forEach((segment, index) => {
+    const groupLabel = GROUP_BY_SEGMENT[segment];
+    if (groupLabel && !groupInserted) {
+      items.push({ label: groupLabel, isLast: false });
+      groupInserted = true;
+    }
+
+    const hrefSegments = rolePrefix
+      ? [rolePrefix, ...visibleSegments.slice(0, index + 1)]
+      : visibleSegments.slice(0, index + 1);
+
+    items.push({
       label: toTitle(segment),
-      href,
-      isLast
-    };
+      href: "/" + hrefSegments.join("/"),
+      isLast: index === visibleSegments.length - 1
+    });
   });
 
   return (
@@ -43,10 +108,10 @@ export function Breadcrumbs() {
             <span className="sr-only sm:not-sr-only">Home</span>
           </Link>
         </li>
-        {items.map((item) => (
-          <li key={item.href} className="flex items-center gap-1">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center gap-1">
             <ChevronRight className="h-3 w-3 shrink-0 opacity-40" aria-hidden />
-            {item.isLast ? (
+            {item.isLast || !item.href ? (
               <span className="font-semibold text-foreground">{item.label}</span>
             ) : (
               <Link

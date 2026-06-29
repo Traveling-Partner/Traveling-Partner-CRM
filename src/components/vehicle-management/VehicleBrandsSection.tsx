@@ -44,7 +44,7 @@ export function VehicleBrandsSection() {
   const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
   const [editingId, setEditingId] = useState<number | string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -109,16 +109,16 @@ export function VehicleBrandsSection() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId || !token) return;
+    if (!deleteTarget || !token) return;
     setDeleting(true);
     try {
-      await deleteVehicleBrand(deleteId, { token });
+      await deleteVehicleBrand(deleteTarget.id, { token });
       success("Vehicle brand deleted successfully.");
-      setDeleteId(null);
+      setDeleteTarget(null);
       await invalidate();
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to delete item.");
-      setDeleteId(null);
+      setDeleteTarget(null);
     } finally {
       setDeleting(false);
     }
@@ -200,10 +200,20 @@ export function VehicleBrandsSection() {
                 className: "w-[140px]",
                 render: (item: VehicleBrand) => (
                   <div className="flex items-center gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(item)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Edit ${item.name}`}
+                      onClick={() => openEdit(item)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setDeleteId(item.id)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Delete ${item.name}`}
+                      onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
+                    >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
@@ -299,9 +309,11 @@ export function VehicleBrandsSection() {
       </EntityModal>
 
       <VehicleDeleteDialog
-        open={Boolean(deleteId)}
+        open={Boolean(deleteTarget)}
         deleting={deleting}
-        onOpenChange={(open) => !open && setDeleteId(null)}
+        recordName={deleteTarget?.name}
+        entityLabel="vehicle brand"
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}
       />
     </>

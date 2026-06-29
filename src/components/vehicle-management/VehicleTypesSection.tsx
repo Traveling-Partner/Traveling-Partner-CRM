@@ -44,7 +44,7 @@ export function VehicleTypesSection() {
   const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
   const [editingId, setEditingId] = useState<number | string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -100,16 +100,16 @@ export function VehicleTypesSection() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId || !token) return;
+    if (!deleteTarget || !token) return;
     setDeleting(true);
     try {
-      await deleteVehicleType(deleteId, { token });
+      await deleteVehicleType(deleteTarget.id, { token });
       success("Vehicle type deleted successfully.");
-      setDeleteId(null);
+      setDeleteTarget(null);
       await invalidate();
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to delete item.");
-      setDeleteId(null);
+      setDeleteTarget(null);
     } finally {
       setDeleting(false);
     }
@@ -183,10 +183,20 @@ export function VehicleTypesSection() {
                       </span>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(type)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Edit ${type.name}`}
+                        onClick={() => openEdit(type)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setDeleteId(type.id)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Delete ${type.name}`}
+                        onClick={() => setDeleteTarget({ id: type.id, name: type.name })}
+                      >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
@@ -261,9 +271,11 @@ export function VehicleTypesSection() {
       </EntityModal>
 
       <VehicleDeleteDialog
-        open={Boolean(deleteId)}
+        open={Boolean(deleteTarget)}
         deleting={deleting}
-        onOpenChange={(open) => !open && setDeleteId(null)}
+        recordName={deleteTarget?.name}
+        entityLabel="vehicle type"
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}
       />
     </>

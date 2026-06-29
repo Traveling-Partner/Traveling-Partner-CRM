@@ -36,10 +36,24 @@ export function VehicleTypeCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
         <div className="absolute right-3 top-3 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button type="button" size="icon" variant="secondary" className="h-8 w-8" onClick={onEdit}>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8"
+            aria-label={`Edit ${name}`}
+            onClick={onEdit}
+          >
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button type="button" size="icon" variant="destructive" className="h-8 w-8" onClick={onDelete}>
+          <Button
+            type="button"
+            size="icon"
+            variant="destructive"
+            className="h-8 w-8"
+            aria-label={`Delete ${name}`}
+            onClick={onDelete}
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>

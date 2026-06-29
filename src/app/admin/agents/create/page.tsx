@@ -137,7 +137,7 @@ export default function AdminCreateAgentPage() {
           title="New sales agent"
           description="Fill in all fields to register a new agent."
         >
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                 <Input id="name" {...register("name")} placeholder="e.g., Zaeem Khan" />
@@ -148,7 +148,14 @@ export default function AdminCreateAgentPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Email" htmlFor="email" required error={errors.email}>
-                <Input id="email" type="email" {...register("email")} placeholder="agent@example.com" />
+                <Input
+                  id="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  {...register("email")}
+                  placeholder="agent@example.com"
+                />
               </FormField>
               <FormField label="Mobile Number" htmlFor="mobileNumber" required error={errors.mobileNumber}>
                 <Input id="mobileNumber" {...register("mobileNumber")} placeholder="03001234567" />

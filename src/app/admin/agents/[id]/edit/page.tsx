@@ -31,7 +31,10 @@ const schema = z.object({
   email: z.string().trim().email("Valid email required"),
   username: z.string().trim().min(2, "Username is required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
-  password: z.string().min(4, "Password must be at least 4 characters"),
+  password: z.union([
+    z.literal(""),
+    z.string().min(4, "Password must be at least 4 characters")
+  ]),
   gender: z.enum(["Male", "Female", "Other", "MALE", "FEMALE", "OTHER"], { required_error: "Gender is required" }),
   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"]),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
@@ -183,7 +186,7 @@ export default function AdminEditAgentPage() {
             cnicNumber: values.cnicNumber,
             cnicFront: values.cnicFront,
             cnicBack: values.cnicBack,
-            password: values.password,
+            ...(values.password.trim() ? { password: values.password } : {}),
             status: values.status
           })
         }
@@ -239,7 +242,7 @@ export default function AdminEditAgentPage() {
           title="Edit sales agent"
           description="Update the agent details and save."
         >
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                 <Input id="name" {...register("name")} placeholder="e.g., Zaeem Khan" />
@@ -250,15 +253,27 @@ export default function AdminEditAgentPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Email" htmlFor="email" required error={errors.email}>
-                <Input id="email" type="email" {...register("email")} placeholder="agent@example.com" />
+                <Input
+                  id="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  {...register("email")}
+                  placeholder="agent@example.com"
+                />
               </FormField>
               <FormField label="Mobile Number" htmlFor="mobileNumber" required error={errors.mobileNumber}>
                 <Input id="mobileNumber" {...register("mobileNumber")} placeholder="03001234567" />
               </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Password" htmlFor="password" required error={errors.password}>
-                <Input id="password" type="password" {...register("password")} placeholder="Enter new password" />
+              <FormField label="Password" htmlFor="password" error={errors.password}>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register("password")}
+                  placeholder="Leave blank to keep current password"
+                />
               </FormField>
               <FormField label="CNIC Number" htmlFor="cnicNumber" required error={errors.cnicNumber}>
                 <Input id="cnicNumber" {...register("cnicNumber")} placeholder="4310212345674" maxLength={13} />
