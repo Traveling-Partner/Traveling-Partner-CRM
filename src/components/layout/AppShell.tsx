@@ -11,9 +11,11 @@ interface AppShellProps {
   children: React.ReactNode;
   title?: string;
   allowedRoles?: string[];
+  /** When true, content spans the full main column instead of max-w-6xl. */
+  wideContent?: boolean;
 }
 
-export function AppShell({ children, title, allowedRoles }: AppShellProps) {
+export function AppShell({ children, title, allowedRoles, wideContent }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -57,7 +59,12 @@ export function AppShell({ children, title, allowedRoles }: AppShellProps) {
           />
 
           <main className="min-w-0 flex-1 px-3 py-4 md:px-6 md:py-6">
-            <div className="mx-auto flex h-full max-w-6xl flex-col gap-4">
+            <div
+              className={cn(
+                "mx-auto flex h-full flex-col gap-4",
+                wideContent ? "max-w-none" : "max-w-6xl"
+              )}
+            >
               {children}
             </div>
           </main>
