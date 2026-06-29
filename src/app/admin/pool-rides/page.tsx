@@ -1,10 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
-import { ColumnDef } from "@tanstack/react-table";
 import {
-  ArrowUpDown,
   Bike,
   Building2,
   Car,
@@ -20,10 +17,8 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
-import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectTrigger,
@@ -34,53 +29,25 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { PoolRideStatCard } from "@/components/pool-rides/PoolRideStatCard";
-import {
-  PoolRideBadge,
-  poolRideCurrency,
-  poolRidePaymentLabel
-} from "@/components/pool-rides/PoolRideBadges";
+import { PoolRideResponsiveTable } from "@/components/pool-rides/PoolRideResponsiveTable";
 import { usePoolRidesMock } from "@/hooks/pool-rides/usePoolRidesMock";
 import { poolRides } from "@/mock-data/pool-rides";
-import type { PoolRide, PoolRideSortField } from "@/types/pool-ride";
 
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-function SortableHeader({
-  label,
-  field,
-  activeField,
-  direction,
-  onSort
-}: {
-  label: string;
-  field: PoolRideSortField;
-  activeField: PoolRideSortField;
-  direction: "asc" | "desc";
-  onSort: (field: PoolRideSortField) => void;
-}) {
-  const isActive = activeField === field;
+function PoolRideTableSkeleton() {
   return (
-    <button
-      type="button"
-      onClick={() => onSort(field)}
-      className="inline-flex items-center gap-1 text-left font-medium transition-colors hover:text-foreground"
-    >
-      {label}
-      <ArrowUpDown
-        className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground/50"}`}
-      />
-      {isActive ? (
-        <span className="sr-only">Sorted {direction}</span>
-      ) : null}
-    </button>
+    <>
+      <div className="space-y-3 md:hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-52 w-full rounded-2xl" />
+        ))}
+      </div>
+      <div className="hidden space-y-2 md:block">
+        <Skeleton className="h-11 w-full rounded-t-2xl" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full" />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -205,155 +172,6 @@ export default function PoolRidesPage() {
     [stats]
   );
 
-  const columns: ColumnDef<PoolRide>[] = useMemo(
-    () => [
-      {
-        accessorKey: "id",
-        header: "Ride ID",
-        cell: ({ row }) => (
-          <span className="font-mono text-xs font-medium">{row.original.id}</span>
-        )
-      },
-      {
-        accessorKey: "bookingDate",
-        header: () => (
-          <SortableHeader
-            label="Booking Date"
-            field="bookingDate"
-            activeField={sortField}
-            direction={sortDirection}
-            onSort={handleSortChange}
-          />
-        ),
-        cell: ({ row }) => (
-          <span className="text-[12px] text-muted-foreground tabular-nums">
-            {formatDate(row.original.bookingDate)}
-          </span>
-        )
-      },
-      {
-        id: "passengerName",
-        header: () => (
-          <SortableHeader
-            label="Passenger"
-            field="passengerName"
-            activeField={sortField}
-            direction={sortDirection}
-            onSort={handleSortChange}
-          />
-        ),
-        cell: ({ row }) => (
-          <span className="text-sm font-medium">{row.original.passenger.name}</span>
-        )
-      },
-      {
-        id: "driverName",
-        header: () => (
-          <SortableHeader
-            label="Driver"
-            field="driverName"
-            activeField={sortField}
-            direction={sortDirection}
-            onSort={handleSortChange}
-          />
-        ),
-        cell: ({ row }) => (
-          <span className="text-sm">{row.original.driver.name}</span>
-        )
-      },
-      {
-        accessorKey: "rideType",
-        header: "Ride Type",
-        cell: ({ row }) => (
-          <span className="text-[13px]">{row.original.rideType}</span>
-        )
-      },
-      {
-        accessorKey: "vehicleType",
-        header: "Vehicle",
-        cell: ({ row }) => (
-          <span className="text-[13px] text-muted-foreground">
-            {row.original.vehicleType}
-          </span>
-        )
-      },
-      {
-        accessorKey: "pickupAddress",
-        header: "Pickup",
-        cell: ({ row }) => (
-          <span className="line-clamp-1 max-w-[140px] text-[12px] text-muted-foreground">
-            {row.original.pickupAddress}
-          </span>
-        )
-      },
-      {
-        accessorKey: "destinationAddress",
-        header: "Destination",
-        cell: ({ row }) => (
-          <span className="line-clamp-1 max-w-[140px] text-[12px] text-muted-foreground">
-            {row.original.destinationAddress}
-          </span>
-        )
-      },
-      {
-        accessorKey: "finalAmount",
-        header: () => (
-          <SortableHeader
-            label="Fare"
-            field="fare"
-            activeField={sortField}
-            direction={sortDirection}
-            onSort={handleSortChange}
-          />
-        ),
-        cell: ({ row }) => (
-          <span className="text-sm font-medium tabular-nums">
-            {poolRideCurrency(row.original.finalAmount)}
-          </span>
-        )
-      },
-      {
-        accessorKey: "paymentMethod",
-        header: "Payment",
-        cell: ({ row }) => (
-          <span className="text-[12px] text-muted-foreground">
-            {poolRidePaymentLabel(row.original.paymentMethod)}
-          </span>
-        )
-      },
-      {
-        accessorKey: "rideStatus",
-        header: () => (
-          <SortableHeader
-            label="Ride Status"
-            field="rideStatus"
-            activeField={sortField}
-            direction={sortDirection}
-            onSort={handleSortChange}
-          />
-        ),
-        cell: ({ row }) => <PoolRideBadge status={row.original.rideStatus} variant="ride" />
-      },
-      {
-        accessorKey: "bookingStatus",
-        header: "Booking",
-        cell: ({ row }) => (
-          <PoolRideBadge status={row.original.bookingStatus} variant="booking" />
-        )
-      },
-      {
-        id: "actions",
-        header: "",
-        cell: ({ row }) => (
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/admin/pool-rides/${row.original.id}`}>View</Link>
-          </Button>
-        )
-      }
-    ],
-    [sortField, sortDirection, handleSortChange]
-  );
-
   return (
     <AppShell title="Pool Ride">
       <PageContainer>
@@ -364,7 +182,7 @@ export default function PoolRidesPage() {
           </p>
         </div>
 
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
           {statCards.map((stat) => (
             <PoolRideStatCard
               key={stat.label}
@@ -385,7 +203,7 @@ export default function PoolRidesPage() {
           className="mt-6"
         >
           <div className="flex flex-col gap-3 pb-4 lg:flex-row lg:flex-wrap lg:items-end">
-            <div className="relative min-w-[200px] flex-1 lg:max-w-xs">
+            <div className="relative min-w-0 flex-1 lg:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search rides, passengers, drivers…"
@@ -457,26 +275,19 @@ export default function PoolRidesPage() {
           </div>
 
           {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-lg" />
-              ))}
-            </div>
+            <PoolRideTableSkeleton />
           ) : filteredCount === 0 ? (
             <EmptyState
               title="No pool rides found"
               description="Try adjusting your search or filters."
             />
           ) : (
-            <div className="overflow-x-auto">
-              <DataTable
-                columns={columns}
-                data={rides}
-                getRowId={(row) => row.id}
-                emptyTitle="No rides"
-                emptyDescription="No rides match your filters."
-              />
-            </div>
+            <PoolRideResponsiveTable
+              rides={rides}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSortChange}
+            />
           )}
 
           {!isLoading && filteredCount > 0 ? (
