@@ -173,12 +173,12 @@ export default function PoolRidesPage() {
   );
 
   return (
-    <AppShell title="Pool Ride">
+    <AppShell title="Rides">
       <PageContainer>
         <div className="mb-4">
-          <h2 className="font-heading text-xl font-semibold tracking-tight">Pool Ride</h2>
+          <h2 className="font-heading text-xl font-semibold tracking-tight">Rides</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Monitor shared and multi-category rides — bookings, fleet mix, and trip outcomes.
+            Monitor bookings, fleet mix, and trip outcomes across all ride types.
           </p>
         </div>
 
@@ -278,7 +278,7 @@ export default function PoolRidesPage() {
             <PoolRideTableSkeleton />
           ) : filteredCount === 0 ? (
             <EmptyState
-              title="No pool rides found"
+              title="No rides found"
               description="Try adjusting your search or filters."
             />
           ) : (

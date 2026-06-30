@@ -55,12 +55,12 @@ export default function PoolRideDetailPage() {
 
   if (!ride) {
     return (
-      <AppShell title="Pool ride detail">
+      <AppShell title="Ride details">
         <PageContainer>
           <EmptyState
             title="Ride not found"
-            description="This pool ride id does not exist in the mock dataset."
-            actionLabel="Back to pool rides"
+            description="This ride id does not exist in the mock dataset."
+            actionLabel="Back to rides"
             onActionClick={() => router.push("/admin/pool-rides")}
           />
         </PageContainer>
@@ -72,13 +72,13 @@ export default function PoolRideDetailPage() {
   const PaymentIcon = ride.paymentMethod === "WALLET" ? Wallet : CreditCard;
 
   return (
-    <AppShell title={`Pool Ride ${ride.id}`} wideContent>
+    <AppShell title="Ride details" wideContent>
       <PageContainer>
         <div className="mb-2 flex flex-wrap items-center gap-3 px-0 md:px-0">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin/pool-rides" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
-              All pool rides
+              All rides
             </Link>
           </Button>
         </div>
