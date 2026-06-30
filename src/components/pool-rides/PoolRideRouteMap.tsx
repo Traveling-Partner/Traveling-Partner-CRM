@@ -184,7 +184,7 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
           )}
         >
             <iframe
-              title="Pool ride route map"
+              title="Ride route map"
               src={googleMapsEmbedSimple}
               className="absolute inset-0 h-full w-full border-0 grayscale-[0.15] contrast-[1.05] saturate-[1.1]"
               loading="lazy"

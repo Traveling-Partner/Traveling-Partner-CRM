@@ -54,7 +54,7 @@ type SidebarEntry = SidebarLink | SidebarGroup;
 
 const adminNav: SidebarEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Pool Ride", href: "/admin/pool-rides", icon: Share2 },
+  { label: "Rides", href: "/admin/pool-rides", icon: Share2 },
   {
     id: "user-management",
     label: "User Management",
