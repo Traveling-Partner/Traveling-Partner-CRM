@@ -1,14 +1,6 @@
 "use client";
 
-<<<<<<< Updated upstream
-import { useMemo } from "react";
-=======
-<<<<<<< HEAD
 import { useMemo, useState } from "react";
-=======
-import { useMemo } from "react";
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -19,9 +11,6 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 import {
   Select,
   SelectContent,
@@ -36,16 +25,6 @@ import type { SentNewsletterRecord } from "@/types/newsletter-subscribers";
 
 const SENT_NEWSLETTERS_PAGE_SIZE = 5;
 
-=======
->>>>>>> Stashed changes
-import { StatusBadge } from "@/components/ui/status-badge";
-import { getNewsletterSubscriberById } from "@/mock-data/newsletter-subscribers";
-import type { SentNewsletterRecord } from "@/types/newsletter-subscribers";
-
-<<<<<<< Updated upstream
-=======
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
 function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const date = new Date(value);
@@ -69,14 +48,8 @@ export default function NewsletterSubscriberDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const subscriber = getNewsletterSubscriberById(params.id);
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
   const [sentPage, setSentPage] = useState(0);
   const [sentPageSize, setSentPageSize] = useState(SENT_NEWSLETTERS_PAGE_SIZE);
-=======
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
 
   const sentColumns: ColumnDef<SentNewsletterRecord>[] = useMemo(
     () => [
@@ -127,18 +100,12 @@ export default function NewsletterSubscriberDetailPage() {
   const sortedSentNewsletters = [...subscriber.sentNewsletters].sort(
     (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
   );
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
   const sentTotalPages = Math.max(1, Math.ceil(sortedSentNewsletters.length / sentPageSize));
   const safeSentPage = Math.min(sentPage, Math.max(0, sentTotalPages - 1));
   const paginatedSentNewsletters = sortedSentNewsletters.slice(
     safeSentPage * sentPageSize,
     safeSentPage * sentPageSize + sentPageSize
   );
-=======
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
 
   return (
     <AppShell title="Newsletter Subscribers">
@@ -176,17 +143,9 @@ export default function NewsletterSubscriberDetailPage() {
               </dd>
             </div>
             <div className="space-y-1">
-<<<<<<< Updated upstream
-              <dt className="text-xs font-medium text-muted-foreground">Total newsletters received</dt>
-=======
-<<<<<<< HEAD
               <dt className="text-xs font-medium text-muted-foreground">
                 Total newsletters received
               </dt>
-=======
-              <dt className="text-xs font-medium text-muted-foreground">Total newsletters received</dt>
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
               <dd className="text-sm font-medium tabular-nums">
                 {subscriber.sentNewsletters.length}
               </dd>
@@ -204,9 +163,6 @@ export default function NewsletterSubscriberDetailPage() {
               description="This subscriber has not received any published newsletters."
             />
           ) : (
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
             <>
               <DataTable
                 columns={sentColumns}
@@ -248,17 +204,6 @@ export default function NewsletterSubscriberDetailPage() {
                 </div>
               )}
             </>
-=======
->>>>>>> Stashed changes
-            <DataTable
-              columns={sentColumns}
-              data={sortedSentNewsletters}
-              getRowId={(row) => `${row.newsletterId}-${row.sentAt}`}
-            />
-<<<<<<< Updated upstream
-=======
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
           )}
         </SectionCard>
       </PageContainer>
