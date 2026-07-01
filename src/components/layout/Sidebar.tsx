@@ -15,6 +15,7 @@ import {
   Images,
   Contact,
   Share2,
+  Route,
   Settings,
   UserCircle2,
   Receipt,
@@ -55,11 +56,16 @@ type SidebarEntry = SidebarLink | SidebarGroup;
 const adminNav: SidebarEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   {
+    id: "ride-management",
+    label: "Ride Management",
+    icon: Route,
+    items: [{ label: "Rides", href: "/admin/pool-rides", icon: Share2 }]
+  },
+  {
     id: "user-management",
     label: "User Management",
     icon: Users,
     items: [
-      { label: "Rides", href: "/admin/pool-rides", icon: Share2 },
       { label: "Drivers", href: "/admin/drivers", icon: Users },
       { label: "Partners", href: "/admin/partners", icon: Briefcase },
       { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
