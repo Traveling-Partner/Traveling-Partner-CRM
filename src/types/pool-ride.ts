@@ -25,6 +25,7 @@ export type PoolTripType = "ONE_WAY" | "ROUND_TRIP" | "SCHEDULED";
 export type PoolPaymentMethod = "CARD" | "CASH" | "WALLET";
 
 export type PoolPaymentStatus = "PAID" | "PENDING" | "REFUNDED" | "FAILED";
+export type PoolServiceMode = "POOL_RIDE" | "TAXI_STAND_CAR";
 
 export type PoolRefundStatus = "PROCESSED" | "PENDING" | "NOT_APPLICABLE" | "FAILED";
 
@@ -113,6 +114,7 @@ export interface PoolRide {
   driverEarnings: number;
   promoCode?: string;
   paymentMethod: PoolPaymentMethod;
+  serviceMode: PoolServiceMode;
   paymentStatus: PoolPaymentStatus;
   rideStatus: PoolRideStatus;
   bookingStatus: PoolBookingStatus;
@@ -129,11 +131,15 @@ export interface PoolRide {
   driverLng?: number;
   timeline: PoolRideTimelineEvent[];
   cancellation?: PoolRideCancellation;
+  reviewRating?: number;
+  reviewComment?: string;
 }
 
 export interface PoolRideStats {
   totalRides: number;
   bookedRides: number;
+  poolRides: number;
+  taxiStandCars: number;
   carPremiumRides: number;
   bikeRides: number;
   cityToCityRides: number;
@@ -156,6 +162,8 @@ export function computePoolRideStats(rides: PoolRide[]): PoolRideStats {
   return {
     totalRides: rides.length,
     bookedRides: rides.filter((r) => r.rideStatus === "BOOKED").length,
+    poolRides: rides.filter((r) => r.serviceMode === "POOL_RIDE").length,
+    taxiStandCars: rides.filter((r) => r.serviceMode === "TAXI_STAND_CAR").length,
     carPremiumRides: rides.filter((r) => r.category === "CAR_PREMIUM").length,
     bikeRides: rides.filter((r) => r.vehicleType === "BIKE").length,
     cityToCityRides: rides.filter((r) => r.category === "CITY_TO_CITY").length,

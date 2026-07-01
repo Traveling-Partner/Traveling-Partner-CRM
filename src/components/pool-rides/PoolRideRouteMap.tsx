@@ -127,6 +127,8 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${ride.startLat},${ride.startLng}&destination=${ride.endLat},${ride.endLng}&travelmode=driving`;
 
   const googleMapsEmbedSimple = `https://maps.google.com/maps?saddr=${ride.startLat},${ride.startLng}&daddr=${ride.endLat},${ride.endLng}&hl=en&z=14&output=embed`;
+  const actualDistance = ride.actualDistanceKm != null ? `${ride.actualDistanceKm} km` : "—";
+  const actualTime = ride.actualTimeMinutes != null ? `${ride.actualTimeMinutes} min` : "—";
 
   const routePath = `M ${pickupPos.x} ${pickupPos.y} Q ${(pickupPos.x + dropoffPos.x) / 2} ${Math.min(pickupPos.y, dropoffPos.y) - 12} ${dropoffPos.x} ${dropoffPos.y}`;
 
@@ -146,7 +148,7 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                Route map
+                Route information
               </p>
               <p className="text-[11px] text-muted-foreground">
                 {isCompleted ? "Completed journey" : isLive ? "Live tracking" : "Planned route"}
@@ -172,6 +174,52 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </a>
+          </div>
+        </div>
+        <div className="grid gap-2 border-b border-border/50 bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-3 md:px-6">
+          <div className="rounded-lg border border-border/50 bg-card/80 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Est. distance
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-foreground">
+              {ride.estimatedDistanceKm} km
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card/80 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Actual distance
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-foreground">{actualDistance}</p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card/80 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Est. time
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-foreground">
+              {ride.estimatedTimeMinutes} min
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card/80 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Actual time
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-foreground">{actualTime}</p>
+          </div>
+          <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 sm:col-span-2 lg:col-span-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+              Pickup address
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-sm font-medium text-foreground">
+              {ride.pickupAddress}
+            </p>
+          </div>
+          <div className="rounded-lg border border-rose-500/25 bg-rose-500/5 px-3 py-2 sm:col-span-2 lg:col-span-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-400">
+              Destination address
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-sm font-medium text-foreground">
+              {ride.destinationAddress}
+            </p>
           </div>
         </div>
 

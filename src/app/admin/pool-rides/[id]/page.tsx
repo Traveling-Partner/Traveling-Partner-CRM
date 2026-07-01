@@ -6,13 +6,10 @@ import { useParams, useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft,
-  CalendarClock,
   CreditCard,
   Hash,
   MapPinned,
-  Navigation,
-  Route,
-  Timer,
+  Star,
   Wallet
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -69,6 +66,7 @@ export default function PoolRideDetailPage() {
   }
 
   const isCancelled = ride.rideStatus === "CANCELLED";
+  const isCompleted = ride.rideStatus === "COMPLETED";
   const PaymentIcon = ride.paymentMethod === "WALLET" ? Wallet : CreditCard;
 
   return (
@@ -90,6 +88,9 @@ export default function PoolRideDetailPage() {
             <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <PoolRideBadge status={ride.rideStatus} variant="ride" />
+                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-[11px] font-semibold text-slate-900 shadow-sm">
+                    {ride.serviceMode === "POOL_RIDE" ? "Pool Ride" : "Taxi Stand Car"}
+                  </span>
                   <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] font-semibold text-foreground">
                     {ride.rideType}
                   </span>
@@ -142,11 +143,6 @@ export default function PoolRideDetailPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Map — edge-to-edge within main column */}
-        <div className="-mx-3 mt-4 w-[calc(100%+1.5rem)] md:-mx-6 md:mt-6 md:w-[calc(100%+3rem)]">
-          <PoolRideRouteMap ride={ride} fullWidth />
-        </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           <SectionCard
@@ -212,15 +208,23 @@ export default function PoolRideDetailPage() {
             </Button>
           </SectionCard>
 
-          <SectionCard title="Passenger information" description="Rider on this trip.">
+          <SectionCard title="Partner information" description="Partner details for this trip.">
             <PersonCard
-              title="Passenger"
+              title="Partner"
               name={ride.passenger.name}
               phone={ride.passenger.phone}
               email={ride.passenger.email}
               photoUrl={ride.passenger.photoUrl}
             />
+            <Button variant="link" className="mt-2 h-auto px-0 text-xs" asChild>
+              <Link href="/admin/partners">Open partner profile</Link>
+            </Button>
           </SectionCard>
+        </div>
+
+        {/* Map — edge-to-edge within main column */}
+        <div className="-mx-3 mt-6 w-[calc(100%+1.5rem)] md:-mx-6 md:w-[calc(100%+3rem)]">
+          <PoolRideRouteMap ride={ride} fullWidth />
         </div>
 
         <SectionCard
@@ -229,69 +233,6 @@ export default function PoolRideDetailPage() {
           className="mt-4"
         >
           <VehicleDetailsCard vehicle={ride.vehicle} />
-        </SectionCard>
-
-        <SectionCard
-          title="Route information"
-          description="Pickup, destination, and timing."
-          className="mt-4"
-        >
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="flex gap-3 rounded-xl border border-border/50 bg-muted/20 p-3">
-              <Route className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase text-muted-foreground">
-                  Est. distance
-                </p>
-                <p className="font-medium">{ride.estimatedDistanceKm} km</p>
-              </div>
-            </div>
-            <div className="flex gap-3 rounded-xl border border-border/50 bg-muted/20 p-3">
-              <Navigation className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase text-muted-foreground">
-                  Actual distance
-                </p>
-                <p className="font-medium">
-                  {ride.actualDistanceKm != null ? `${ride.actualDistanceKm} km` : "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3 rounded-xl border border-border/50 bg-muted/20 p-3">
-              <Timer className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase text-muted-foreground">
-                  Est. time
-                </p>
-                <p className="font-medium">{ride.estimatedTimeMinutes} min</p>
-              </div>
-            </div>
-            <div className="flex gap-3 rounded-xl border border-border/50 bg-muted/20 p-3">
-              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase text-muted-foreground">
-                  Actual time
-                </p>
-                <p className="font-medium">
-                  {ride.actualTimeMinutes != null ? `${ride.actualTimeMinutes} min` : "—"}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                Pickup address
-              </p>
-              <p className="mt-2 text-sm leading-relaxed">{ride.pickupAddress}</p>
-            </div>
-            <div className="rounded-xl border border-rose-500/25 bg-rose-500/5 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-400">
-                Destination address
-              </p>
-              <p className="mt-2 text-sm leading-relaxed">{ride.destinationAddress}</p>
-            </div>
-          </div>
         </SectionCard>
 
         {isCancelled && ride.cancellation ? (
@@ -314,6 +255,65 @@ export default function PoolRideDetailPage() {
                 label="Refund status"
                 value={ride.cancellation.refundStatus.replace(/_/g, " ")}
               />
+            </div>
+          </SectionCard>
+        ) : null}
+
+        {isCompleted ? (
+          <SectionCard
+            title="Completion information"
+            description="Completion status and rider feedback."
+            className="mt-4 border-emerald-500/20"
+          >
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <InfoField label="Status" value="Completed" />
+              <InfoField
+                label="Completion time"
+                value={
+                  ride.timeline.find((step) => step.stage === "COMPLETED")?.timestamp
+                    ? format(
+                        parseISO(
+                          ride.timeline.find((step) => step.stage === "COMPLETED")!.timestamp!
+                        ),
+                        "PPp"
+                      )
+                    : "—"
+                }
+              />
+              <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Rider rating
+                </p>
+                <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium">
+                  {ride.reviewRating != null ? (
+                    <>
+                      <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
+                      {ride.reviewRating.toFixed(1)} / 5
+                    </>
+                  ) : (
+                    "No rating given"
+                  )}
+                </p>
+              </div>
+              <InfoField
+                label="Review comment"
+                value={ride.reviewComment?.trim() ? ride.reviewComment : "No review given"}
+              />
+            </div>
+          </SectionCard>
+        ) : !isCancelled ? (
+          <SectionCard
+            title="Completion information"
+            description="Ride is not completed yet."
+            className="mt-4"
+          >
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <InfoField
+                label="Current status"
+                value={ride.rideStatus.replace(/_/g, " ")}
+              />
+              <InfoField label="Rider rating" value="No rating given" />
+              <InfoField label="Review comment" value="No review given" />
             </div>
           </SectionCard>
         ) : null}

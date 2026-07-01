@@ -12,8 +12,8 @@ const DEFAULT_PAGE_SIZE = 8;
 const INITIAL_LOAD_DELAY_MS = 400;
 
 export type PoolRideTypeFilter = "all" | string;
+export type PoolServiceModeFilter = "all" | PoolRide["serviceMode"];
 export type PoolRideStatusFilter = "all" | PoolRide["rideStatus"];
-export type PoolBookingStatusFilter = "all" | PoolRide["bookingStatus"];
 export type SortDirection = "asc" | "desc";
 
 interface UsePoolRidesMockOptions {
@@ -75,9 +75,9 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [rideTypeFilter, setRideTypeFilter] = useState<PoolRideTypeFilter>("all");
+  const [serviceModeFilter, setServiceModeFilter] =
+    useState<PoolServiceModeFilter>("all");
   const [rideStatusFilter, setRideStatusFilter] = useState<PoolRideStatusFilter>("all");
-  const [bookingStatusFilter, setBookingStatusFilter] =
-    useState<PoolBookingStatusFilter>("all");
   const [dateFilter, setDateFilter] = useState("");
   const [sortField, setSortField] = useState<PoolRideSortField>("bookingDate");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -96,19 +96,32 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
   const filteredRides = useMemo(() => {
     return rides.filter((ride) => {
       if (!matchesSearch(ride, search)) return false;
-      if (rideTypeFilter !== "all" && ride.rideType !== rideTypeFilter) return false;
-      if (rideStatusFilter !== "all" && ride.rideStatus !== rideStatusFilter) return false;
-      if (bookingStatusFilter !== "all" && ride.bookingStatus !== bookingStatusFilter)
+      if (serviceModeFilter !== "all" && ride.serviceMode !== serviceModeFilter) return false;
+      if (
+        serviceModeFilter === "POOL_RIDE" &&
+        !["SHARED", "CITY_TO_CITY", "OUT_OF_CITY"].includes(ride.category)
+      ) {
         return false;
+      }
+      if (
+        rideTypeFilter !== "all" &&
+        !(
+          ride.rideType === rideTypeFilter ||
+          (rideTypeFilter === "City to City" && ride.rideType === "Out of City")
+        )
+      ) {
+        return false;
+      }
+      if (rideStatusFilter !== "all" && ride.rideStatus !== rideStatusFilter) return false;
       if (!matchesDate(ride, dateFilter)) return false;
       return true;
     });
   }, [
     rides,
     search,
+    serviceModeFilter,
     rideTypeFilter,
     rideStatusFilter,
-    bookingStatusFilter,
     dateFilter
   ]);
 
@@ -136,7 +149,10 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
   }, [sortedRides, page, pageSize]);
 
   const rideTypeOptions = useMemo(() => {
-    const types = Array.from(new Set(rides.map((r) => r.rideType)));
+    const normalizedTypes = rides.map((r) =>
+      r.rideType === "Out of City" ? "City to City" : r.rideType
+    );
+    const types = Array.from(new Set(normalizedTypes));
     return types.sort();
   }, [rides]);
 
@@ -158,17 +174,17 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
     [resetPage]
   );
 
-  const handleRideStatusFilterChange = useCallback(
-    (value: PoolRideStatusFilter) => {
-      setRideStatusFilter(value);
+  const handleServiceModeFilterChange = useCallback(
+    (value: PoolServiceModeFilter) => {
+      setServiceModeFilter(value);
       resetPage();
     },
     [resetPage]
   );
 
-  const handleBookingStatusFilterChange = useCallback(
-    (value: PoolBookingStatusFilter) => {
-      setBookingStatusFilter(value);
+  const handleRideStatusFilterChange = useCallback(
+    (value: PoolRideStatusFilter) => {
+      setRideStatusFilter(value);
       resetPage();
     },
     [resetPage]
@@ -214,8 +230,8 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
     isLoading,
     search,
     rideTypeFilter,
+    serviceModeFilter,
     rideStatusFilter,
-    bookingStatusFilter,
     dateFilter,
     sortField,
     sortDirection,
@@ -226,8 +242,8 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
     setPage,
     handleSearchChange,
     handleRideTypeFilterChange,
+    handleServiceModeFilterChange,
     handleRideStatusFilterChange,
-    handleBookingStatusFilterChange,
     handleDateFilterChange,
     handleSortChange,
     handlePageSizeChange
