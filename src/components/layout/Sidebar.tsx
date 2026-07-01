@@ -25,7 +25,8 @@ import {
   FolderOpen,
   Layers,
   Palette,
-  Tags
+  Tags,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -68,8 +69,16 @@ const adminNav: SidebarEntry[] = [
     items: [
       { label: "Drivers", href: "/admin/drivers", icon: Users },
       { label: "Partners", href: "/admin/partners", icon: Briefcase },
-      { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
       { label: "Documents", href: "/admin/documents", icon: FileText }
+    ]
+  },
+  {
+    id: "agent-management",
+    label: "Agent Management",
+    icon: TrendingUp,
+    items: [
+      { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
+      { label: "Agent Performance", href: "/admin/agent-performance", icon: BadgeDollarSign }
     ]
   },
   {

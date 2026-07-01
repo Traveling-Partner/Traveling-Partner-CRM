@@ -40,6 +40,8 @@ export interface AgentRow {
   mobileNumber: string | null;
   cnicNumber?: string | null;
   status: string;
+  /** Populated when API returns it; otherwise performance UI uses mock joining date. */
+  createdAt?: string | null;
 }
 
 type RequestOpts = { token: string; signal?: AbortSignal; debugLabel?: string };
@@ -180,6 +182,8 @@ export interface AgentDetail {
   cnicNumber?: string | null;
   cnicFront?: string | null;
   cnicBack?: string | null;
+  /** Populated when API returns it; otherwise performance UI uses mock joining date. */
+  createdAt?: string | null;
 }
 
 export interface DriverDetailBundle {

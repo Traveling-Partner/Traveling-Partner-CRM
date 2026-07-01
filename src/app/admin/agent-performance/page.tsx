@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -21,11 +21,16 @@ import {
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { Search, Filter } from "lucide-react";
 import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
-import type { AgentRow } from "@/services/users";
+import {
+  buildAgentPerformanceRow,
+  formatAgentCurrency,
+  formatAgentDate,
+  type AgentPerformanceRow
+} from "@/lib/agent-onboarding";
 
-const DEFAULT_PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 10;
 
-export default function AdminAgentsPage() {
+export default function AdminAgentPerformancePage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -39,43 +44,47 @@ export default function AdminAgentsPage() {
     search
   });
 
-  const agentRows: AgentRow[] = data?.content ?? [];
+  const agentRows: AgentPerformanceRow[] = useMemo(
+    () => (data?.content ?? []).map(buildAgentPerformanceRow),
+    [data?.content]
+  );
+
   const totalPages = data?.totalPages ?? 1;
-  const totalElements = data?.totalElements ?? 0;
   const loading = isLoading || isFetching;
 
-  const columns: ColumnDef<AgentRow>[] = [
+  const columns: ColumnDef<AgentPerformanceRow>[] = [
     {
       accessorKey: "name",
-      header: "Agent",
-      cell: ({ row }) => {
-        const name = row.original.name || "—";
-        const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-        return (
-          <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-violet-200 text-[11px] font-bold text-violet-700 dark:from-violet-800 dark:to-violet-900 dark:text-violet-300">
-              {initials || "?"}
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{name}</p>
-              <p className="text-[11px] text-muted-foreground">{row.original.email || "—"}</p>
-            </div>
-          </div>
-        );
-      }
+      header: "Agent name",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium">{row.original.name || "—"}</span>
+      )
+    },
+    {
+      accessorKey: "id",
+      header: "Agent ID",
+      cell: ({ row }) => (
+        <span className="text-xs font-mono text-muted-foreground tabular-nums">
+          {row.original.id}
+        </span>
+      )
     },
     {
       accessorKey: "mobileNumber",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-[13px] text-muted-foreground">{row.original.mobileNumber || "—"}</span>
+        <span className="text-[13px] text-muted-foreground whitespace-nowrap">
+          {row.original.mobileNumber || "—"}
+        </span>
       )
     },
     {
-      accessorKey: "cnicNumber",
-      header: "CNIC",
+      accessorKey: "email",
+      header: "Email",
       cell: ({ row }) => (
-        <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
+        <span className="max-w-[180px] truncate text-[13px] text-muted-foreground">
+          {row.original.email || "—"}
+        </span>
       )
     },
     {
@@ -84,32 +93,86 @@ export default function AdminAgentsPage() {
       cell: ({ row }) => <StatusBadge status={row.original.status} />
     },
     {
+      accessorKey: "driverCount",
+      header: "Drivers",
+      cell: ({ row }) => (
+        <span className="font-heading font-semibold tabular-nums">{row.original.driverCount}</span>
+      )
+    },
+    {
+      accessorKey: "passengerCount",
+      header: "Passengers",
+      cell: ({ row }) => (
+        <span className="font-heading font-semibold tabular-nums">{row.original.passengerCount}</span>
+      )
+    },
+    {
+      accessorKey: "totalCommission",
+      header: "Total earned",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium tabular-nums whitespace-nowrap">
+          {formatAgentCurrency(row.original.totalCommission)}
+        </span>
+      )
+    },
+    {
+      accessorKey: "paidAmount",
+      header: "Total paid",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap">
+          {formatAgentCurrency(row.original.paidAmount)}
+        </span>
+      )
+    },
+    {
+      accessorKey: "remainingAmount",
+      header: "Remaining",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium text-amber-600 dark:text-amber-400 tabular-nums whitespace-nowrap">
+          {formatAgentCurrency(row.original.remainingAmount)}
+        </span>
+      )
+    },
+    {
+      accessorKey: "lastPaymentDate",
+      header: "Last payment",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          {formatAgentDate(row.original.lastPaymentDate)}
+        </span>
+      )
+    },
+    {
+      accessorKey: "joiningDate",
+      header: "Joining date",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          {formatAgentDate(row.original.joiningDate)}
+        </span>
+      )
+    },
+    {
       id: "actions",
-      header: "",
+      header: "Actions",
       cell: ({ row }) => (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs font-medium text-muted-foreground hover:text-foreground"
+          className="h-7 text-[11px]"
           onClick={() => router.push(`/admin/agents/${row.original.id}`)}
         >
-          Performance →
+          View performance
         </Button>
       )
     }
   ];
 
   return (
-    <AppShell title="Sales Agents">
+    <AppShell title="Agent Performance" wideContent>
       <PageContainer>
         <SectionCard
-          title="Agent management"
-          description="Manage sales agents."
-          headerAction={
-            <Button onClick={() => router.push("/admin/agents/create")}>
-              Create agent
-            </Button>
-          }
+          title="Agent performance overview"
+          description="All agents with onboarding counts, commission totals, payment status, and quick access to detailed records."
         >
           {error ? (
             <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -159,7 +222,9 @@ export default function AdminAgentsPage() {
               ))}
             </div>
           ) : (
-            <DataTable columns={columns} data={agentRows} />
+            <div className="overflow-x-auto">
+              <DataTable columns={columns} data={agentRows} getRowId={(row) => String(row.id)} />
+            </div>
           )}
           <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

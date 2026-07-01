@@ -1,16 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowLeft, Pencil, Users, UserCircle, BadgeDollarSign } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
+import { DataTable } from "@/components/common/DataTable";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  AgentDriversTable,
+  AgentPassengersTable
+} from "@/components/admin/agents/AgentOnboardingTables";
 import { useAgentDetailQuery } from "@/hooks/queries/use-agent-detail-query";
+import {
+  formatAgentCurrency,
+  formatAgentDate,
+  getAgentDrivers,
+  getAgentJoiningDate,
+  getAgentLastPaymentDate,
+  getAgentPartners,
+  getAgentPaymentSummary
+} from "@/lib/agent-onboarding";
+import type { Commission } from "@/types/domain";
 
 export default function AdminAgentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -18,6 +37,52 @@ export default function AdminAgentDetailPage() {
   const { data: agent, isLoading, isError } = useAgentDetailQuery(params.id);
   const loading = isLoading;
   const fallbackCnicImage = "/mock-images/id-document.svg";
+
+  const agentDrivers = useMemo(() => getAgentDrivers(params.id), [params.id]);
+  const agentPassengers = useMemo(() => getAgentPartners(params.id), [params.id]);
+  const paymentSummary = useMemo(() => getAgentPaymentSummary(params.id), [params.id]);
+  const lastPaymentDate = useMemo(() => getAgentLastPaymentDate(params.id), [params.id]);
+  const joiningDate = useMemo(
+    () => getAgentJoiningDate(params.id, agent?.createdAt),
+    [params.id, agent?.createdAt]
+  );
+
+  const commissionColumns: ColumnDef<Commission>[] = [
+    {
+      accessorKey: "month",
+      header: "Month",
+      cell: ({ row }) =>
+        new Date(row.original.month + "-01").toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric"
+        })
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount",
+      cell: ({ row }) => (
+        <span className="font-heading font-semibold">
+          {formatAgentCurrency(row.original.amount)}
+        </span>
+      )
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.status === "PAID" ? "APPROVED" : "PENDING"} />
+      )
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Recorded",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(row.original.createdAt).toLocaleDateString()}
+        </span>
+      )
+    }
+  ];
 
   if (!loading && (isError || !agent)) {
     return (
@@ -35,23 +100,94 @@ export default function AdminAgentDetailPage() {
   }
 
   return (
-    <AppShell title={`Agent • ${agent?.name || "—"}`}>
+    <AppShell title={`Agent • ${agent?.name || "—"}`} wideContent>
       <PageContainer>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/agents" className="gap-1.5">
+            <Link href="/admin/agent-performance" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
-              Back to agents
+              Back to performance
             </Link>
           </Button>
-          <Button size="sm" asChild>
-            <Link href={`/admin/agents/${params.id}/edit`} className="gap-1.5">
-              <Pencil className="h-4 w-4" />
-              Edit agent
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/admin/agents/${params.id}/drivers`}>Driver info</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/admin/agents/${params.id}/passengers`}>Passenger info</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/agents">All agents</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href={`/admin/agents/${params.id}/edit`} className="gap-1.5">
+                <Pencil className="h-4 w-4" />
+                Edit agent
+              </Link>
+            </Button>
+          </div>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-border/80 shadow-sm">
+            <CardContent className="flex items-start gap-3 pt-4">
+              <div className="rounded-lg bg-blue-500/10 p-2 text-blue-600">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Drivers added
+                </p>
+                <p className="text-2xl font-heading font-semibold">{agentDrivers.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/80 shadow-sm">
+            <CardContent className="flex items-start gap-3 pt-4">
+              <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600">
+                <UserCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Passengers added
+                </p>
+                <p className="text-2xl font-heading font-semibold">{agentPassengers.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/80 shadow-sm">
+            <CardContent className="flex items-start gap-3 pt-4">
+              <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600">
+                <BadgeDollarSign className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Paid to agent
+                </p>
+                <p className="text-2xl font-heading font-semibold text-emerald-600 dark:text-emerald-400">
+                  {formatAgentCurrency(paymentSummary.paid)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/80 shadow-sm">
+            <CardContent className="flex items-start gap-3 pt-4">
+              <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600">
+                <BadgeDollarSign className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Remaining balance
+                </p>
+                <p className="text-2xl font-heading font-semibold text-amber-600 dark:text-amber-400">
+                  {formatAgentCurrency(paymentSummary.remaining)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Agent profile"
             description="Contact and status"
@@ -74,6 +210,18 @@ export default function AdminAgentDetailPage() {
                   <p className="mt-0.5 font-heading font-medium">{agent?.mobileNumber || "—"}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Agent ID</p>
+                  <p className="mt-0.5 font-heading font-medium tabular-nums">{params.id}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Joining date</p>
+                  <p className="mt-0.5 font-heading font-medium">{formatAgentDate(joiningDate)}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Last payment</p>
+                  <p className="mt-0.5 font-heading font-medium">{formatAgentDate(lastPaymentDate)}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:col-span-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
                   <div className="mt-0.5">
                     <StatusBadge status={agent?.status || "PENDING"} />
@@ -82,19 +230,64 @@ export default function AdminAgentDetailPage() {
               </div>
             )}
           </SectionCard>
-          <SectionCard title="Performance" description="Onboarded counts">
+          <SectionCard title="Payment summary" description="Commission totals">
             <div className="space-y-3 text-sm">
               <div className="flex justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
-                <span className="text-muted-foreground">Drivers onboarded</span>
-                <span className="font-heading font-semibold">—</span>
+                <span className="text-muted-foreground">Total earned</span>
+                <span className="font-heading font-semibold">
+                  {formatAgentCurrency(paymentSummary.total)}
+                </span>
               </div>
               <div className="flex justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
-                <span className="text-muted-foreground">Partners onboarded</span>
-                <span className="font-heading font-semibold">—</span>
+                <span className="text-muted-foreground">Paid</span>
+                <span className="font-heading font-semibold text-emerald-600 dark:text-emerald-400">
+                  {formatAgentCurrency(paymentSummary.paid)}
+                </span>
+              </div>
+              <div className="flex justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                <span className="text-muted-foreground">Remaining</span>
+                <span className="font-heading font-semibold text-amber-600 dark:text-amber-400">
+                  {formatAgentCurrency(paymentSummary.remaining)}
+                </span>
               </div>
             </div>
           </SectionCard>
         </div>
+
+        <SectionCard
+          title="Onboarded users"
+          description="Complete list of drivers and passengers added by this agent."
+          className="mt-4"
+        >
+          <Tabs defaultValue="drivers">
+            <TabsList className="mb-4">
+              <TabsTrigger value="drivers">Drivers ({agentDrivers.length})</TabsTrigger>
+              <TabsTrigger value="passengers">Passengers ({agentPassengers.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="drivers">
+              <AgentDriversTable drivers={agentDrivers} />
+            </TabsContent>
+            <TabsContent value="passengers">
+              <AgentPassengersTable passengers={agentPassengers} />
+            </TabsContent>
+          </Tabs>
+        </SectionCard>
+
+        <SectionCard
+          title="Payment history"
+          description="Commission payments recorded for this agent."
+          className="mt-4"
+        >
+          {paymentSummary.commissions.length === 0 ? (
+            <EmptyState
+              title="No payments recorded"
+              description="Commission payouts for this agent will appear here."
+            />
+          ) : (
+            <DataTable columns={commissionColumns} data={paymentSummary.commissions} />
+          )}
+        </SectionCard>
+
         <SectionCard
           title="CNIC documents"
           description="Front and back CNIC images from agent profile."
@@ -139,125 +332,6 @@ export default function AdminAgentDetailPage() {
             </div>
           </div>
         </SectionCard>
-
-        {/* Future use: keep uploaded documents section for later backend integration.
-        <div className="mt-4">
-          <SectionCard
-            title="Uploaded documents"
-            description="Agent verification files submitted during onboarding."
-          >
-            {agentDocuments.length === 0 ? (
-              <EmptyState
-                title="No documents uploaded"
-                description="Uploaded files will appear here for review."
-              />
-            ) : (
-              <div className="grid gap-3 text-xs lg:grid-cols-[360px,1fr]">
-                <div className="space-y-2">
-                  {agentDocuments.map((doc) => (
-                    <button
-                      key={doc.id}
-                      type="button"
-                      onClick={() => setSelectedDocumentId(doc.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition-all ${
-                        selectedDocument?.id === doc.id
-                          ? "border-primary/60 bg-primary/10 shadow-sm"
-                          : "border-border/60 bg-card hover:bg-muted/30"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="h-12 w-16 overflow-hidden rounded-md border border-border/60 bg-muted/30">
-                          <img
-                            src={doc.fileUrl}
-                            alt={doc.fileName}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = fallbackImage;
-                            }}
-                          />
-                        </div>
-                        <div className="mt-0.5 rounded-md bg-muted p-1.5">
-                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">
-                            {doc.type.replaceAll("_", " ")}
-                          </p>
-                          <p className="truncate text-[0.7rem] text-muted-foreground">
-                            {doc.fileName}
-                          </p>
-                          <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
-                            Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="ml-2 shrink-0">
-                        <span className="rounded-md bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
-                          {doc.status}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {selectedDocument ? (
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
-                    <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
-                          {selectedDocument.fileName}
-                        </p>
-                        <p className="text-[0.68rem] text-muted-foreground">
-                          {selectedDocument.type.replaceAll("_", " ")}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <a
-                          href={selectedDocument.fileUrl}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setPreviewOpen(true);
-                          }}
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                        >
-                          <Eye className="h-3 w-3" />
-                          Preview
-                        </a>
-                        <a
-                          href={selectedDocument.fileUrl}
-                          download
-                          className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[0.68rem] font-medium hover:bg-muted/50"
-                        >
-                          <Download className="h-3 w-3" />
-                          Download
-                        </a>
-                      </div>
-                    </div>
-                    <div className="h-[360px] bg-muted/20 p-2">
-                      {selectedIsPdf ? (
-                        <iframe
-                          src={selectedDocument.fileUrl}
-                          title={selectedDocument.fileName}
-                          className="h-full w-full rounded-md border border-border/60 bg-background"
-                        />
-                      ) : (
-                        <img
-                          src={previewSrc}
-                          alt={selectedDocument.fileName}
-                          className="h-full w-full rounded-md object-cover bg-background"
-                          onError={() => {
-                            setPreviewSrc(fallbackImage);
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </SectionCard>
-        </div>
-        */}
       </PageContainer>
     </AppShell>
   );
