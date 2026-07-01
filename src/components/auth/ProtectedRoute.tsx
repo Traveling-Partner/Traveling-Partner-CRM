@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth.store";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { logout as logoutAction } from "@/store/slices/authSlice";
 import { decodeToken } from "@/lib/decodeToken";
 import {
   LOGIN_ROUTE,
@@ -51,29 +52,20 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
   const [hydrated, setHydrated] = useState(false);
-  const [shellReady, setShellReady] = useState(false);
 
-  const { user, token, isAuthenticated, logout } = useAuthStore((state) => ({
-    user: state.user,
-    token: state.token,
-    isAuthenticated: state.isAuthenticated,
-    logout: state.logout
-  }));
+  const user = useAppSelector((state) => state.auth.user);
+  const token = useAppSelector((state) => state.auth.token);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const authInitialized = useAppSelector((state) => state.auth.authInitialized);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
-  // Delay rendering the app shell so CSS (Tailwind) is applied before first paint of dashboard/sidebar
   useEffect(() => {
-    if (!hydrated || !user) return;
-    const t = setTimeout(() => setShellReady(true), 120);
-    return () => clearTimeout(t);
-  }, [hydrated, user]);
-
-  useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !authInitialized) return;
 
     const localToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const activeToken = token ?? localToken;
@@ -87,7 +79,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     const now = Math.floor(Date.now() / 1000);
 
     if (!decoded || decoded.exp <= now) {
-      logout();
+      dispatch(logoutAction());
       router.replace(LOGIN_ROUTE);
       return;
     }
@@ -103,9 +95,19 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (redirect && redirect !== pathname) {
       router.replace(redirect);
     }
-  }, [hydrated, isAuthenticated, user, pathname, router, token, allowedRoles, logout]);
+  }, [
+    hydrated,
+    authInitialized,
+    isAuthenticated,
+    user,
+    pathname,
+    router,
+    token,
+    allowedRoles,
+    dispatch
+  ]);
 
-  if (!hydrated) {
+  if (!hydrated || !authInitialized) {
     return <InlineLoader />;
   }
 
@@ -113,10 +115,5 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <InlineLoader />;
   }
 
-  if (!shellReady) {
-    return <InlineLoader />;
-  }
-
   return <>{children}</>;
 }
-

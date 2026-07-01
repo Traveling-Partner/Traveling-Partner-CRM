@@ -26,6 +26,8 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   forcePasswordChange: boolean;
+  /** True after client has read localStorage once (avoids auth flash / stuck loader). */
+  authInitialized: boolean;
 }
 
 const initialState: AuthState = {
@@ -34,7 +36,8 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-  forcePasswordChange: false
+  forcePasswordChange: false,
+  authInitialized: false
 };
 
 export const loginUserThunk = createAsyncThunk(
@@ -101,6 +104,9 @@ const authSlice = createSlice({
     },
     setForcePasswordChange: (state, action: PayloadAction<boolean>) => {
       state.forcePasswordChange = action.payload;
+    },
+    markAuthInitialized: (state) => {
+      state.authInitialized = true;
     }
   },
   extraReducers: (builder) => {
@@ -123,6 +129,6 @@ const authSlice = createSlice({
   }
 });
 
-export const { restoreAuth, logout, clearAuthError, setForcePasswordChange } =
+export const { restoreAuth, logout, clearAuthError, setForcePasswordChange, markAuthInitialized } =
   authSlice.actions;
 export default authSlice.reducer;

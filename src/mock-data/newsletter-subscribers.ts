@@ -123,9 +123,6 @@ export const newsletterSubscribers: NewsletterSubscriber[] = [
     subscriptionDate: "2026-01-05T10:05:00.000Z",
     status: "ACTIVE",
     sentNewsletters: []
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
   },
   {
     id: "sub-11",
@@ -199,9 +196,6 @@ export const newsletterSubscribers: NewsletterSubscriber[] = [
       sentFromCatalog(101, "2025-03-02T10:00:00.000Z"),
       sentFromCatalog(105, "2026-02-14T10:00:00.000Z")
     ]
-=======
->>>>>>> 46c4ba4917a754ff26ec5eaaf226e9a4e85baa3e
->>>>>>> Stashed changes
   }
 ];
 
