@@ -54,12 +54,12 @@ type SidebarEntry = SidebarLink | SidebarGroup;
 
 const adminNav: SidebarEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Rides", href: "/admin/pool-rides", icon: Share2 },
   {
     id: "user-management",
     label: "User Management",
     icon: Users,
     items: [
+      { label: "Rides", href: "/admin/pool-rides", icon: Share2 },
       { label: "Drivers", href: "/admin/drivers", icon: Users },
       { label: "Partners", href: "/admin/partners", icon: Briefcase },
       { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
@@ -317,6 +317,7 @@ export function Sidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     adminNav.forEach((entry) => {
+      console.log(entry, 'entry')
       if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
         initial[entry.id] = true;
       }
