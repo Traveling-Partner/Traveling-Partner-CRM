@@ -29,8 +29,8 @@ const CATEGORIES: PoolRideCategory[] = [
 const CATEGORY_LABELS: Record<PoolRideCategory, string> = {
   CAR_PREMIUM: "Car Premium",
   BIKE: "Bike Ride",
-  CITY_TO_CITY: "City to City",
-  SHARED: "Shared Ride",
+  CITY_TO_CITY: "City to City Shared Ride",
+  SHARED: "In City Shared Ride",
   OUT_OF_CITY: "Out of City",
   RICKSHAW: "Rickshaw Ride",
   ECONOMY: "Economy Ride"
@@ -44,6 +44,16 @@ const VEHICLE_FOR_CATEGORY: Record<PoolRideCategory, PoolVehicleType> = {
   OUT_OF_CITY: "CAR",
   RICKSHAW: "RICKSHAW",
   ECONOMY: "CAR"
+};
+
+const SERVICE_MODE_FOR_CATEGORY: Record<PoolRideCategory, PoolRide["serviceMode"]> = {
+  SHARED: "POOL_RIDE",
+  CITY_TO_CITY: "POOL_RIDE",
+  OUT_OF_CITY: "POOL_RIDE",
+  CAR_PREMIUM: "TAXI_STAND_CAR",
+  BIKE: "TAXI_STAND_CAR",
+  RICKSHAW: "TAXI_STAND_CAR",
+  ECONOMY: "TAXI_STAND_CAR"
 };
 
 const FIRST_NAMES = ["Layla", "Omar", "Noor", "Khalid", "Hana", "Youssef", "Amira", "Faisal"];
@@ -258,6 +268,7 @@ export const poolRides: PoolRide[] = Array.from({ length: 42 }).map((_, index) =
     driverEarnings,
     promoCode: discount > 0 ? `SAVE10-${index}` : undefined,
     paymentMethod: payments[index % payments.length],
+    serviceMode: SERVICE_MODE_FOR_CATEGORY[category],
     paymentStatus: paymentStatusFor(rideStatus),
     rideStatus,
     bookingStatus: bookingStatusFor(rideStatus),
@@ -286,6 +297,16 @@ export const poolRides: PoolRide[] = Array.from({ length: 42 }).map((_, index) =
           ? startLng
           : undefined,
     timeline: buildTimeline(subMinutes(bookingDate, 2), rideStatus, durationMins),
+    reviewRating:
+      rideStatus === "COMPLETED" && index % 2 === 0
+        ? Number((4 + (index % 10) * 0.08).toFixed(1))
+        : undefined,
+    reviewComment:
+      rideStatus === "COMPLETED" && index % 2 === 0
+        ? index % 4 === 0
+          ? "Smooth ride and punctual driver."
+          : "Clean vehicle and good driving."
+        : undefined,
     cancellation:
       rideStatus === "CANCELLED"
         ? {

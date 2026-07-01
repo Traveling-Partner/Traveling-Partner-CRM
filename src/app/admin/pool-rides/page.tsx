@@ -2,16 +2,12 @@
 
 import { useMemo } from "react";
 import {
-  Bike,
-  Building2,
   Car,
   CheckCircle2,
-  MapPinned,
   Search,
   Share2,
-  Sparkles,
   Timer,
-  Truck,
+  CarTaxiFront,
   XCircle
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -32,6 +28,7 @@ import { PoolRideStatCard } from "@/components/pool-rides/PoolRideStatCard";
 import { PoolRideResponsiveTable } from "@/components/pool-rides/PoolRideResponsiveTable";
 import { usePoolRidesMock } from "@/hooks/pool-rides/usePoolRidesMock";
 import { poolRides } from "@/mock-data/pool-rides";
+import { computePoolRideStats } from "@/types/pool-ride";
 
 function PoolRideTableSkeleton() {
   return (
@@ -54,13 +51,14 @@ function PoolRideTableSkeleton() {
 export default function PoolRidesPage() {
   const {
     rides,
+    allRides,
     filteredCount,
     stats,
     isLoading,
     search,
     rideTypeFilter,
+    serviceModeFilter,
     rideStatusFilter,
-    bookingStatusFilter,
     dateFilter,
     sortField,
     sortDirection,
@@ -71,105 +69,105 @@ export default function PoolRidesPage() {
     setPage,
     handleSearchChange,
     handleRideTypeFilterChange,
+    handleServiceModeFilterChange,
     handleRideStatusFilterChange,
-    handleBookingStatusFilterChange,
     handleDateFilterChange,
     handleSortChange,
     handlePageSizeChange
   } = usePoolRidesMock({ initialData: poolRides });
 
+  const scopedStats = useMemo(() => {
+    if (serviceModeFilter === "all") return stats;
+    const source = allRides.filter((ride) => ride.serviceMode === serviceModeFilter);
+    return computePoolRideStats(source);
+  }, [allRides, serviceModeFilter, stats]);
+
   const statCards = useMemo(
-    () => [
-      {
-        label: "Total Rides",
-        value: stats.totalRides,
-        icon: Car,
-        iconBg: "bg-amber-50 dark:bg-amber-500/10",
-        iconColor: "text-amber-600 dark:text-amber-400",
-        accentBorder: "border-amber-500/20"
-      },
-      {
-        label: "Booked Rides",
-        value: stats.bookedRides,
-        icon: Timer,
-        iconBg: "bg-sky-50 dark:bg-sky-500/10",
-        iconColor: "text-sky-600 dark:text-sky-400",
-        accentBorder: "border-sky-500/20"
-      },
-      {
-        label: "Car Premium",
-        value: stats.carPremiumRides,
-        icon: Sparkles,
-        iconBg: "bg-violet-50 dark:bg-violet-500/10",
-        iconColor: "text-violet-600 dark:text-violet-400",
-        accentBorder: "border-violet-500/20"
-      },
-      {
-        label: "Bike Rides",
-        value: stats.bikeRides,
-        icon: Bike,
-        iconBg: "bg-cyan-50 dark:bg-cyan-500/10",
-        iconColor: "text-cyan-600 dark:text-cyan-400",
-        accentBorder: "border-cyan-500/20"
-      },
-      {
-        label: "City to City",
-        value: stats.cityToCityRides,
-        icon: Building2,
-        iconBg: "bg-indigo-50 dark:bg-indigo-500/10",
-        iconColor: "text-indigo-600 dark:text-indigo-400",
-        accentBorder: "border-indigo-500/20"
-      },
-      {
-        label: "Shared Rides",
-        value: stats.sharedRides,
-        icon: Share2,
-        iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
-        iconColor: "text-emerald-600 dark:text-emerald-400",
-        accentBorder: "border-emerald-500/20"
-      },
-      {
-        label: "Out of City",
-        value: stats.outOfCityRides,
-        icon: MapPinned,
-        iconBg: "bg-orange-50 dark:bg-orange-500/10",
-        iconColor: "text-orange-600 dark:text-orange-400",
-        accentBorder: "border-orange-500/20"
-      },
-      {
-        label: "Completed",
-        value: stats.completedRides,
-        icon: CheckCircle2,
-        iconBg: "bg-green-50 dark:bg-green-500/10",
-        iconColor: "text-green-600 dark:text-green-400",
-        accentBorder: "border-green-500/20"
-      },
-      {
-        label: "Cancelled",
-        value: stats.cancelledRides,
-        icon: XCircle,
-        iconBg: "bg-red-50 dark:bg-red-500/10",
-        iconColor: "text-red-600 dark:text-red-400",
-        accentBorder: "border-red-500/20"
-      },
-      {
-        label: "Rickshaw",
-        value: stats.rickshawRides,
-        icon: Truck,
-        iconBg: "bg-lime-50 dark:bg-lime-500/10",
-        iconColor: "text-lime-700 dark:text-lime-400",
-        accentBorder: "border-lime-500/20"
-      },
-      {
-        label: "Economy",
-        value: stats.economyRides,
-        icon: Car,
-        iconBg: "bg-slate-100 dark:bg-slate-500/10",
-        iconColor: "text-slate-600 dark:text-slate-400",
-        accentBorder: "border-slate-500/20"
+    () => {
+      const baseCards = [
+        {
+          label: "Total Rides",
+          value: scopedStats.totalRides,
+          icon: Car,
+          iconBg: "bg-amber-50 dark:bg-amber-500/10",
+          iconColor: "text-amber-600 dark:text-amber-400",
+          accentBorder: "border-amber-500/20"
+        },
+        {
+          label: "Booked Rides",
+          value: scopedStats.bookedRides,
+          icon: Timer,
+          iconBg: "bg-sky-50 dark:bg-sky-500/10",
+          iconColor: "text-sky-600 dark:text-sky-400",
+          accentBorder: "border-sky-500/20"
+        },
+        {
+          label: "Completed",
+          value: scopedStats.completedRides,
+          icon: CheckCircle2,
+          iconBg: "bg-green-50 dark:bg-green-500/10",
+          iconColor: "text-green-600 dark:text-green-400",
+          accentBorder: "border-green-500/20"
+        },
+        {
+          label: "Cancelled",
+          value: scopedStats.cancelledRides,
+          icon: XCircle,
+          iconBg: "bg-red-50 dark:bg-red-500/10",
+          iconColor: "text-red-600 dark:text-red-400",
+          accentBorder: "border-red-500/20"
+        }
+      ];
+
+      if (serviceModeFilter === "POOL_RIDE") {
+        return [
+          ...baseCards,
+          {
+            label: "Pool Ride",
+            value: scopedStats.poolRides,
+            icon: Share2,
+            iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+            iconColor: "text-emerald-600 dark:text-emerald-400",
+            accentBorder: "border-emerald-500/20"
+          }
+        ];
       }
-    ],
-    [stats]
+
+      if (serviceModeFilter === "TAXI_STAND_CAR") {
+        return [
+          ...baseCards,
+          {
+            label: "Taxi Stand Car",
+            value: scopedStats.taxiStandCars,
+            icon: CarTaxiFront,
+            iconBg: "bg-violet-50 dark:bg-violet-500/10",
+            iconColor: "text-violet-600 dark:text-violet-400",
+            accentBorder: "border-violet-500/20"
+          }
+        ];
+      }
+
+      return [
+        ...baseCards,
+        {
+          label: "Pool Ride",
+          value: scopedStats.poolRides,
+          icon: Share2,
+          iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+          iconColor: "text-emerald-600 dark:text-emerald-400",
+          accentBorder: "border-emerald-500/20"
+        },
+        {
+          label: "Taxi Stand Car",
+          value: scopedStats.taxiStandCars,
+          icon: CarTaxiFront,
+          iconBg: "bg-violet-50 dark:bg-violet-500/10",
+          iconColor: "text-violet-600 dark:text-violet-400",
+          accentBorder: "border-violet-500/20"
+        }
+      ];
+    },
+    [scopedStats, serviceModeFilter]
   );
 
   return (
@@ -182,7 +180,7 @@ export default function PoolRidesPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {statCards.map((stat) => (
             <PoolRideStatCard
               key={stat.label}
@@ -202,18 +200,18 @@ export default function PoolRidesPage() {
           description="Search, filter, and open any ride for the full operational view."
           className="mt-6"
         >
-          <div className="flex flex-col gap-3 pb-4 lg:flex-row lg:flex-wrap lg:items-end">
-            <div className="relative min-w-0 flex-1 lg:max-w-xs">
+          <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2 xl:grid-cols-12">
+            <div className="relative min-w-0 sm:col-span-2 xl:col-span-4">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search rides, passengers, drivers…"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-9"
+                className="h-11 pl-9"
               />
             </div>
             <Select value={rideTypeFilter} onValueChange={handleRideTypeFilterChange}>
-              <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectTrigger className="h-11 w-full sm:col-span-1 xl:col-span-2">
                 <SelectValue placeholder="Ride type" />
               </SelectTrigger>
               <SelectContent>
@@ -225,29 +223,23 @@ export default function PoolRidesPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={serviceModeFilter} onValueChange={handleServiceModeFilterChange}>
+              <SelectTrigger className="h-11 w-full sm:col-span-1 xl:col-span-2">
+                <SelectValue placeholder="Service mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All services</SelectItem>
+                <SelectItem value="POOL_RIDE">Pool Ride</SelectItem>
+                <SelectItem value="TAXI_STAND_CAR">Taxi Stand Car</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={rideStatusFilter} onValueChange={handleRideStatusFilterChange}>
-              <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectTrigger className="h-11 w-full sm:col-span-1 xl:col-span-2">
                 <SelectValue placeholder="Ride status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="BOOKED">Booked</SelectItem>
-                <SelectItem value="DRIVER_ACCEPTED">Driver Accepted</SelectItem>
-                <SelectItem value="DRIVER_ARRIVED">Driver Arrived</SelectItem>
-                <SelectItem value="STARTED">Started</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="CANCELLED">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={bookingStatusFilter} onValueChange={handleBookingStatusFilterChange}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Booking status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All bookings</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
                 <SelectItem value="COMPLETED">Completed</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
@@ -256,14 +248,14 @@ export default function PoolRidesPage() {
               type="date"
               value={dateFilter}
               onChange={(e) => handleDateFilterChange(e.target.value)}
-              className="w-full sm:w-[160px]"
+              className="h-11 w-full sm:col-span-1 xl:col-span-2"
               aria-label="Filter by booking date"
             />
             <Select
               value={String(pageSize)}
               onValueChange={(v) => handlePageSizeChange(Number(v))}
             >
-              <SelectTrigger className="w-full sm:w-[120px]">
+              <SelectTrigger className="h-11 w-full sm:col-span-1 xl:col-span-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
