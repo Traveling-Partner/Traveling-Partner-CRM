@@ -11,6 +11,8 @@ export { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-qu
 export { useBlogListQuery } from "@/hooks/queries/use-blog-list-query";
 export { useNewsletterListQuery } from "@/hooks/queries/use-newsletter-list-query";
 export { useNewsletterDetailQuery } from "@/hooks/queries/use-newsletter-detail-query";
+export { useNewsletterSubscribersListQuery } from "@/hooks/queries/use-newsletter-subscribers-list-query";
+export { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newsletter-subscriber-detail-query";
 export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
