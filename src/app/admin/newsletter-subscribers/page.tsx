@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
@@ -21,13 +21,10 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
-import { useNewsletterSubscribersMock } from "@/hooks/newsletter-subscribers/useNewsletterSubscribersMock";
-import { newsletterSubscribers } from "@/mock-data/newsletter-subscribers";
-import {
-  getLastNewsletterReceived,
-  getTotalNewslettersReceived,
-  type NewsletterSubscriber
-} from "@/types/newsletter-subscribers";
+import { useNewsletterSubscribersListQuery } from "@/hooks/queries/use-newsletter-subscribers-list-query";
+import type { SubscriberListRow } from "@/services/newsletter-subscribers";
+
+const DEFAULT_PAGE_SIZE = 6;
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -40,36 +37,37 @@ function formatDate(value: string | null | undefined) {
   });
 }
 
-function subscriberStatusBadge(status: NewsletterSubscriber["status"]) {
+function subscriberStatusBadge(status: string) {
   return <StatusBadge status={status === "ACTIVE" ? "ACTIVE" : "INACTIVE"} />;
 }
 
 export default function NewsletterSubscribersPage() {
   const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const {
-    subscribers,
-    totalSubscribers,
-    isLoading,
-    search,
-    statusFilter,
+  const { data, isLoading, isFetching, error } = useNewsletterSubscribersListQuery({
     page,
     pageSize,
-    totalPages,
-    setPage,
-    handleSearchChange,
-    handleStatusFilterChange,
-    handlePageSizeChange
-  } = useNewsletterSubscribersMock({ initialData: newsletterSubscribers });
+    status: statusFilter,
+    search
+  });
 
-  const columns: ColumnDef<NewsletterSubscriber>[] = useMemo(
+  const subscribers: SubscriberListRow[] = data?.content ?? [];
+  const totalSubscribers = data?.totalElements ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const loading = isLoading || isFetching;
+
+  const columns: ColumnDef<SubscriberListRow>[] = useMemo(
     () => [
       {
-        accessorKey: "name",
+        accessorKey: "fullName",
         header: "Subscriber Name",
         cell: ({ row }) => (
           <span className="text-sm font-medium text-foreground">
-            {row.original.name?.trim() || "—"}
+            {row.original.fullName?.trim() || "—"}
           </span>
         )
       },
@@ -81,11 +79,11 @@ export default function NewsletterSubscribersPage() {
         )
       },
       {
-        accessorKey: "subscriptionDate",
+        accessorKey: "subscribedAt",
         header: "Subscription Date",
         cell: ({ row }) => (
           <span className="text-[12px] text-muted-foreground tabular-nums">
-            {formatDate(row.original.subscriptionDate)}
+            {formatDate(row.original.subscribedAt)}
           </span>
         )
       },
@@ -95,20 +93,20 @@ export default function NewsletterSubscribersPage() {
         cell: ({ row }) => subscriberStatusBadge(row.original.status)
       },
       {
-        id: "totalReceived",
+        accessorKey: "totalNewslettersReceived",
         header: "Total Newsletters Received",
         cell: ({ row }) => (
           <span className="text-[13px] font-medium tabular-nums">
-            {getTotalNewslettersReceived(row.original)}
+            {row.original.totalNewslettersReceived}
           </span>
         )
       },
       {
-        id: "lastReceived",
+        accessorKey: "lastNewsletterReceived",
         header: "Last Newsletter Received",
         cell: ({ row }) => (
           <span className="text-[12px] text-muted-foreground tabular-nums">
-            {formatDate(getLastNewsletterReceived(row.original))}
+            {formatDate(row.original.lastNewsletterReceived)}
           </span>
         )
       },
@@ -135,23 +133,32 @@ export default function NewsletterSubscribersPage() {
       <PageContainer>
         <SectionCard
           title="Newsletter subscribers"
-          description="View email subscribers and the newsletters sent to them. Data is mock until subscriber API integration."
+          description="View email subscribers and the newsletters sent to them."
         >
+          {error ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error.message}
+            </p>
+          ) : null}
           <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by email…"
                 value={search}
-                onChange={(event) => handleSearchChange(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
                 className="pl-9"
               />
             </div>
             <Select
               value={statusFilter}
-              onValueChange={(value) =>
-                handleStatusFilterChange(value as "all" | NewsletterSubscriber["status"])
-              }
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setPage(0);
+              }}
             >
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Status" />
@@ -164,7 +171,7 @@ export default function NewsletterSubscribersPage() {
             </Select>
           </div>
 
-          {isLoading ? (
+          {loading ? (
             <div className="space-y-2 py-3">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
@@ -182,17 +189,20 @@ export default function NewsletterSubscribersPage() {
             <DataTable
               columns={columns}
               data={subscribers}
-              getRowId={(row) => row.id}
+              getRowId={(row) => String(row.id)}
             />
           )}
 
-          {!isLoading && totalSubscribers > 0 && (
+          {!loading && totalSubscribers > 0 && (
             <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>Show</span>
                 <Select
                   value={String(pageSize)}
-                  onValueChange={(value) => handlePageSizeChange(Number(value))}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setPage(0);
+                  }}
                 >
                   <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
                     <SelectValue />

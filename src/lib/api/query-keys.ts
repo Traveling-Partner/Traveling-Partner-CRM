@@ -43,7 +43,11 @@ export const queryKeys = {
   newsletter: {
     all: ["newsletter"] as const,
     list: (filters: NewsletterListFilters) => ["newsletter", "list", filters] as const,
-    detail: (id: number) => ["newsletter", "detail", id] as const
+    detail: (id: number) => ["newsletter", "detail", id] as const,
+    subscribers: (filters: NewsletterSubscribersListFilters) =>
+      ["newsletter", "subscribers", "list", filters] as const,
+    subscriberDetail: (id: string | number, page: number, pageSize: number) =>
+      ["newsletter", "subscribers", "detail", String(id), page, pageSize] as const
   },
   carousel: {
     banners: () => ["carousel", "banners"] as const,
@@ -91,6 +95,13 @@ export interface BlogListFilters {
 }
 
 export interface NewsletterListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+  status: string;
+}
+
+export interface NewsletterSubscribersListFilters {
   page: number;
   pageSize: number;
   search: string;
