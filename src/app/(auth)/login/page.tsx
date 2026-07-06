@@ -5,9 +5,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearAuthError, loginUserThunk } from "@/store/slices/authSlice";
 import { generateAdminOtp } from "@/services/auth";
+import { fetchAdminDashboardData } from "@/services/admin-dashboard";
+import { DASHBOARD_STALE_TIME_MS } from "@/lib/api/query-config";
+import { queryKeys } from "@/lib/api/query-keys";
+import { getDefaultRouteForRole, normalizeRole } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
@@ -23,9 +28,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
   const { success: toastSuccess, error: toastError } = useToast();
-  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [showOtpField, setShowOtpField] = useState(false);
   const [otpGenerating, setOtpGenerating] = useState(false);
   const otpInputRef = useRef<HTMLInputElement | null>(null);
@@ -44,10 +50,10 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/dashboard");
+    if (isAuthenticated && user) {
+      router.replace(getDefaultRouteForRole(user.role));
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   useEffect(() => {
     return () => {
@@ -77,13 +83,23 @@ export default function LoginPage() {
     }
 
     try {
-      await dispatch(
+      const { token, user: loggedInUser } = await dispatch(
         loginUserThunk({
           mobileNumber: values.mobileNumber,
           otp: values.otp
         })
       ).unwrap();
-      router.replace("/dashboard");
+
+      if (normalizeRole(loggedInUser.role) === "ADMIN") {
+        await queryClient.prefetchQuery({
+          queryKey: queryKeys.dashboard.admin(),
+          staleTime: DASHBOARD_STALE_TIME_MS,
+          queryFn: ({ signal }) =>
+            fetchAdminDashboardData(token, { signal, debugSource: "prefetch" })
+        });
+      }
+
+      router.replace(getDefaultRouteForRole(loggedInUser.role));
     } catch {
       // Error state is already handled in Redux.
     }
@@ -127,9 +143,16 @@ export default function LoginPage() {
               <Input
                 id="otp"
                 type="text"
+                inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="1234"
-                {...register("otp")}
+                maxLength={4}
+                placeholder="Enter OTP"
+                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                {...register("otp", {
+                  onChange: (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4);
+                  },
+                })}
                 ref={(el) => {
                   register("otp").ref(el);
                   otpInputRef.current = el;

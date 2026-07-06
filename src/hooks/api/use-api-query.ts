@@ -7,6 +7,7 @@ import {
   type UseQueryResult
 } from "@tanstack/react-query";
 import { useAuthToken } from "@/hooks/api/use-auth-token";
+import { useAppSelector } from "@/store/hooks";
 
 type AuthenticatedQueryFn<T> = (ctx: {
   token: string;
@@ -31,12 +32,15 @@ export function useApiQuery<TData>(
   options: UseApiQueryOptions<TData>
 ): UseQueryResult<TData, Error> {
   const token = useAuthToken();
+  const authInitialized = useAppSelector((state) => state.auth.authInitialized);
   const { queryFn, queryKey, requireAuth = true, enabled, ...rest } = options;
 
   return useQuery({
     ...rest,
     queryKey,
-    enabled: (enabled ?? true) && (!requireAuth || !!token),
+    enabled:
+      (enabled ?? true) &&
+      (!requireAuth || (authInitialized && !!token)),
     queryFn: ({ signal }) => {
       if (requireAuth && !token) {
         throw new Error("Authentication required.");

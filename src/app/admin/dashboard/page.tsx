@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useAppSelector } from "@/store/hooks";
 import { useAdminDashboardQuery } from "@/hooks/queries/use-admin-dashboard-query";
 import {
   Users,
@@ -15,7 +14,6 @@ import {
   UserCircle2,
   Car,
   TrendingUp,
-  Activity,
   Clock
 } from "lucide-react";
 import {
@@ -69,7 +67,6 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ n
 
 export default function AdminDashboardPage() {
   const { data, loading: isLoading, error } = useAdminDashboardQuery();
-
   const {
     counts,
     driverStatusCounts,
@@ -203,6 +200,9 @@ export default function AdminDashboardPage() {
           </div>
           <div className="px-2 pb-2 pt-4 sm:px-4 sm:pb-4">
             <div className="h-60 sm:h-72">
+              {isLoading ? (
+                <Skeleton className="h-full w-full rounded-lg" />
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={ridesTrend} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
                   <defs>
@@ -239,6 +239,7 @@ export default function AdminDashboardPage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
         </Card>
@@ -253,6 +254,9 @@ export default function AdminDashboardPage() {
             </div>
             <div className="p-2 sm:p-4">
               <div className="h-60 sm:h-64">
+                {isLoading ? (
+                  <Skeleton className="h-full w-full rounded-lg" />
+                ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={rideStatusBreakdown} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.06} vertical={false} />
@@ -278,6 +282,7 @@ export default function AdminDashboardPage() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                )}
               </div>
             </div>
           </Card>
@@ -290,6 +295,9 @@ export default function AdminDashboardPage() {
             </div>
             <div className="flex flex-col items-center justify-center p-4">
               <div className="h-52 w-full max-w-[260px]">
+                {isLoading ? (
+                  <Skeleton className="mx-auto h-full w-full max-w-[200px] rounded-full" />
+                ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -308,8 +316,10 @@ export default function AdminDashboardPage() {
                     <Tooltip content={<PieTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
+                )}
               </div>
               {/* Legend */}
+              {!isLoading ? (
               <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                 {rideStatusBreakdown.map((entry, idx) => {
                   const pct = rideTotal > 0 ? Math.round((entry.count / rideTotal) * 100) : 0;
@@ -322,6 +332,13 @@ export default function AdminDashboardPage() {
                   );
                 })}
               </div>
+              ) : (
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -340,9 +357,22 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="px-4 py-2 sm:px-5">
-            {recentActivity.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-4 py-2">
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <div key={idx} className="flex items-center gap-4">
+                    <Skeleton className="h-2 w-2 shrink-0 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                    <Skeleton className="h-3 w-16 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            ) : recentActivity.length === 0 ? (
               <div className="rounded-lg bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                {isLoading ? "Loading recent activity…" : "No recent activity found."}
+                No recent activity found.
               </div>
             ) : (
               <div className="relative">
