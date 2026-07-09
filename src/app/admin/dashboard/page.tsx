@@ -32,8 +32,8 @@ import {
 } from "recharts";
 import { format, parseISO } from "date-fns";
 
-const PIE_COLORS = ["#fdb813", "#ef4444", "#22c55e"];
-const BAR_COLORS = ["#fdb813", "#ef4444", "#22c55e"];
+const PIE_COLORS = ["#3b82f6", "#fdb813", "#f97316", "#ef4444", "#22c55e"];
+const BAR_COLORS = ["#3b82f6", "#fdb813", "#22c55e", "#ef4444", "#f97316"];
 
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color: string }>; label?: string }) {
   if (!active || !payload?.length) return null;
@@ -250,7 +250,7 @@ export default function AdminDashboardPage() {
           <Card>
             <div className="px-4 py-3 sm:px-5 border-b border-border/40">
               <h3 className="text-sm font-semibold text-foreground">Ride status breakdown</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Accepted, canceled &amp; completed</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Requested, Accepted, Started, Cancelled &amp; Completed</p>
             </div>
             <div className="p-2 sm:p-4">
               <div className="h-60 sm:h-64">

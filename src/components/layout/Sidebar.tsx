@@ -332,7 +332,6 @@ export function Sidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     adminNav.forEach((entry) => {
-      console.log(entry, 'entry')
       if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
         initial[entry.id] = true;
       }

@@ -23,7 +23,7 @@ export interface DashboardRidesTrendPoint {
 }
 
 export interface DashboardRideStatusBreakdown {
-  status: "ACCEPTED" | "CANCELED" | "COMPLETED";
+  status: "REQUESTED" | "ACCEPTED" | "STARTED" | "CANCELED" | "COMPLETED";
   count: number;
 }
 
@@ -67,8 +67,8 @@ interface RideStatusCountResponse {
   requested: number;
   accepted: number;
   started: number;
-  completed: number;
   canceled: number;
+  completed: number;
 }
 
 interface AuditLogsResponse {
@@ -92,7 +92,9 @@ const EMPTY_DRIVER_STATUS: DashboardDriverStatusCounts = {
 };
 
 const EMPTY_RIDE_STATUS: DashboardRideStatusBreakdown[] = [
+  { status: "REQUESTED", count: 0 },
   { status: "ACCEPTED", count: 0 },
+  { status: "STARTED", count: 0 },
   { status: "CANCELED", count: 0 },
   { status: "COMPLETED", count: 0 }
 ];
@@ -125,7 +127,9 @@ function mapDashboardResponse(
       count: ridesTrendRes.counts?.[idx] ?? 0
     })),
     rideStatusBreakdown: [
+      { status: "REQUESTED", count: rideStatusRes.requested ?? 0 },
       { status: "ACCEPTED", count: rideStatusRes.accepted ?? 0 },
+      { status: "STARTED", count: rideStatusRes.started ?? 0 },
       { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
       { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
     ],

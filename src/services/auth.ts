@@ -43,7 +43,6 @@ export async function loginUser({ mobileNumber, otp }: LoginPayload) {
     body: JSON.stringify({ mobileNumber, otp })
   });
 
-  console.log("[Auth] /auth/admin/login response:", response);
 
   return response.data;
 }
