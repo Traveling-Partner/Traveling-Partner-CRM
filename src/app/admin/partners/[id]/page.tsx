@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -46,6 +46,7 @@ export default function AdminPartnerDetailPage() {
   const [previewDownloadName, setPreviewDownloadName] = useState<string>("document.jpg");
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+  const profilePicture = partner?.basicInformation?.profilePicture?.trim() || null;
 
   const statusMutation = useApiMutation<void, { userId: number; status: string }>({
     mutationFn: ({ token, variables }) =>
@@ -53,7 +54,7 @@ export default function AdminPartnerDetailPage() {
     invalidateKeys: [queryKeys.users.partnerDetail(params.id)],
     onSuccess: (_data, variables) => {
       setOptimisticStatus(variables.status);
-      success(variables.status === "ACTIVE" ? "Partner marked active." : "Partner marked inactive.");
+      success(variables.status === "ACTIVE" ? "Partner marked active." : "Partner marked blocked.");
       setStatusConfirmOpen(false);
     },
     onError: (err) => {
@@ -95,7 +96,7 @@ export default function AdminPartnerDetailPage() {
   const email = partner?.basicInformation?.email || partner?.email || "—";
   const partnerStatus = optimisticStatus ?? partner?.status;
   const isActiveStatus = partnerStatus === "ACTIVE" || partnerStatus === "APPROVED";
-  const nextStatus: "ACTIVE" | "INACTIVE" = isActiveStatus ? "INACTIVE" : "ACTIVE";
+  const nextStatus: "ACTIVE" | "BLOCKED" = isActiveStatus ? "BLOCKED" : "ACTIVE";
 
   const handleStatusConfirm = () => {
     if (!partner) return;
@@ -137,6 +138,19 @@ export default function AdminPartnerDetailPage() {
               <Skeleton className="h-32 w-full rounded-lg" />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 text-sm">
+                 <div className="h-32 w-32 shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted/20">
+                    {profilePicture  ? (
+                      <img
+                        src={profilePicture}
+                        alt={`${fullName} profile`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        {fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || <UserCircle className="h-4 w-4" strokeWidth={1.25} />}
+                      </div>
+                    )}
+                  </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
                   <p className="mt-0.5 font-heading font-medium">{fullName}</p>
@@ -169,11 +183,11 @@ export default function AdminPartnerDetailPage() {
               <div className="mt-4 flex justify-end">
                 {isActiveStatus ? (
                   <Button variant="destructive" onClick={() => setStatusConfirmOpen(true)}>
-                    Inactive
+                    Blocked
                   </Button>
                 ) : (
                   <Button onClick={() => setStatusConfirmOpen(true)}>
-                    Active
+                    Approved
                   </Button>
                 )}
               </div>
@@ -399,17 +413,17 @@ export default function AdminPartnerDetailPage() {
           open={statusConfirmOpen}
           onOpenChange={setStatusConfirmOpen}
           onConfirm={handleStatusConfirm}
-          title={nextStatus === "ACTIVE" ? "Activate partner?" : "Set partner inactive?"}
+          title={nextStatus === "ACTIVE" ? "Activate partner?" : "Set partner blocked?"}
           description={
             partner
               ? nextStatus === "ACTIVE"
                 ? `Mark "${fullName}" as active?`
-                : `Mark "${fullName}" as inactive?`
+                : `Mark "${fullName}" as blocked?`
               : undefined
           }
-          confirmLabel={statusUpdating ? "Updating..." : nextStatus === "ACTIVE" ? "Activate" : "Set inactive"}
+          confirmLabel={statusUpdating ? "Updating..." : nextStatus === "ACTIVE" ? "Activate" : "Set blocked"}
           cancelLabel="Cancel"
-          destructive={nextStatus === "INACTIVE"}
+          destructive={nextStatus === "BLOCKED"}
         />
       </PageContainer>
     </AppShell>

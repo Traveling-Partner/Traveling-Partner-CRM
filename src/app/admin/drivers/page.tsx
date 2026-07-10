@@ -15,9 +15,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { useDriversListQuery } from "@/hooks/queries/use-drivers-list-query";
 import type { DriverRow } from "@/services/users";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, UserCircle } from "lucide-react";
 
-const DEFAULT_PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 25;
 
 export default function AdminDriversPage() {
   const router = useRouter();
@@ -54,7 +54,20 @@ export default function AdminDriversPage() {
         return (
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[11px] font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
-              {initials || "?"}
+              
+
+              {d.profilePicture  ? (
+                      <img
+                        src={d.profilePicture}
+                        alt={`${displayName} profile`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        {initials || <UserCircle className="h-4 w-4" strokeWidth={1.25} />}
+                        
+                      </div>
+                    )}
             </span>
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
@@ -65,10 +78,33 @@ export default function AdminDriversPage() {
       }
     },
     {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => (
+        <span className="text-[13px] text-muted-foreground">{row.original.gender || "—"}</span>
+      )
+    },
+    {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => (
         <span className="text-[13px] text-muted-foreground">{row.original.email || "—"}</span>
+      )
+    },
+
+    {
+      accessorKey: "city",
+      header: "City",
+      cell: ({ row }) => (
+        <span className="text-[13px] text-muted-foreground">{row.original.city || "—"}</span>
+      )
+    },
+   
+    {
+      accessorKey: "referralCode",
+      header: "Referral No",
+      cell: ({ row }) => (
+        <span className="text-[13px] text-muted-foreground">{row.original.referralCode || "—"}</span>
       )
     },
     {
@@ -85,7 +121,7 @@ export default function AdminDriversPage() {
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: "Joined",
       cell: ({ row }) => (
         <span className="text-[12px] text-muted-foreground tabular-nums">
           {row.original.createdAt
@@ -149,7 +185,7 @@ export default function AdminDriversPage() {
                   <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="APPROVED">Approved</SelectItem>
                   <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
                   <SelectItem value="BLOCKED">Blocked</SelectItem>
                 </SelectContent>
               </Select>
@@ -170,7 +206,6 @@ export default function AdminDriversPage() {
           {/* Pagination footer */}
           <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Show</span>
               <Select
                 value={String(pageSize)}
                 onValueChange={(v) => {
@@ -182,10 +217,10 @@ export default function AdminDriversPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
                   <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="250">250</SelectItem>
                 </SelectContent>
               </Select>
               <span>per page</span>
