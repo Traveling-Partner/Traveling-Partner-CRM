@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Download, Eye, FileText } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -19,7 +19,7 @@ import { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";
 import { queryKeys } from "@/lib/api/query-keys";
 import { updateUserStatus } from "@/services/users";
 
-type DriverStatus = "PENDING" | "APPROVED" | "RESTRICTED";
+type DriverStatus = "PENDING" | "APPROVED" | "ACTIVE" | "REJECTED" | "BLOCKED" | "RESTRICTED";
 
 interface DriverDocument {
   id: string;
@@ -44,10 +44,13 @@ function prettyDate(value?: string | null) {
   return d.toLocaleDateString();
 }
 
-const statusPayloadMap: Record<DriverStatus, "ACTIVE" | "INACTIVE" | "BLOCKED"> = {
-  APPROVED: "ACTIVE",
-  RESTRICTED: "INACTIVE",
-  PENDING: "INACTIVE"
+const statusPayloadMap: Record<DriverStatus, "PENDING" | "APPROVED" | "ACTIVE" | "RESTRICTED" | "BLOCKED" | "REJECTED"> = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  ACTIVE: "ACTIVE",
+  RESTRICTED: "RESTRICTED",
+  BLOCKED: "BLOCKED",
+  REJECTED: "REJECTED"
 };
 
 export default function AdminDriverDetailPage() {
@@ -66,6 +69,7 @@ export default function AdminDriverDetailPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+  const [profileImageError, setProfileImageError] = useState(false);
 
   const statusMutation = useApiMutation<void, { userId: number; status: string }>({
     mutationFn: ({ token, variables }) =>
@@ -114,18 +118,23 @@ export default function AdminDriverDetailPage() {
     ];
   }, [driver, docStatuses]);
 
+  const selectedDocument = documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
+  const displayName = driver?.username || driver?.basicInformation?.firstName || "Driver";
+  const profilePicture = driver?.basicInformation?.profilePicture?.trim() || null;
+  const displayStatus = optimisticStatus ?? driver?.status ?? "PENDING";
+  const currentStatus = String(displayStatus).trim().toUpperCase();
+  const showApproveAction = currentStatus === "PENDING" || currentStatus === "REJECTED" || currentStatus === "BLOCKED" ;
+  const showRestrictAction = currentStatus === "APPROVED" || currentStatus === "ACTIVE" || currentStatus === "RESTRICTED";
+
+  useEffect(() => {
+    setProfileImageError(false);
+  }, [profilePicture]);
+
   useEffect(() => {
     if (documents.length > 0 && !documents.some((doc) => doc.id === selectedDocumentId)) {
       setSelectedDocumentId(documents[0].id);
     }
   }, [documents, selectedDocumentId]);
-
-  const selectedDocument = documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
-  const displayName = driver?.username || driver?.basicInformation?.firstName || "Driver";
-  const displayStatus = optimisticStatus ?? driver?.status ?? "PENDING";
-  const currentStatus = String(displayStatus).trim().toUpperCase();
-  const showApproveAction = currentStatus === "INACTIVE";
-  const showRestrictAction = currentStatus === "ACTIVE";
 
   if (!loading && (isError || !driver)) {
     return (
@@ -154,7 +163,7 @@ export default function AdminDriverDetailPage() {
       status: statusPayloadMap[pendingAction]
     });
   };
-
+console.log(documents , "documents");
   return (
     <AppShell title={`Driver • ${displayName}`}>
       <PageContainer>
@@ -176,7 +185,27 @@ export default function AdminDriverDetailPage() {
             {loading ? (
               <Skeleton className="h-32 w-full rounded-lg" />
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-[140px,1fr]">
+                <div className="flex flex-col items-center gap-2 sm:items-start">
+                  <div className="h-32 w-32 shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted/20">
+                    {profilePicture && !profileImageError ? (
+                      <img
+                        src={profilePicture}
+                        alt={`${displayName} profile`}
+                        className="h-full w-full object-cover"
+                        onError={() => setProfileImageError(true)}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <UserCircle className="h-16 w-16" strokeWidth={1.25} />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Profile picture
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Full name</p>
                   <p className="mt-0.5 text-sm font-medium text-foreground">
@@ -213,6 +242,7 @@ export default function AdminDriverDetailPage() {
                     <StatusBadge status={displayStatus} />
                   </div>
                 </div>
+                </div>
               </div>
             )}
           </SectionCard>
@@ -230,7 +260,7 @@ export default function AdminDriverDetailPage() {
                     disabled={updatingStatus}
                     onClick={() => handleStatusChange("APPROVED")}
                   >
-                    Approve
+                    Approved
                   </Button>
                 ) : null}
                 {showRestrictAction ? (
@@ -238,9 +268,9 @@ export default function AdminDriverDetailPage() {
                     size="sm"
                     variant="destructive"
                     disabled={updatingStatus}
-                    onClick={() => handleStatusChange("RESTRICTED")}
+                    onClick={() => handleStatusChange("BLOCKED")}
                   >
-                    Restrict
+                    Blocked
                   </Button>
                 ) : null}
               </div>
@@ -261,11 +291,10 @@ export default function AdminDriverDetailPage() {
                     key={doc.id}
                     type="button"
                     onClick={() => setSelectedDocumentId(doc.id)}
-                    className={`w-full rounded-xl border p-3 text-left transition-all ${
-                      selectedDocument?.id === doc.id
+                    className={`w-full rounded-xl border p-3 text-left transition-all ${selectedDocument?.id === doc.id
                         ? "border-[#fdb813]/40 bg-[var(--brand-light-hover)] shadow-sm ring-1 ring-[#fdb813]/20"
                         : "border-border/60 bg-card hover:bg-muted/30"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-2">
                       <div className="h-12 w-16 overflow-hidden rounded-md border border-border/60 bg-muted/30">
@@ -488,7 +517,7 @@ export default function AdminDriverDetailPage() {
           }
           confirmLabel={updatingStatus ? "Updating..." : "Confirm"}
           cancelLabel="Cancel"
-          destructive={pendingAction === "RESTRICTED"}
+          destructive={pendingAction === "BLOCKED"}
         />
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl">

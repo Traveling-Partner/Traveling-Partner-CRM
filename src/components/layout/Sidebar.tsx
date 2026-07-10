@@ -56,12 +56,7 @@ type SidebarEntry = SidebarLink | SidebarGroup;
 
 const adminNav: SidebarEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  {
-    id: "ride-management",
-    label: "Ride Management",
-    icon: Route,
-    items: [{ label: "Rides", href: "/admin/pool-rides", icon: Share2 }]
-  },
+  
   {
     id: "user-management",
     label: "User Management",
@@ -71,6 +66,12 @@ const adminNav: SidebarEntry[] = [
       { label: "Partners", href: "/admin/partners", icon: Briefcase },
       { label: "Documents", href: "/admin/documents", icon: FileText }
     ]
+  },
+  {
+    id: "ride-management",
+    label: "Ride Management",
+    icon: Route,
+    items: [{ label: "Rides", href: "/admin/pool-rides", icon: Share2 }]
   },
   {
     id: "agent-management",
@@ -122,12 +123,12 @@ const adminNav: SidebarEntry[] = [
       { label: "Vehicle Brands", href: "/admin/vehicle-brands", icon: Tags }
     ]
   },
-  {
-    id: "system",
-    label: "System",
-    icon: Settings,
-    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }]
-  }
+  // {
+  //   id: "system",
+  //   label: "System",
+  //   icon: Settings,
+  //   items: [{ label: "Settings", href: "/admin/settings", icon: Settings }]
+  // }
 ];
 
 const agentItems: SidebarLink[] = [

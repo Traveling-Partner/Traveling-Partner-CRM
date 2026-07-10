@@ -13,6 +13,10 @@ import type {
 } from "@/lib/api/query-keys";
 
 export interface DriverRow {
+  profilePicture?: string | null;
+  city: string;
+  gender: string;
+  referralCode: string;
   id: number;
   email: string | null;
   name: string | null;
@@ -28,6 +32,10 @@ export interface PartnerRow {
   name: string | null;
   email: string | null;
   mobileNumber: string | null;
+  gender: string;
+  referralCode: string;
+  city: string;
+  cnicNumber: string;
   status: string;
   profilePicture?: string | null;
   createdAt?: string | null;
@@ -159,12 +167,16 @@ export interface PartnerDetail {
   updatedAt: string | null;
   basicInformation?: {
     firstName: string | null;
+    profilePicture: string | null;
     lastName: string | null;
     gender?: string | null;
     email?: string | null;
     city: string | null;
     cnicFront: string | null;
     cnicBack: string | null;
+    referralCode: string | null;
+    acceptTerm: boolean | null;
+    filterDeleted: boolean | null;
   } | null;
   vehicle?: {
     modelNumberId: number | null;
