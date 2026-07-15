@@ -180,7 +180,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+        {/* <div className="rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
           <p className="font-semibold text-xs text-foreground mb-1.5">
             Example credentials
           </p>
@@ -188,7 +188,7 @@ export default function LoginPage() {
             <li>Mobile Number: <span className="font-medium text-foreground">03002234519</span></li>
             <li>OTP: <span className="font-medium text-foreground">1234</span></li>
           </ul>
-        </div>
+        </div> */}
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-between gap-2 border-t border-border bg-muted/30 py-3.5 px-6 text-xs text-muted-foreground sm:flex-row">
         <span>&copy; {new Date().getFullYear()} Traveling Partner</span>

@@ -28,9 +28,7 @@ import { useToast } from "@/components/ui/toast";
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   email: z.string().trim().email("Valid email required"),
-  username: z.string().trim().min(2, "Username is required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
-  password: z.string().min(4, "Password must be at least 4 characters"),
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"]),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
@@ -57,9 +55,7 @@ export default function AdminCreateAgentPage() {
     defaultValues: {
       name: "",
       email: "",
-      username: "",
       mobileNumber: "",
-      password: "",
       gender: "Male",
       status: "PENDING",
       cnicNumber: "",
@@ -101,12 +97,10 @@ export default function AdminCreateAgentPage() {
           token,
           body: JSON.stringify({
             email: values.email,
-            username: values.username,
             mobileNumber: values.mobileNumber,
-            password: values.password,
             name: values.name,
             gender: values.gender,
-            status: values.status,
+            status: "ACTIVE",
             cnicNumber: values.cnicNumber,
             cnicFront: values.cnicFront,
             cnicBack: values.cnicBack
@@ -138,13 +132,11 @@ export default function AdminCreateAgentPage() {
           description="Fill in all fields to register a new agent."
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                 <Input id="name" {...register("name")} placeholder="e.g., Zaeem Khan" />
               </FormField>
-              <FormField label="Username" htmlFor="username" required error={errors.username}>
-                <Input id="username" {...register("username")} placeholder="e.g., agent5" />
-              </FormField>
+             
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Email" htmlFor="email" required error={errors.email}>
@@ -162,8 +154,23 @@ export default function AdminCreateAgentPage() {
               </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Password" htmlFor="password" required error={errors.password}>
-                <Input id="password" type="password" {...register("password")} placeholder="Enter password" />
+              <FormField label="Gender" required error={errors.gender}>
+                <Controller
+                  name="gender"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </FormField>
               <FormField label="CNIC Number" htmlFor="cnicNumber" required error={errors.cnicNumber}>
                 <Input id="cnicNumber" {...register("cnicNumber")} placeholder="4310212345674" maxLength={13} />
@@ -174,9 +181,8 @@ export default function AdminCreateAgentPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="cnic-front-upload"
-                    className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted/60 ${
-                      frontUploading ? "pointer-events-none opacity-60" : ""
-                    }`}
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted/60 ${frontUploading ? "pointer-events-none opacity-60" : ""
+                      }`}
                   >
                     {frontUploading ? "Uploading..." : "Upload front image"}
                   </label>
@@ -209,9 +215,8 @@ export default function AdminCreateAgentPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="cnic-back-upload"
-                    className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted/60 ${
-                      backUploading ? "pointer-events-none opacity-60" : ""
-                    }`}
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted/60 ${backUploading ? "pointer-events-none opacity-60" : ""
+                      }`}
                   >
                     {backUploading ? "Uploading..." : "Upload back image"}
                   </label>
@@ -239,46 +244,6 @@ export default function AdminCreateAgentPage() {
                   />
                   <Input id="cnicBack" {...register("cnicBack")} readOnly placeholder="Uploaded URL appears here" />
                 </div>
-              </FormField>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Gender" required error={errors.gender}>
-                <Controller
-                  name="gender"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-              <FormField label="Status" required error={errors.status}>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="BLOCKED">Blocked</SelectItem>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="APPROVED">Approved</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
               </FormField>
             </div>
             <Button type="submit" disabled={saving}>
