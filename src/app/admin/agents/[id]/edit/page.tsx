@@ -29,12 +29,7 @@ import { useToast } from "@/components/ui/toast";
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   email: z.string().trim().email("Valid email required"),
-  username: z.string().trim().min(2, "Username is required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
-  password: z.union([
-    z.literal(""),
-    z.string().min(4, "Password must be at least 4 characters")
-  ]),
   gender: z.enum(["Male", "Female", "Other", "MALE", "FEMALE", "OTHER"], { required_error: "Gender is required" }),
   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"]),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
@@ -53,7 +48,6 @@ interface UploadResponse {
 interface AgentDetailResponse {
   id: number;
   email: string | null;
-  username: string | null;
   mobileNumber: string | null;
   name: string | null;
   gender?: string | null;
@@ -81,9 +75,7 @@ export default function AdminEditAgentPage() {
     defaultValues: {
       name: "",
       email: "",
-      username: "",
       mobileNumber: "",
-      password: "",
       gender: "Male",
       status: "PENDING",
       cnicNumber: "",
@@ -147,9 +139,7 @@ export default function AdminEditAgentPage() {
         reset({
           name: payload.name || "",
           email: payload.email || "",
-          username: payload.username || "",
           mobileNumber: payload.mobileNumber || "",
-          password: "",
           gender: normalizedGender,
           status: normalizedStatus,
           cnicNumber: payload.cnicNumber || "",
@@ -179,14 +169,12 @@ export default function AdminEditAgentPage() {
           token,
           body: JSON.stringify({
             email: values.email,
-            username: values.username,
             mobileNumber: values.mobileNumber,
             name: values.name,
             gender: values.gender,
             cnicNumber: values.cnicNumber,
             cnicFront: values.cnicFront,
             cnicBack: values.cnicBack,
-            ...(values.password.trim() ? { password: values.password } : {}),
             status: values.status
           })
         }
@@ -247,9 +235,6 @@ export default function AdminEditAgentPage() {
               <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                 <Input id="name" {...register("name")} placeholder="e.g., Zaeem Khan" />
               </FormField>
-              <FormField label="Username" htmlFor="username" required error={errors.username}>
-                <Input id="username" {...register("username")} placeholder="e.g., agent5" />
-              </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Email" htmlFor="email" required error={errors.email}>
@@ -267,14 +252,6 @@ export default function AdminEditAgentPage() {
               </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Password" htmlFor="password" error={errors.password}>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                  placeholder="Leave blank to keep current password"
-                />
-              </FormField>
               <FormField label="CNIC Number" htmlFor="cnicNumber" required error={errors.cnicNumber}>
                 <Input id="cnicNumber" {...register("cnicNumber")} placeholder="4310212345674" maxLength={13} />
               </FormField>

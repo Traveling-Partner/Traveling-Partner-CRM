@@ -110,15 +110,6 @@ export default function AdminAgentDetailPage() {
             </Link>
           </Button>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/admin/agents/${params.id}/drivers`}>Driver info</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/admin/agents/${params.id}/passengers`}>Passenger info</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/agents">All agents</Link>
-            </Button>
             <Button size="sm" asChild>
               <Link href={`/admin/agents/${params.id}/edit`} className="gap-1.5">
                 <Pencil className="h-4 w-4" />

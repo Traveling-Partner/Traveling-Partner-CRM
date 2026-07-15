@@ -23,7 +23,7 @@ import { Search, Filter } from "lucide-react";
 import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
 import type { AgentRow } from "@/services/users";
 
-const DEFAULT_PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 25;
 
 export default function AdminAgentsPage() {
   const router = useRouter();
@@ -63,6 +63,13 @@ export default function AdminAgentsPage() {
           </div>
         );
       }
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => (
+        <span className="text-[13px] text-muted-foreground">{row.original?.gender?.toUpperCase() || "—"}</span>
+      )
     },
     {
       accessorKey: "mobileNumber",
@@ -144,10 +151,9 @@ export default function AdminAgentsPage() {
                 <SelectContent>
                   <SelectItem value="all">All status</SelectItem>
                   <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
                   <SelectItem value="INACTIVE">Inactive</SelectItem>
                   <SelectItem value="BLOCKED">Blocked</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="APPROVED">Approved</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -163,7 +169,6 @@ export default function AdminAgentsPage() {
           )}
           <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Show</span>
               <Select
                 value={String(pageSize)}
                 onValueChange={(value) => {
@@ -175,13 +180,12 @@ export default function AdminAgentsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
                   <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="250">250</SelectItem>
                 </SelectContent>
               </Select>
-              <span>per page</span>
             </div>
             <PaginationControls
               currentPage={page + 1}

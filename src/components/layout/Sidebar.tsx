@@ -64,7 +64,8 @@ const adminNav: SidebarEntry[] = [
     items: [
       { label: "Drivers", href: "/admin/drivers", icon: Users },
       { label: "Partners", href: "/admin/partners", icon: Briefcase },
-      { label: "Documents", href: "/admin/documents", icon: FileText }
+      { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
+      { label: "Documents", href: "/admin/documents", icon: FileText },
     ]
   },
   {
@@ -75,10 +76,9 @@ const adminNav: SidebarEntry[] = [
   },
   {
     id: "agent-management",
-    label: "Agent Management",
+    label: "Comission Management",
     icon: TrendingUp,
     items: [
-      { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
       { label: "Agent Performance", href: "/admin/agent-performance", icon: BadgeDollarSign }
     ]
   },
