@@ -10,7 +10,7 @@ import {
   type DriverDocumentsPayload
 } from "@/lib/documents-utils";
 import { fetcher } from "@/lib/fetcher";
-import { fetchDriversList, type DriverRow } from "@/services/users";
+import type { DriverRow } from "@/services/users";
 import type { DocumentsQueueFilters } from "@/lib/api/query-keys";
 import type { PaginatedResponse } from "@/lib/api/types";
 
@@ -72,11 +72,34 @@ export async function fetchDriverDocumentSummaryStatus(
   return summarizeDocumentVerificationStatus(payload);
 }
 
+export async function fetchDocumentsQueueDrivers(
+  filters: DocumentsQueueFilters,
+  opts: RequestOpts
+): Promise<PaginatedResponse<DriverRow>> {
+  const url = buildApiUrl("/users/drivers", {
+    page: filters.page,
+    size: filters.pageSize,
+    name: filters.name.trim() || undefined,
+    mobileNumber: filters.mobileNumber.trim() || undefined,
+    city: filters.city.trim() || undefined,
+    gender: filters.gender === "all" ? undefined : filters.gender,
+    status: filters.status === "all" ? undefined : filters.status,
+    documentType: filters.documentType === "all" ? undefined : filters.documentType
+  });
+
+  return fetcher<PaginatedResponse<DriverRow>>(url, {
+    token: opts.token,
+    signal: opts.signal,
+    dedupe: false,
+    debugLabel: "documents:drivers-list"
+  });
+}
+
 export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
   opts: RequestOpts
 ): Promise<DocumentsQueuePage> {
-  const drivers = await fetchDriversList(filters, { ...opts, debugLabel: "documents:drivers-list" });
+  const drivers = await fetchDocumentsQueueDrivers(filters, opts);
 
   const statusEntries = await Promise.all(
     drivers.content.map(async (driver) => {

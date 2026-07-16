@@ -13,6 +13,7 @@ export const queryKeys = {
     all: ["users"] as const,
     drivers: (filters: DriversListFilters) =>
       ["users", "drivers", "list", filters] as const,
+    driverStatusCounts: () => ["users", "drivers", "status-counts"] as const,
     driverDetail: (id: string | number) => ["users", "drivers", "detail", String(id)] as const,
     driverDocuments: (id: string | number) =>
       ["users", "drivers", "documents", String(id)] as const,
@@ -20,9 +21,11 @@ export const queryKeys = {
       ["users", "drivers", "document-summary", id] as const,
     partners: (filters: PartnersListFilters) =>
       ["users", "partners", "list", filters] as const,
+    partnerStatusCounts: () => ["users", "partners", "status-counts"] as const,
     partnerDetail: (id: string | number) => ["users", "partners", "detail", String(id)] as const,
     agents: (filters: AgentsListFilters) =>
       ["users", "agents", "list", filters] as const,
+    agentStatusCounts: () => ["users", "agents", "status-counts"] as const,
     agentDetail: (id: string | number) => ["users", "agents", "detail", String(id)] as const,
     documentsQueue: (filters: DocumentsQueueFilters) =>
       ["users", "documents", "queue", filters] as const
@@ -63,28 +66,41 @@ export interface DriversListFilters {
   page: number;
   pageSize: number;
   status: string;
-  search: string;
+  name: string;
+  mobileNumber: string;
+  city: string;
+  gender: string;
 }
 
 export interface PartnersListFilters {
   page: number;
   pageSize: number;
   status: string;
-  search: string;
+  name: string;
+  mobileNumber: string;
+  city: string;
+  gender: string;
 }
 
 export interface AgentsListFilters {
   page: number;
   pageSize: number;
   status: string;
-  search: string;
+  name: string;
+  mobileNumber: string;
+  city: string;
+  gender: string;
 }
 
 export interface DocumentsQueueFilters {
   page: number;
   pageSize: number;
+  name: string;
+  mobileNumber: string;
+  city: string;
+  gender: string;
   status: string;
-  search: string;
+  documentType: string;
 }
 
 export interface BlogListFilters {

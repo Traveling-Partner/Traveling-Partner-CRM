@@ -19,15 +19,20 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Clock, CheckCircle2, Ban, XCircle } from "lucide-react";
 import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
+import { useAgentStatusCountsQuery } from "@/hooks/queries/use-agent-status-counts-query";
 import type { AgentRow } from "@/services/users";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_PAGE_SIZE = 25;
 
 export default function AdminAgentsPage() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
+  const [phoneFilter, setPhoneFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -36,13 +41,57 @@ export default function AdminAgentsPage() {
     page,
     pageSize,
     status: statusFilter,
-    search
+    name: nameFilter,
+    mobileNumber: phoneFilter,
+    city: cityFilter,
+    gender: genderFilter
   });
+  const {
+    data: statusCounts,
+    isLoading: countsLoading,
+    isFetching: countsFetching
+  } = useAgentStatusCountsQuery();
 
   const agentRows: AgentRow[] = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
-  const totalElements = data?.totalElements ?? 0;
   const loading = isLoading || isFetching;
+  const countsLoadingState = countsLoading || countsFetching;
+  const resetPage = () => setPage(0);
+
+  const statusCountCards = [
+    {
+      label: "Pending",
+      value: statusCounts.pending,
+      icon: Clock,
+      iconBg: "bg-amber-50 dark:bg-amber-500/10",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      valueColor: "text-amber-600 dark:text-amber-400"
+    },
+    {
+      label: "Approved",
+      value: statusCounts.approved,
+      icon: CheckCircle2,
+      iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      valueColor: "text-emerald-600 dark:text-emerald-400"
+    },
+    {
+      label: "Blocked",
+      value: statusCounts.blocked,
+      icon: Ban,
+      iconBg: "bg-red-50 dark:bg-red-500/10",
+      iconColor: "text-red-600 dark:text-red-400",
+      valueColor: "text-red-600 dark:text-red-400"
+    },
+    {
+      label: "Rejected",
+      value: statusCounts.rejected,
+      icon: XCircle,
+      iconBg: "bg-orange-50 dark:bg-orange-500/10",
+      iconColor: "text-orange-600 dark:text-orange-400",
+      valueColor: "text-orange-600 dark:text-orange-400"
+    }
+  ];
 
   const columns: ColumnDef<AgentRow>[] = [
     {
@@ -68,7 +117,9 @@ export default function AdminAgentsPage() {
       accessorKey: "gender",
       header: "Gender",
       cell: ({ row }) => (
-        <span className="text-[13px] text-muted-foreground">{row.original?.gender?.toUpperCase() || "—"}</span>
+        <span className="text-[13px] text-muted-foreground">
+          {(row.original as AgentRow & { gender?: string }).gender?.toUpperCase() || "—"}
+        </span>
       )
     },
     {
@@ -118,41 +169,106 @@ export default function AdminAgentsPage() {
             </Button>
           }
         >
+          <div className="mb-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+            {statusCountCards.map((card) => (
+              <div
+                key={card.label}
+                className="rounded-xl border border-border/60 bg-muted/20"
+              >
+                <div className="flex items-center gap-3 p-4">
+                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", card.iconBg)}>
+                    <card.icon className={cn("h-5 w-5", card.iconColor)} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                      {card.label}
+                    </p>
+                    {countsLoadingState ? (
+                      <Skeleton className="mt-1 h-7 w-12" />
+                    ) : (
+                      <p className={cn("text-2xl font-bold tracking-tight tabular-nums", card.valueColor)}>
+                        {card.value.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {error ? (
             <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error.message}
             </p>
           ) : null}
-          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="space-y-2.5 pb-3">
+            {/* <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Filter className="h-3.5 w-3.5" />
+              <span>Filter agents</span>
+            </div> */}
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                  placeholder="Name"
+                  value={nameFilter}
+                  onChange={(e) => {
+                    setNameFilter(e.target.value);
+                    resetPage();
+                  }}
+                  className="pl-9"
+                />
+              </div>
               <Input
-                placeholder="Search by name or email…"
-                value={search}
+                placeholder="Phone number"
+                value={phoneFilter}
                 onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(0);
+                  setPhoneFilter(e.target.value);
+                  resetPage();
                 }}
-                className="pl-9"
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="City"
+                value={cityFilter}
+                onChange={(e) => {
+                  setCityFilter(e.target.value);
+                  resetPage();
+                }}
+              />
+              <Select
+                value={genderFilter}
+                onValueChange={(value) => {
+                  setGenderFilter(value);
+                  resetPage();
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All genders</SelectItem>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
                   setStatusFilter(value);
-                  setPage(0);
+                  resetPage();
                 }}
               >
-                <SelectTrigger className="w-40">
+                <SelectTrigger>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All status</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
                   <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
                   <SelectItem value="BLOCKED">Blocked</SelectItem>
                 </SelectContent>
               </Select>
