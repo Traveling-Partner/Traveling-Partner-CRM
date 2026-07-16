@@ -66,9 +66,80 @@ export async function fetchDriversList(
     page: filters.page,
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
-    search: filters.search.trim() || undefined
+    name: filters.name.trim() || undefined,
+    mobileNumber: filters.mobileNumber.trim() || undefined,
+    city: filters.city.trim() || undefined,
+    gender: filters.gender === "all" ? undefined : filters.gender
   });
   return fetcher<PaginatedResponse<DriverRow>>(url, readOpts({ ...opts, debugLabel: "users:drivers" }));
+}
+
+export interface DriverStatusCounts {
+  pending: number;
+  approved: number;
+  blocked: number;
+  rejected: number;
+}
+
+export const EMPTY_DRIVER_STATUS_COUNTS: DriverStatusCounts = {
+  pending: 0,
+  approved: 0,
+  blocked: 0,
+  rejected: 0
+};
+
+export async function fetchDriverStatusCounts(opts: RequestOpts): Promise<DriverStatusCounts> {
+  const response = await fetcher<{
+    pending?: number;
+    approved?: number;
+    blocked?: number;
+    rejected?: number;
+  }>(buildApiUrl("/users/driver-status-counts"), readOpts({ ...opts, debugLabel: "users:driver-status-counts" }));
+
+  return {
+    pending: response.pending ?? 0,
+    approved: response.approved ?? 0,
+    blocked: response.blocked ?? 0,
+    rejected: response.rejected ?? 0
+  };
+}
+
+export type PartnerStatusCounts = DriverStatusCounts;
+export type AgentStatusCounts = DriverStatusCounts;
+
+export const EMPTY_PARTNER_STATUS_COUNTS = EMPTY_DRIVER_STATUS_COUNTS;
+export const EMPTY_AGENT_STATUS_COUNTS = EMPTY_DRIVER_STATUS_COUNTS;
+
+export async function fetchPartnerStatusCounts(opts: RequestOpts): Promise<PartnerStatusCounts> {
+  const response = await fetcher<{
+    pending?: number;
+    approved?: number;
+    blocked?: number;
+    rejected?: number;
+  }>(buildApiUrl("/users/partner-status-counts"), readOpts({ ...opts, debugLabel: "users:partner-status-counts" }));
+
+  return {
+    pending: response.pending ?? 0,
+    approved: response.approved ?? 0,
+    blocked: response.blocked ?? 0,
+    rejected: response.rejected ?? 0
+  };
+}
+
+export async function fetchAgentStatusCounts(opts: RequestOpts): Promise<AgentStatusCounts> {
+  const response = await fetcher<{
+    pending?: number;
+    approved?: number;
+    blocked?: number;
+    rejected?: number;
+  }>(buildApiUrl("/users/sale-agent-status-counts"), readOpts({ ...opts, debugLabel: "users:agent-status-counts" }));
+
+  return {
+    pending: response.pending ?? 0,
+    approved: response.approved ?? 0,
+    blocked: response.blocked ?? 0,
+    rejected: response.rejected ?? 0
+  };
 }
 
 export async function fetchPartnersList(
@@ -78,9 +149,11 @@ export async function fetchPartnersList(
   const url = buildApiUrl("/users/partners", {
     page: filters.page,
     size: filters.pageSize,
-    status: filters.status === "all" ? "" : filters.status,
-    city: "",
-    search: filters.search.trim()
+    status: filters.status === "all" ? undefined : filters.status,
+    name: filters.name.trim() || undefined,
+    mobileNumber: filters.mobileNumber.trim() || undefined,
+    city: filters.city.trim() || undefined,
+    gender: filters.gender === "all" ? undefined : filters.gender
   });
   return fetcher<PaginatedResponse<PartnerRow>>(url, readOpts({ ...opts, debugLabel: "users:partners" }));
 }
@@ -92,8 +165,11 @@ export async function fetchAgentsList(
   const url = buildApiUrl("/users/sale-agents", {
     page: filters.page,
     size: filters.pageSize,
-    status: filters.status === "all" ? "" : filters.status,
-    search: filters.search.trim()
+    status: filters.status === "all" ? undefined : filters.status,
+    name: filters.name.trim() || undefined,
+    mobileNumber: filters.mobileNumber.trim() || undefined,
+    city: filters.city.trim() || undefined,
+    gender: filters.gender === "all" ? undefined : filters.gender
   });
   return fetcher<PaginatedResponse<AgentRow>>(url, readOpts({ ...opts, debugLabel: "users:agents" }));
 }

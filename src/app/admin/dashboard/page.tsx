@@ -8,13 +8,19 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useAdminDashboardQuery } from "@/hooks/queries/use-admin-dashboard-query";
+import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
+import {
+  buildAgentPerformanceRow,
+  getAgentCommissions
+} from "@/lib/agent-onboarding";
 import {
   Users,
   Briefcase,
   UserCircle2,
   Car,
   TrendingUp,
-  Clock
+  Clock,
+  BadgeDollarSign
 } from "lucide-react";
 import {
   AreaChart,
@@ -68,6 +74,19 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ n
 export default function AdminDashboardPage() {
   const { data, loading: isLoading, error } = useAdminDashboardQuery();
   const {
+    data: agentsData,
+    isLoading: agentsLoading,
+    isFetching: agentsFetching
+  } = useAgentsListQuery({
+    page: 0,
+    pageSize: 100,
+    status: "all",
+    name: "",
+    mobileNumber: "",
+    city: "",
+    gender: "all"
+  });
+  const {
     counts,
     driverStatusCounts,
     ridesTrend,
@@ -87,6 +106,54 @@ export default function AdminDashboardPage() {
   );
 
   const rideTotal = rideStatusBreakdown.reduce((sum, r) => sum + r.count, 0);
+  const isAgentPerfLoading = agentsLoading || agentsFetching;
+  const agentRows = useMemo(
+    () => (agentsData?.content ?? []).map(buildAgentPerformanceRow),
+    [agentsData?.content]
+  );
+  const registeredByAgents = useMemo(
+    () => ({
+      drivers: agentRows.reduce((sum, row) => sum + row.driverCount, 0),
+      partners: agentRows.reduce((sum, row) => sum + row.passengerCount, 0)
+    }),
+    [agentRows]
+  );
+  const topAgentRegistrations = useMemo(
+    () =>
+      [...agentRows]
+        .map((row) => ({
+          name: row.name?.trim() || `Agent ${row.id}`,
+          drivers: row.driverCount,
+          partners: row.passengerCount
+        }))
+        .sort((a, b) => b.drivers + b.partners - (a.drivers + a.partners))
+        .slice(0, 6),
+    [agentRows]
+  );
+  const commissionTotals = useMemo(() => {
+    let pending = 0;
+    let total = 0;
+    let released = 0;
+    for (const row of agentRows) {
+      total += row.totalCommission;
+      released += row.paidAmount;
+      const commissions = getAgentCommissions(row.id);
+      pending += commissions
+        .filter((item) => item.status === "PENDING")
+        .reduce((sum, item) => sum + item.amount, 0);
+    }
+    const remaining = Math.max(total - released, 0);
+    return { pending, released, remaining, total };
+  }, [agentRows]);
+  const commissionBreakdownData = useMemo(
+    () => [
+      { label: "Pending", value: commissionTotals.pending },
+      { label: "Released", value: commissionTotals.released },
+      { label: "Remaining", value: commissionTotals.remaining },
+      { label: "Total", value: commissionTotals.total }
+    ],
+    [commissionTotals]
+  );
 
   const statCards = [
     {
@@ -339,6 +406,115 @@ export default function AdminDashboardPage() {
                   <Skeleton className="h-4 w-24" />
                 </div>
               )}
+            </div>
+          </Card>
+        </div>
+
+        {/* ── Agent Performance ── */}
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Card>
+            <div className="px-4 py-3 sm:px-5 border-b border-border/40">
+              <h3 className="text-sm font-semibold text-foreground">Agent performance</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                New registered drivers and partners by agents
+              </p>
+            </div>
+            <div className="p-3 sm:p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">New Drivers</p>
+                  {isAgentPerfLoading ? (
+                    <Skeleton className="mt-2 h-7 w-16" />
+                  ) : (
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-blue-600 dark:text-blue-400">
+                      {registeredByAgents.drivers.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">New Partners</p>
+                  {isAgentPerfLoading ? (
+                    <Skeleton className="mt-2 h-7 w-16" />
+                  ) : (
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                      {registeredByAgents.partners.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-3 h-56">
+                {isAgentPerfLoading ? (
+                  <Skeleton className="h-full w-full rounded-lg" />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={topAgentRegistrations} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.06} vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tickMargin={12}
+                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                        width={36}
+                      />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Bar dataKey="drivers" name="Drivers" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                      <Bar dataKey="partners" name="Partners" fill="#22c55e" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Agent commission graph</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Pending, released, remaining and total commission
+                </p>
+              </div>
+              <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="p-3 sm:p-4">
+              <div className="h-64">
+                {isAgentPerfLoading ? (
+                  <Skeleton className="h-full w-full rounded-lg" />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={commissionBreakdownData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.06} vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        tickMargin={12}
+                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                        width={56}
+                      />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Bar dataKey="value" name="Commission" radius={[8, 8, 0, 0]} maxBarSize={62}>
+                        {commissionBreakdownData.map((entry, idx) => (
+                          <Cell key={entry.label} fill={BAR_COLORS[idx % BAR_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </Card>
         </div>

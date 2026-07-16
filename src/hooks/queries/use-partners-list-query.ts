@@ -9,18 +9,34 @@ export function usePartnersListQuery(params: {
   page: number;
   pageSize: number;
   status: string;
-  search: string;
+  name: string;
+  mobileNumber: string;
+  city: string;
+  gender: string;
 }) {
-  const debouncedSearch = useDebouncedValue(params.search);
+  const debouncedName = useDebouncedValue(params.name);
+  const debouncedMobileNumber = useDebouncedValue(params.mobileNumber);
+  const debouncedCity = useDebouncedValue(params.city);
 
   const filters = useMemo<PartnersListFilters>(
     () => ({
       page: params.page,
       pageSize: params.pageSize,
       status: params.status,
-      search: debouncedSearch
+      name: debouncedName,
+      mobileNumber: debouncedMobileNumber,
+      city: debouncedCity,
+      gender: params.gender
     }),
-    [params.page, params.pageSize, params.status, debouncedSearch]
+    [
+      params.page,
+      params.pageSize,
+      params.status,
+      params.gender,
+      debouncedName,
+      debouncedMobileNumber,
+      debouncedCity
+    ]
   );
 
   return usePaginatedQuery({

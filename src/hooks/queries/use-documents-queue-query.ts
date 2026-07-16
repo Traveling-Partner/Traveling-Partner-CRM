@@ -9,18 +9,37 @@ export function useDocumentsQueueQuery(params: {
   page: number;
   pageSize: number;
   status: string;
-  search: string;
+  name: string;
+  mobileNumber: string;
+  city: string;
+  gender: string;
+  documentType: string;
 }) {
-  const debouncedSearch = useDebouncedValue(params.search);
+  const debouncedName = useDebouncedValue(params.name);
+  const debouncedMobileNumber = useDebouncedValue(params.mobileNumber);
+  const debouncedCity = useDebouncedValue(params.city);
 
   const filters = useMemo<DocumentsQueueFilters>(
     () => ({
       page: params.page,
       pageSize: params.pageSize,
       status: params.status,
-      search: debouncedSearch
+      name: debouncedName,
+      mobileNumber: debouncedMobileNumber,
+      city: debouncedCity,
+      gender: params.gender,
+      documentType: params.documentType
     }),
-    [params.page, params.pageSize, params.status, debouncedSearch]
+    [
+      params.page,
+      params.pageSize,
+      params.status,
+      params.gender,
+      params.documentType,
+      debouncedName,
+      debouncedMobileNumber,
+      debouncedCity
+    ]
   );
 
   return useApiQuery({

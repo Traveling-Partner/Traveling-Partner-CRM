@@ -19,15 +19,20 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
-import { Search, Filter, UserCircle } from "lucide-react";
+import { Search, Filter, UserCircle, Clock, CheckCircle2, Ban, XCircle } from "lucide-react";
 import { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
+import { usePartnerStatusCountsQuery } from "@/hooks/queries/use-partner-status-counts-query";
 import type { PartnerRow } from "@/services/users";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_PAGE_SIZE = 25;
 
 export default function AdminPartnersPage() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
+  const [phoneFilter, setPhoneFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -36,13 +41,57 @@ export default function AdminPartnersPage() {
     page,
     pageSize,
     status: statusFilter,
-    search
+    name: nameFilter,
+    mobileNumber: phoneFilter,
+    city: cityFilter,
+    gender: genderFilter
   });
+  const {
+    data: statusCounts,
+    isLoading: countsLoading,
+    isFetching: countsFetching
+  } = usePartnerStatusCountsQuery();
 
   const partnerRows: PartnerRow[] = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
-  const totalElements = data?.totalElements ?? 0;
   const loading = isLoading || isFetching;
+  const countsLoadingState = countsLoading || countsFetching;
+  const resetPage = () => setPage(0);
+
+  const statusCountCards = [
+    {
+      label: "Pending",
+      value: statusCounts.pending,
+      icon: Clock,
+      iconBg: "bg-amber-50 dark:bg-amber-500/10",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      valueColor: "text-amber-600 dark:text-amber-400"
+    },
+    {
+      label: "Approved",
+      value: statusCounts.approved,
+      icon: CheckCircle2,
+      iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      valueColor: "text-emerald-600 dark:text-emerald-400"
+    },
+    {
+      label: "Blocked",
+      value: statusCounts.blocked,
+      icon: Ban,
+      iconBg: "bg-red-50 dark:bg-red-500/10",
+      iconColor: "text-red-600 dark:text-red-400",
+      valueColor: "text-red-600 dark:text-red-400"
+    },
+    {
+      label: "Rejected",
+      value: statusCounts.rejected,
+      icon: XCircle,
+      iconBg: "bg-orange-50 dark:bg-orange-500/10",
+      iconColor: "text-orange-600 dark:text-orange-400",
+      valueColor: "text-orange-600 dark:text-orange-400"
+    }
+  ];
 
   const columns: ColumnDef<PartnerRow>[] = useMemo(
     () => [
@@ -151,34 +200,97 @@ export default function AdminPartnersPage() {
           title="Partner management"
           description="Manage fleet and corporate partners across your operating regions."
         >
+          <div className="mb-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+            {statusCountCards.map((card) => (
+              <div
+                key={card.label}
+                className="rounded-xl border border-border/60 bg-muted/20"
+              >
+                <div className="flex items-center gap-3 p-4">
+                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", card.iconBg)}>
+                    <card.icon className={cn("h-5 w-5", card.iconColor)} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                      {card.label}
+                    </p>
+                    {countsLoadingState ? (
+                      <Skeleton className="mt-1 h-7 w-12" />
+                    ) : (
+                      <p className={cn("text-2xl font-bold tracking-tight tabular-nums", card.valueColor)}>
+                        {card.value.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {error ? (
             <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error.message}
             </p>
           ) : null}
-          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="space-y-2.5 pb-3">
+            {/* <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Filter className="h-3.5 w-3.5" />
+              <span>Filter partners</span>
+            </div> */}
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                  placeholder="Name"
+                  value={nameFilter}
+                  onChange={(e) => {
+                    setNameFilter(e.target.value);
+                    resetPage();
+                  }}
+                  className="pl-9"
+                />
+              </div>
               <Input
-                placeholder="Search partners…"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(0);
+                placeholder="Phone number"
+                value={phoneFilter}
+                onChange={(e) => {
+                  setPhoneFilter(e.target.value);
+                  resetPage();
                 }}
-                className="pl-9"
               />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="City"
+                value={cityFilter}
+                onChange={(e) => {
+                  setCityFilter(e.target.value);
+                  resetPage();
+                }}
+              />
+              <Select
+                value={genderFilter}
+                onValueChange={(value) => {
+                  setGenderFilter(value);
+                  resetPage();
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All genders</SelectItem>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
                   setStatusFilter(value);
-                  setPage(0);
+                  resetPage();
                 }}
               >
-                <SelectTrigger className="w-32">
+                <SelectTrigger>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -190,7 +302,6 @@ export default function AdminPartnersPage() {
                   <SelectItem value="BLOCKED">Blocked</SelectItem>
                 </SelectContent>
               </Select>
-
             </div>
           </div>
 
@@ -206,7 +317,6 @@ export default function AdminPartnersPage() {
 
           <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {/* <span>Show</span> */}
               <Select
                 value={String(pageSize)}
                 onValueChange={(value) => {
@@ -224,7 +334,6 @@ export default function AdminPartnersPage() {
                   <SelectItem value="250">250</SelectItem>
                 </SelectContent>
               </Select>
-              <span>per page</span>
             </div>
             <PaginationControls
               currentPage={page + 1}
@@ -237,4 +346,3 @@ export default function AdminPartnersPage() {
     </AppShell>
   );
 }
-

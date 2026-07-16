@@ -41,7 +41,7 @@ import { PaginationControls } from "@/components/vehicle-management/PaginationCo
 
 type DecisionType = "APPROVE" | "REJECT";
 
-const DEFAULT_PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 25;
 const fallbackImage = "/mock-images/document-fallback.svg";
 const fallbackByType = {
   DRIVER_LICENSE: "/mock-images/driver-license.svg",
@@ -90,8 +90,12 @@ export default function DocumentsQueuePage() {
   const { success, error } = useToast();
   const queryClient = useQueryClient();
 
+  const [nameFilter, setNameFilter] = useState("");
+  const [phoneFilter, setPhoneFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -99,13 +103,18 @@ export default function DocumentsQueuePage() {
     page,
     pageSize,
     status: statusFilter,
-    search
+    name: nameFilter,
+    mobileNumber: phoneFilter,
+    city: cityFilter,
+    gender: genderFilter,
+    documentType: documentTypeFilter
   });
 
   const drivers = queueQuery.data?.drivers.content ?? [];
   const documentStatusByDriverId = queueQuery.data?.documentStatusByDriverId ?? {};
   const totalPages = queueQuery.data?.drivers.totalPages ?? 1;
   const loading = queueQuery.isLoading || queueQuery.isFetching;
+  const resetPage = () => setPage(0);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDriver, setPreviewDriver] = useState<DriverRow | null>(null);
@@ -408,38 +417,89 @@ export default function DocumentsQueuePage() {
           description="Review and act on pending driver documents before they go live."
         >
           <>
-            <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-                <Input
-                  placeholder="Search drivers…"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(0);
-                  }}
-                  className="pl-9"
-                />
+            <div className="space-y-2.5 pb-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Filter className="h-3.5 w-3.5" />
+                <span>Filter documents</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Filter className="h-3.5 w-3.5" /></div>
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                  <Input
+                    placeholder="Name"
+                    value={nameFilter}
+                    onChange={(event) => {
+                      setNameFilter(event.target.value);
+                      resetPage();
+                    }}
+                    className="pl-9"
+                  />
+                </div>
+                <Input
+                  placeholder="Phone number"
+                  value={phoneFilter}
+                  onChange={(event) => {
+                    setPhoneFilter(event.target.value);
+                    resetPage();
+                  }}
+                />
+                <Input
+                  placeholder="City"
+                  value={cityFilter}
+                  onChange={(event) => {
+                    setCityFilter(event.target.value);
+                    resetPage();
+                  }}
+                />
+                <Select
+                  value={genderFilter}
+                  onValueChange={(value) => {
+                    setGenderFilter(value);
+                    resetPage();
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All genders</SelectItem>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select
                   value={statusFilter}
                   onValueChange={(value) => {
                     setStatusFilter(value);
-                    setPage(0);
+                    resetPage();
                   }}
                 >
-                  <SelectTrigger className="w-36">
+                  <SelectTrigger>
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All status</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="INACTIVE">Inactive</SelectItem>
-                    <SelectItem value="BLOCKED">Blocked</SelectItem>
                     <SelectItem value="PENDING">Pending</SelectItem>
                     <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={documentTypeFilter}
+                  onValueChange={(value) => {
+                    setDocumentTypeFilter(value);
+                    resetPage();
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Document type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="CNIC">CNIC</SelectItem>
+                    <SelectItem value="LICENSE">License</SelectItem>
+                    <SelectItem value="VEHICLE">Vehicle</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -462,7 +522,7 @@ export default function DocumentsQueuePage() {
 
             <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Show</span>
+                {/* <span>Show</span> */}
                 <Select
                   value={String(pageSize)}
                   onValueChange={(value) => {
@@ -474,13 +534,13 @@ export default function DocumentsQueuePage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="6">6</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
                     <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="250">250</SelectItem>
                   </SelectContent>
                 </Select>
-                <span>per page</span>
+                {/* <span>per page</span> */}
               </div>
               <PaginationControls
                 currentPage={page + 1}

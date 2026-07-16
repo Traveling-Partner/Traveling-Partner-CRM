@@ -41,7 +41,10 @@ export default function AdminAgentPerformancePage() {
     page,
     pageSize,
     status: statusFilter,
-    search
+    name: search,
+    mobileNumber: "",
+    city: "",
+    gender: "all"
   });
 
   const agentRows: AgentPerformanceRow[] = useMemo(

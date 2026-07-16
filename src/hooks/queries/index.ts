@@ -1,7 +1,10 @@
 export { useAdminDashboardQuery } from "@/hooks/queries/use-admin-dashboard-query";
 export { useDriversListQuery } from "@/hooks/queries/use-drivers-list-query";
+export { useDriverStatusCountsQuery } from "@/hooks/queries/use-driver-status-counts-query";
 export { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
+export { usePartnerStatusCountsQuery } from "@/hooks/queries/use-partner-status-counts-query";
 export { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
+export { useAgentStatusCountsQuery } from "@/hooks/queries/use-agent-status-counts-query";
 export { useCarouselBannersQuery } from "@/hooks/queries/use-carousel-banners-query";
 export { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";
 export { usePartnerDetailQuery } from "@/hooks/queries/use-partner-detail-query";
