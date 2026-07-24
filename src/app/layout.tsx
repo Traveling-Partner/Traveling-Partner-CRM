@@ -20,7 +20,15 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: "Traveling Partner Portal",
-  description: "Back-office portal for ride-hailing operations"
+  description: "Back-office portal for ride-hailing operations",
+  icons: {
+    icon: [
+      { url: "/favicon.ico?v=5", sizes: "any" },
+      { url: "/favicon.png?v=5", type: "image/png", sizes: "16x16" }
+    ],
+    shortcut: "/favicon.ico?v=5",
+    apple: [{ url: "/favicon.png?v=5", type: "image/png", sizes: "16x16" }]
+  }
 };
 
 export default function RootLayout({
@@ -30,6 +38,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
+      <head>
+        <link rel="icon" href="/favicon.ico?v=5" sizes="any" />
+        <link rel="icon" href="/favicon.png?v=5" type="image/png" sizes="16x16" />
+        <link rel="apple-touch-icon" href="/favicon.png?v=5" />
+      </head>
       <body
         className={`${poppins.variable} ${montserrat.variable} min-h-full font-body antialiased bg-background text-foreground`}
         style={
