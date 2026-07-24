@@ -33,7 +33,7 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
         {/* Fixed sidebar: always left, never reflows */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-30 hidden transition-[width] duration-200 ease-out md:block",
+            "fixed inset-y-0 left-0 z-30 hidden overflow-visible transition-[width] duration-200 ease-out md:block",
             collapsed ? "w-[4.25rem]" : "w-64"
           )}
           aria-label="Main navigation"
