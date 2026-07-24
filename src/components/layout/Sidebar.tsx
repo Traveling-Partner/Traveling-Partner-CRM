@@ -26,11 +26,12 @@ import {
   Layers,
   Palette,
   Tags,
-  TrendingUp
+  TrendingUp,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -363,14 +364,13 @@ export function Sidebar({
   const sidebarContent = (
     <div
       className={cn(
-        "flex h-screen flex-col border-r border-border bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900",
+        "relative flex h-screen flex-col border-r border-border bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900",
         "dark:border-slate-800/80 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100",
-        "overflow-y-auto overflow-x-hidden transition-[width] duration-200 ease-out",
-        "scrollbar-thin scrollbar-brand",
+        "transition-[width] duration-200 ease-out",
         mobileOpen ? "w-full" : collapsed ? "w-[4.25rem]" : "w-64"
       )}
     >
-      <div className="flex h-16 shrink-0 items-center justify-center border-b border-border px-3 dark:border-slate-800/60">
+      <div className="relative z-10 flex h-16 shrink-0 items-center justify-center border-b border-border px-3 dark:border-slate-800/60">
         <Link
           href={isAdmin ? "/admin/dashboard" : "/agent/dashboard"}
           className="flex items-center justify-center bg-transparent"
@@ -382,13 +382,36 @@ export function Sidebar({
             alt="Traveling Partner"
             className={cn(
               "bg-transparent object-contain transition-all duration-200",
-              effectiveCollapsed ? "h-9 w-auto max-w-[40px]" : "h-12 w-auto max-w-[210px]"
+              effectiveCollapsed ? "h-9 w-auto max-w-[40px]" : "h-12 w-auto max-w-[180px]"
             )}
           />
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-2 py-3" role="navigation">
+      {/* Floating edge toggle — outside scroll area so it isn’t clipped */}
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className={cn(
+          "absolute top-[3.15rem] right-0 z-40 hidden translate-x-1/2 items-center justify-center md:inline-flex",
+          "h-7 w-7 rounded-full border border-border bg-card text-muted-foreground shadow-md",
+          "transition-all duration-200 hover:scale-105 hover:border-[#fdb813]/60 hover:bg-gradient-to-b hover:from-[#fce001] hover:to-[#fdb813] hover:text-slate-900 hover:shadow-lg hover:shadow-yellow-500/20",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fdb813]/60"
+        )}
+      >
+        {collapsed ? (
+          <PanelLeftOpen className="h-3.5 w-3.5" />
+        ) : (
+          <PanelLeftClose className="h-3.5 w-3.5" />
+        )}
+      </button>
+
+      <nav
+        className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-thin scrollbar-brand"
+        role="navigation"
+      >
         {isAdmin
           ? adminNav.map((entry) =>
               isSidebarGroup(entry) ? (
@@ -421,23 +444,6 @@ export function Sidebar({
               />
             ))}
       </nav>
-
-      <div className="border-t border-border px-3 py-2.5 dark:border-slate-800/60">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hidden w-full justify-center rounded-xl border border-border bg-slate-100/80 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:border-slate-700/60 dark:bg-slate-800/30 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-white md:inline-flex"
-          onClick={onToggleCollapsed}
-          aria-label="Collapse sidebar"
-        >
-          <div
-            className={cn(
-              "h-3 w-3 border-b-2 border-l-2 border-slate-500 transition-transform duration-200 dark:border-slate-400",
-              collapsed ? "rotate-45" : "-rotate-[135deg]"
-            )}
-          />
-        </Button>
-      </div>
     </div>
   );
 
