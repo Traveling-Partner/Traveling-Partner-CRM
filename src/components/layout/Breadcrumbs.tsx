@@ -4,7 +4,13 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 
-const SKIP_SEGMENTS = new Set(["admin", "agent"]);
+const SKIP_SEGMENTS = new Set([
+  "admin",
+  "agent",
+  "sales-manager",
+  "marketing-manager",
+  "manager"
+]);
 
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -32,7 +38,18 @@ const SEGMENT_LABELS: Record<string, string> = {
   create: "Create",
   edit: "Edit",
   listings: "My Listings",
-  profile: "Profile"
+  profile: "Profile",
+  financial: "Financial Management",
+  payments: "Payments",
+  transactions: "Transactions",
+  invoices: "Invoices",
+  reports: "Reports",
+  content: "Content",
+  calendar: "Calendar",
+  media: "Media Library",
+  analytics: "Analytics",
+  users: "Users",
+  notifications: "Notifications"
 };
 
 const GROUP_BY_SEGMENT: Record<string, string> = {
@@ -45,10 +62,21 @@ const GROUP_BY_SEGMENT: Record<string, string> = {
   newsletter: "Content Management",
   "newsletter-subscribers": "Content Management",
   carousel: "Content Management",
+  content: "Content Management",
+  calendar: "Content Management",
+  media: "Content Management",
+  analytics: "Content Management",
   "tax-management": "Financial Management",
   "commission-management": "Financial Management",
   "insurance-management": "Financial Management",
   "platform-fee-management": "Financial Management",
+  financial: "Financial Management",
+  payments: "Financial Management",
+  transactions: "Financial Management",
+  invoices: "Financial Management",
+  reports: "Financial Management",
+  commissions: "Commission Management",
+  users: "User Management",
   "vehicle-types": "Vehicle Management",
   "vehicle-models": "Vehicle Management",
   "vehicle-colors": "Vehicle Management",
@@ -75,7 +103,14 @@ export function Breadcrumbs() {
     return null;
   }
 
-  const rolePrefix = segments[0] === "admin" || segments[0] === "agent" ? segments[0] : null;
+  const rolePrefix =
+    segments[0] === "admin" ||
+    segments[0] === "agent" ||
+    segments[0] === "sales-manager" ||
+    segments[0] === "marketing-manager" ||
+    segments[0] === "manager"
+      ? segments[0]
+      : null;
   const visibleSegments = segments.filter((segment) => !SKIP_SEGMENTS.has(segment));
 
   const items: Array<{ label: string; href?: string; isLast: boolean }> = [];

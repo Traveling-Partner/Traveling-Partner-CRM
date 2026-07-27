@@ -1,35 +1,9 @@
 "use client";
 
-import { type ComponentType, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  Briefcase,
-  BadgeDollarSign,
-  Car,
-  Newspaper,
-  Mail,
-  Images,
-  Contact,
-  Share2,
-  Route,
-  Settings,
-  UserCircle2,
-  Receipt,
-  Shield,
-  Coins,
-  ChevronDown,
-  FolderOpen,
-  Layers,
-  Palette,
-  Tags,
-  TrendingUp,
-  PanelLeftClose,
-  PanelLeftOpen
-} from "lucide-react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -39,114 +13,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-
-type SidebarLink = {
-  label: string;
-  href: string;
-  icon: ComponentType<{ className?: string }>;
-};
-
-type SidebarGroup = {
-  id: string;
-  label: string;
-  icon: ComponentType<{ className?: string }>;
-  items: SidebarLink[];
-};
-
-type SidebarEntry = SidebarLink | SidebarGroup;
-
-const adminNav: SidebarEntry[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  
-  {
-    id: "user-management",
-    label: "User Management",
-    icon: Users,
-    items: [
-      { label: "Drivers", href: "/admin/drivers", icon: Users },
-      { label: "Partners", href: "/admin/partners", icon: Briefcase },
-      { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
-      { label: "Documents", href: "/admin/documents", icon: FileText },
-    ]
-  },
-  {
-    id: "ride-management",
-    label: "Ride Management",
-    icon: Route,
-    items: [{ label: "Rides", href: "/admin/pool-rides", icon: Share2 }]
-  },
-  {
-    id: "agent-management",
-    label: "Comission Management",
-    icon: TrendingUp,
-    items: [
-      { label: "Agent Performance", href: "/admin/agent-performance", icon: BadgeDollarSign }
-    ]
-  },
-  {
-    id: "content-management",
-    label: "Content Management",
-    icon: FolderOpen,
-    items: [
-      { label: "Blog", href: "/admin/blog", icon: Newspaper },
-      { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
-      { label: "Newsletter Subscribers", href: "/admin/newsletter-subscribers", icon: Contact },
-      { label: "Carousel", href: "/admin/carousel", icon: Images }
-    ]
-  },
-  {
-    id: "financial-management",
-    label: "Financial Management",
-    icon: BadgeDollarSign,
-    items: [
-      { label: "Tax Management", href: "/admin/tax-management", icon: Receipt },
-      {
-        label: "Commission Management",
-        href: "/admin/commission-management",
-        icon: BadgeDollarSign
-      },
-      { label: "Insurance Management", href: "/admin/insurance-management", icon: Shield },
-      {
-        label: "Platform Fee Management",
-        href: "/admin/platform-fee-management",
-        icon: Coins
-      }
-    ]
-  },
-  {
-    id: "vehicle-management",
-    label: "Vehicle Management",
-    icon: Car,
-    items: [
-      { label: "Vehicle Types", href: "/admin/vehicle-types", icon: Car },
-      { label: "Vehicle Models", href: "/admin/vehicle-models", icon: Layers },
-      { label: "Vehicle Colors", href: "/admin/vehicle-colors", icon: Palette },
-      { label: "Vehicle Brands", href: "/admin/vehicle-brands", icon: Tags }
-    ]
-  },
-  // {
-  //   id: "system",
-  //   label: "System",
-  //   icon: Settings,
-  //   items: [{ label: "Settings", href: "/admin/settings", icon: Settings }]
-  // }
-];
-
-const agentItems: SidebarLink[] = [
-  { label: "Dashboard", href: "/agent/dashboard", icon: LayoutDashboard },
-  { label: "My Listings", href: "/agent/listings", icon: Briefcase },
-  { label: "My Commissions", href: "/agent/commissions", icon: BadgeDollarSign },
-  { label: "Profile", href: "/agent/profile", icon: UserCircle2 }
-];
-
-function isSidebarGroup(entry: SidebarEntry): entry is SidebarGroup {
-  return "items" in entry;
-}
+import {
+  getNavForRole,
+  isSidebarGroup,
+  type SidebarEntry,
+  type SidebarGroup,
+  type SidebarLink
+} from "@/config/navigation";
+import { getDefaultRouteForRole } from "@/lib/rbac";
 
 function isLinkActive(pathname: string, href: string) {
   if (pathname === href) return true;
 
-  if (href === "/admin/dashboard" || href === "/agent/dashboard") {
+  if (
+    href.endsWith("/dashboard") &&
+    (href === "/admin/dashboard" ||
+      href === "/agent/dashboard" ||
+      href === "/sales-manager/dashboard" ||
+      href === "/marketing-manager/dashboard" ||
+      href === "/manager/dashboard")
+  ) {
     return false;
   }
 
@@ -298,7 +184,7 @@ function NavGroup({
         <span className="flex-1 truncate text-left">{group.label}</span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200 dark:text-slate-400",
+            "h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200",
             isOpen && "rotate-180"
           )}
         />
@@ -326,6 +212,16 @@ function NavGroup({
   );
 }
 
+function buildOpenGroups(nav: SidebarEntry[], pathname: string) {
+  const initial: Record<string, boolean> = {};
+  nav.forEach((entry) => {
+    if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
+      initial[entry.id] = true;
+    }
+  });
+  return initial;
+}
+
 export function Sidebar({
   collapsed,
   onToggleCollapsed,
@@ -334,26 +230,17 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === "ADMIN";
+  const homeHref = getDefaultRouteForRole(user?.role ?? "AGENT");
+  const navItems = useMemo(() => getNavForRole(user?.role), [user?.role]);
   const effectiveCollapsed = collapsed && !mobileOpen;
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    adminNav.forEach((entry) => {
-      if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
-        initial[entry.id] = true;
-      }
-    });
-    return initial;
-  });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    buildOpenGroups(navItems, pathname)
+  );
 
   useEffect(() => {
-    adminNav.forEach((entry) => {
-      if (isSidebarGroup(entry) && groupHasActiveChild(pathname, entry.items)) {
-        setOpenGroups((prev) => ({ ...prev, [entry.id]: true }));
-      }
-    });
-  }, [pathname]);
+    setOpenGroups((prev) => ({ ...prev, ...buildOpenGroups(navItems, pathname) }));
+  }, [pathname, navItems]);
 
   const toggleGroup = (groupId: string) => {
     setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
@@ -372,7 +259,7 @@ export function Sidebar({
     >
       <div className="relative z-10 flex h-16 shrink-0 items-center justify-center border-b border-border px-3 dark:border-slate-800/60">
         <Link
-          href={isAdmin ? "/admin/dashboard" : "/agent/dashboard"}
+          href={homeHref}
           className="flex items-center justify-center bg-transparent"
           onClick={handleNavigate}
         >
@@ -388,7 +275,6 @@ export function Sidebar({
         </Link>
       </div>
 
-      {/* Floating edge toggle — outside scroll area so it isn’t clipped */}
       <button
         type="button"
         onClick={onToggleCollapsed}
@@ -412,37 +298,27 @@ export function Sidebar({
         className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-thin scrollbar-brand"
         role="navigation"
       >
-        {isAdmin
-          ? adminNav.map((entry) =>
-              isSidebarGroup(entry) ? (
-                <NavGroup
-                  key={entry.id}
-                  group={entry}
-                  pathname={pathname}
-                  collapsed={effectiveCollapsed}
-                  isOpen={Boolean(openGroups[entry.id])}
-                  onToggle={() => toggleGroup(entry.id)}
-                  onNavigate={handleNavigate}
-                />
-              ) : (
-                <NavLink
-                  key={entry.href}
-                  item={entry}
-                  pathname={pathname}
-                  collapsed={effectiveCollapsed}
-                  onNavigate={handleNavigate}
-                />
-              )
-            )
-          : agentItems.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                collapsed={effectiveCollapsed}
-                onNavigate={handleNavigate}
-              />
-            ))}
+        {navItems.map((entry) =>
+          isSidebarGroup(entry) ? (
+            <NavGroup
+              key={entry.id}
+              group={entry}
+              pathname={pathname}
+              collapsed={effectiveCollapsed}
+              isOpen={Boolean(openGroups[entry.id])}
+              onToggle={() => toggleGroup(entry.id)}
+              onNavigate={handleNavigate}
+            />
+          ) : (
+            <NavLink
+              key={entry.href}
+              item={entry}
+              pathname={pathname}
+              collapsed={effectiveCollapsed}
+              onNavigate={handleNavigate}
+            />
+          )
+        )}
       </nav>
     </div>
   );

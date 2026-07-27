@@ -6,6 +6,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
+import { getAllowedRolesForPath } from "@/lib/roles";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -19,18 +20,11 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const routeRoles =
-    allowedRoles ??
-    (pathname?.startsWith("/admin")
-      ? ["ADMIN"]
-      : pathname?.startsWith("/agent")
-        ? ["AGENT", "ADMIN"]
-        : undefined);
+  const routeRoles = allowedRoles ?? getAllowedRolesForPath(pathname ?? "");
 
   return (
     <ProtectedRoute allowedRoles={routeRoles}>
       <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/80 to-slate-100 dark:from-slate-950 dark:via-slate-950/95 dark:to-slate-950">
-        {/* Fixed sidebar: always left, never reflows */}
         <aside
           className={cn(
             "fixed inset-y-0 left-0 z-30 hidden overflow-visible transition-[width] duration-200 ease-out md:block",
@@ -46,7 +40,6 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
           />
         </aside>
 
-        {/* Main content: offset by sidebar width so it never overlaps */}
         <div
           className={cn(
             "flex min-h-screen flex-col transition-[margin] duration-200 ease-out",
@@ -73,4 +66,3 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
     </ProtectedRoute>
   );
 }
-
