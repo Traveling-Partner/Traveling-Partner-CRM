@@ -17,24 +17,36 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title, allowedRoles, wideContent }: AppShellProps) {
+  /** Pinned closed by hamburger click (true = icon rail). */
   const [collapsed, setCollapsed] = useState(false);
+  /** Temporary expand while hovering the closed sidebar nav. */
+  const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const routeRoles = allowedRoles ?? getAllowedRolesForPath(pathname ?? "");
+
+  const isCollapsed = collapsed && !hovered;
 
   return (
     <ProtectedRoute allowedRoles={routeRoles}>
       <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/80 to-slate-100 dark:from-slate-950 dark:via-slate-950/95 dark:to-slate-950">
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-30 hidden overflow-visible transition-[width] duration-200 ease-out md:block",
-            collapsed ? "w-[4.25rem]" : "w-64"
+            "fixed inset-y-0 left-0 z-40 hidden h-screen overflow-hidden transition-[width] duration-200 ease-out md:block",
+            isCollapsed ? "w-[4.25rem]" : "w-64",
+            collapsed && hovered && "shadow-xl shadow-slate-900/10"
           )}
           aria-label="Main navigation"
+          onMouseLeave={() => setHovered(false)}
         >
           <Sidebar
-            collapsed={collapsed}
-            onToggleCollapsed={() => setCollapsed((prev) => !prev)}
+            collapsed={isCollapsed}
+            pinnedCollapsed={collapsed}
+            onHoverOpen={() => setHovered(true)}
+            onToggleCollapsed={() => {
+              setCollapsed((prev) => !prev);
+              setHovered(false);
+            }}
             mobileOpen={mobileOpen}
             onMobileOpenChange={setMobileOpen}
           />

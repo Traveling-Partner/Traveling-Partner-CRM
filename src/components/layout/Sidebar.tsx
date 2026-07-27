@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -47,6 +47,10 @@ function groupHasActiveChild(pathname: string, items: SidebarLink[]) {
 
 interface SidebarProps {
   collapsed: boolean;
+  /** True when user pinned the sidebar closed (icon rail). */
+  pinnedCollapsed?: boolean;
+  /** Called when pointer enters the nav while the rail is pinned closed. */
+  onHoverOpen?: () => void;
   onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
@@ -66,6 +70,7 @@ function NavLink({ item, pathname, collapsed, nested, onNavigate }: NavLinkProps
   return (
     <Link
       href={item.href}
+      title={collapsed && !nested ? item.label : undefined}
       className={cn(
         "group flex items-center gap-2.5 rounded-xl py-2.5 text-sm font-medium transition-all duration-200",
         nested ? "px-2" : "px-2.5",
@@ -122,6 +127,7 @@ function NavGroup({
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white"
             )}
             aria-label={group.label}
+            title={group.label}
           >
             <group.icon
               className={cn(
@@ -252,6 +258,8 @@ function RoleSectionHeading({
 
 export function Sidebar({
   collapsed,
+  pinnedCollapsed = false,
+  onHoverOpen,
   onToggleCollapsed,
   mobileOpen,
   onMobileOpenChange
@@ -261,6 +269,7 @@ export function Sidebar({
   const homeHref = getDefaultRouteForRole(user?.role ?? "AGENT");
   const navItems = useMemo(() => getNavForRole(user?.role), [user?.role]);
   const effectiveCollapsed = collapsed && !mobileOpen;
+  const showLogo = !effectiveCollapsed;
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     buildOpenGroups(navItems, pathname)
@@ -279,52 +288,57 @@ export function Sidebar({
   const sidebarContent = (
     <div
       className={cn(
-        "relative flex h-screen flex-col border-r border-border bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900",
-        "dark:border-slate-800/80 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100",
-        "transition-[width] duration-200 ease-out",
-        mobileOpen ? "w-full" : collapsed ? "w-[4.25rem]" : "w-64"
+        "relative flex h-full min-h-0 w-full flex-col overflow-hidden border-r border-border bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900",
+        "dark:border-slate-800/80 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100"
       )}
     >
-      <div className="relative z-10 flex h-16 shrink-0 items-center justify-center border-b border-border px-3 dark:border-slate-800/60">
-        <Link
-          href={homeHref}
-          className="flex items-center justify-center bg-transparent"
-          onClick={handleNavigate}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/tp-logo.png?v=2"
-            alt="Traveling Partner"
-            className={cn(
-              "bg-transparent object-contain transition-all duration-200",
-              effectiveCollapsed ? "h-9 w-auto max-w-[40px]" : "h-12 w-auto max-w-[180px]"
-            )}
-          />
-        </Link>
-      </div>
-
-      <button
-        type="button"
-        onClick={onToggleCollapsed}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      <div
         className={cn(
-          "absolute top-[3.15rem] right-0 z-40 hidden translate-x-1/2 items-center justify-center md:inline-flex",
-          "h-7 w-7 rounded-full border border-border bg-card text-muted-foreground shadow-md",
-          "transition-all duration-200 hover:scale-105 hover:border-[#fdb813]/60 hover:bg-gradient-to-b hover:from-[#fce001] hover:to-[#fdb813] hover:text-slate-900 hover:shadow-lg hover:shadow-yellow-500/20",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fdb813]/60"
+          "relative z-10 flex h-16 shrink-0 items-center border-b border-border dark:border-slate-800/60",
+          effectiveCollapsed ? "justify-center px-2" : "gap-2 px-3"
         )}
       >
-        {collapsed ? (
-          <PanelLeftOpen className="h-3.5 w-3.5" />
-        ) : (
-          <PanelLeftClose className="h-3.5 w-3.5" />
+        {showLogo && (
+          <Link
+            href={homeHref}
+            className="flex min-w-0 flex-1 items-center justify-start bg-transparent"
+            onClick={handleNavigate}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/tp-logo.png?v=2"
+              alt="Traveling Partner"
+              className="h-11 w-auto max-w-[150px] bg-transparent object-contain"
+            />
+          </Link>
         )}
-      </button>
+
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn(
+            "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm",
+            "transition-all duration-200 hover:border-[#fdb813]/60 hover:bg-gradient-to-b hover:from-[#fce001] hover:to-[#fdb813] hover:text-slate-900",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fdb813]/60",
+            "hidden md:inline-flex"
+          )}
+        >
+          {effectiveCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+        </button>
+      </div>
 
       <nav
-        className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-thin scrollbar-brand"
+        className={cn(
+          "min-h-0 flex-1 space-y-0.5 overflow-x-hidden overflow-y-auto px-2 py-3",
+          "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        )}
         role="navigation"
+        onMouseEnter={() => {
+          // Hover-open only on the sidebar nav when it is pinned closed — not on the hamburger
+          if (pinnedCollapsed) onHoverOpen?.();
+        }}
       >
         {navItems.map((entry) => {
           if (isSidebarSection(entry)) {
@@ -353,7 +367,7 @@ export function Sidebar({
 
           return (
             <NavLink
-              key={entry.href}
+              key={`${entry.href}-${entry.label}`}
               item={entry}
               pathname={pathname}
               collapsed={effectiveCollapsed}
@@ -367,7 +381,7 @@ export function Sidebar({
 
   return (
     <>
-      <div className="hidden md:block">{sidebarContent}</div>
+      <div className="hidden h-full md:block">{sidebarContent}</div>
 
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <DialogContent className="left-0 top-0 z-50 h-[100dvh] w-[280px] max-h-[100dvh] max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 data-[state=open]:slide-in-from-left-full data-[state=closed]:slide-out-to-left-full md:hidden">

@@ -43,12 +43,11 @@ export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
  * IMPORTANT: These are the same /admin/* route modules Admin uses (same components,
  * same React Query hooks, same src/services calls). Do not duplicate pages or
  * change API services for role access — only route allow-lists live here.
- * AGENT is included so Sales Agent can preview from their sidebar.
  */
 const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }> = [
   {
     prefixes: ["/admin/commission-management", "/admin/agent-performance"],
-    roles: [ROLES.ADMIN, ROLES.SALES_MANAGER, ROLES.MANAGER, ROLES.AGENT]
+    roles: [ROLES.ADMIN, ROLES.SALES_MANAGER, ROLES.MANAGER]
   },
   {
     prefixes: [
@@ -57,7 +56,7 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
       "/admin/newsletter-subscribers",
       "/admin/carousel"
     ],
-    roles: [ROLES.ADMIN, ROLES.MARKETING_MANAGER, ROLES.AGENT]
+    roles: [ROLES.ADMIN, ROLES.MARKETING_MANAGER]
   },
   {
     prefixes: [
@@ -65,7 +64,7 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
       "/admin/insurance-management",
       "/admin/platform-fee-management"
     ],
-    roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES_MANAGER, ROLES.AGENT]
+    roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES_MANAGER]
   },
   {
     prefixes: [
@@ -74,11 +73,11 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
       "/admin/agents",
       "/admin/documents"
     ],
-    roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.AGENT]
+    roles: [ROLES.ADMIN, ROLES.MANAGER]
   },
   {
     prefixes: ["/admin/pool-rides", "/admin/rides"],
-    roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.AGENT]
+    roles: [ROLES.ADMIN, ROLES.MANAGER]
   },
   {
     prefixes: [
@@ -87,7 +86,7 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
       "/admin/vehicle-colors",
       "/admin/vehicle-brands"
     ],
-    roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.AGENT]
+    roles: [ROLES.ADMIN, ROLES.MANAGER]
   }
 ];
 
@@ -102,9 +101,9 @@ export function getSharedAdminRolesForPath(pathname: string): AppRole[] | undefi
 export const ROUTE_PREFIX_CHECKS: Array<{ prefix: string; roles: AppRole[] }> = [
   { prefix: "/admin", roles: [ROLES.ADMIN] },
   { prefix: "/agent", roles: [ROLES.AGENT, ROLES.ADMIN] },
-  { prefix: "/sales-manager", roles: [ROLES.SALES_MANAGER, ROLES.AGENT, ROLES.ADMIN] },
-  { prefix: "/marketing-manager", roles: [ROLES.MARKETING_MANAGER, ROLES.AGENT, ROLES.ADMIN] },
-  { prefix: "/manager", roles: [ROLES.MANAGER, ROLES.AGENT, ROLES.ADMIN] }
+  { prefix: "/sales-manager", roles: [ROLES.SALES_MANAGER] },
+  { prefix: "/marketing-manager", roles: [ROLES.MARKETING_MANAGER] },
+  { prefix: "/manager", roles: [ROLES.MANAGER] }
 ];
 
 export function isAppRole(value: string): value is AppRole {

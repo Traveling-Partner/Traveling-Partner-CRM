@@ -87,7 +87,6 @@ function getRouteOwnerRole(pathname: string): AppRole | null {
  * If the signed-in role does not own this route prefix, send them to their dashboard.
  * Admin may still open /agent routes (existing behavior).
  * Shared Admin pages (content / financial / users / commissions) are allowed for the roles that reuse them.
- * Agent may preview Sales/Marketing/Manager dashboards and shared Admin pages from the agent sidebar.
  */
 export function getRedirectForRoleOnProtectedRoute(
   role: Role,
@@ -111,18 +110,6 @@ export function getRedirectForRoleOnProtectedRoute(
   }
   if (owner === ROLES.AGENT && normalizedRole === ROLES.ADMIN) {
     return null; // Admin allowed on agent routes (existing AppShell allows ADMIN)
-  }
-
-  // Agent preview: allow browsing other role dashboards from agent sidebar
-  const previewableByAgent =
-    owner === ROLES.SALES_MANAGER ||
-    owner === ROLES.MARKETING_MANAGER ||
-    owner === ROLES.MANAGER;
-  if (
-    previewableByAgent &&
-    (normalizedRole === ROLES.AGENT || normalizedRole === ROLES.ADMIN)
-  ) {
-    return null;
   }
 
   if (owner === ROLES.AGENT && normalizedRole !== ROLES.AGENT && normalizedRole !== ROLES.ADMIN) {

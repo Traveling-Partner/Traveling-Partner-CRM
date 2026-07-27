@@ -144,31 +144,14 @@ export const adminNav: SidebarEntry[] = [
 ];
 
 /**
- * Sales Agent nav — agent API pages first, then other roles with clear headings
- * and Admin-style dropdowns (same /admin pages + APIs).
+ * Sales Agent nav — agent pages only (API-backed).
+ * Other roles keep their own sidebars via salesManagerNav / marketingManagerNav / managerNav.
  */
 export const agentNav: SidebarEntry[] = [
-  roleSection("section-sales-agent", "Sales Agent"),
   { label: "Dashboard", href: "/agent/dashboard", icon: LayoutDashboard },
   { label: "My Listings", href: "/agent/listings", icon: Briefcase },
   { label: "My Commissions", href: "/agent/commissions", icon: BadgeDollarSign },
-  { label: "Profile", href: "/agent/profile", icon: UserCircle2 },
-
-  roleSection("section-sales-manager", "Sales Manager"),
-  { label: "Dashboard", href: "/sales-manager/dashboard", icon: LayoutDashboard },
-  commissionManagementGroup,
-  financialManagementGroup,
-
-  roleSection("section-marketing-manager", "Marketing Manager"),
-  { label: "Dashboard", href: "/marketing-manager/dashboard", icon: LayoutDashboard },
-  contentManagementGroup,
-
-  roleSection("section-manager", "Manager"),
-  { label: "Dashboard", href: "/manager/dashboard", icon: LayoutDashboard },
-  financialManagementGroup,
-  userManagementGroup,
-  rideManagementGroup,
-  vehicleManagementGroup
+  { label: "Profile", href: "/agent/profile", icon: UserCircle2 }
 ];
 
 /** Sales Manager — Agent Performance + full Financial Management (Commission once inside Financial). */
