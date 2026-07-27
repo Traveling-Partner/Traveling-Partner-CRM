@@ -16,9 +16,11 @@ import {
 import {
   getNavForRole,
   isSidebarGroup,
+  isSidebarSection,
   type SidebarEntry,
   type SidebarGroup,
-  type SidebarLink
+  type SidebarLink,
+  type SidebarSection
 } from "@/config/navigation";
 import { getDefaultRouteForRole } from "@/lib/rbac";
 
@@ -222,6 +224,32 @@ function buildOpenGroups(nav: SidebarEntry[], pathname: string) {
   return initial;
 }
 
+function RoleSectionHeading({
+  section,
+  collapsed
+}: {
+  section: SidebarSection;
+  collapsed: boolean;
+}) {
+  if (collapsed) {
+    return (
+      <div
+        className="mx-auto my-2 h-px w-6 rounded-full bg-border dark:bg-slate-700"
+        title={section.label}
+        aria-hidden
+      />
+    );
+  }
+
+  return (
+    <div className="px-2.5 pb-1 pt-4 first:pt-1">
+      <p className="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+        {section.label}
+      </p>
+    </div>
+  );
+}
+
 export function Sidebar({
   collapsed,
   onToggleCollapsed,
@@ -298,18 +326,32 @@ export function Sidebar({
         className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-thin scrollbar-brand"
         role="navigation"
       >
-        {navItems.map((entry) =>
-          isSidebarGroup(entry) ? (
-            <NavGroup
-              key={entry.id}
-              group={entry}
-              pathname={pathname}
-              collapsed={effectiveCollapsed}
-              isOpen={Boolean(openGroups[entry.id])}
-              onToggle={() => toggleGroup(entry.id)}
-              onNavigate={handleNavigate}
-            />
-          ) : (
+        {navItems.map((entry) => {
+          if (isSidebarSection(entry)) {
+            return (
+              <RoleSectionHeading
+                key={entry.id}
+                section={entry}
+                collapsed={effectiveCollapsed}
+              />
+            );
+          }
+
+          if (isSidebarGroup(entry)) {
+            return (
+              <NavGroup
+                key={entry.id}
+                group={entry}
+                pathname={pathname}
+                collapsed={effectiveCollapsed}
+                isOpen={Boolean(openGroups[entry.id])}
+                onToggle={() => toggleGroup(entry.id)}
+                onNavigate={handleNavigate}
+              />
+            );
+          }
+
+          return (
             <NavLink
               key={entry.href}
               item={entry}
@@ -317,8 +359,8 @@ export function Sidebar({
               collapsed={effectiveCollapsed}
               onNavigate={handleNavigate}
             />
-          )
-        )}
+          );
+        })}
       </nav>
     </div>
   );
