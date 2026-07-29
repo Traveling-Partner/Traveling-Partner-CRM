@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { ROLE_LABELS } from "@/lib/roles";
+import { toAppRole } from "@/lib/rbac";
 
 interface HeaderProps {
   title?: string;
@@ -80,7 +82,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
                   {displayName}
                 </span>
                 <span className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">
-                  {user?.role === "ADMIN" ? "Admin" : "Sales Agent"}
+                  {ROLE_LABELS[toAppRole(user?.role) ?? "AGENT"] ?? user?.role ?? "User"}
                 </span>
               </div>
               <ChevronDown className="ml-0.5 h-3.5 w-3.5 opacity-50" />

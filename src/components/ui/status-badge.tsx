@@ -62,6 +62,36 @@ const statusConfig: Record<string, { label: string; dot: string; bg: string; tex
     dot: "bg-red-500",
     bg: "bg-red-50 dark:bg-red-500/10",
     text: "text-red-700 dark:text-red-400"
+  },
+  PAID: {
+    label: "Paid",
+    dot: "bg-emerald-500",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-700 dark:text-emerald-400"
+  },
+  OVERDUE: {
+    label: "Overdue",
+    dot: "bg-red-500",
+    bg: "bg-red-50 dark:bg-red-500/10",
+    text: "text-red-700 dark:text-red-400"
+  },
+  PUBLISHED: {
+    label: "Published",
+    dot: "bg-emerald-500",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-700 dark:text-emerald-400"
+  },
+  SCHEDULED: {
+    label: "Scheduled",
+    dot: "bg-sky-500",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-700 dark:text-sky-400"
+  },
+  UNPUBLISHED: {
+    label: "Unpublished",
+    dot: "bg-slate-400",
+    bg: "bg-muted",
+    text: "text-muted-foreground"
   }
 };
 

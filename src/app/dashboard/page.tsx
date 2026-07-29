@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { getDefaultRouteForRole } from "@/lib/rbac";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -14,12 +15,7 @@ export default function DashboardPage() {
       return;
     }
 
-    if (user.role === "ADMIN") {
-      router.replace("/admin/dashboard");
-      return;
-    }
-
-    router.replace("/agent/dashboard");
+    router.replace(getDefaultRouteForRole(user.role));
   }, [isAuthenticated, router, user]);
 
   return null;
