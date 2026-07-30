@@ -49,7 +49,10 @@ const SEGMENT_LABELS: Record<string, string> = {
   media: "Media Library",
   analytics: "Analytics",
   users: "Users",
-  notifications: "Notifications"
+  notifications: "Notifications",
+  safety: "Safety Center",
+  incidents: "SOS Incidents",
+  services: "Emergency Services"
 };
 
 const GROUP_BY_SEGMENT: Record<string, string> = {
@@ -81,7 +84,10 @@ const GROUP_BY_SEGMENT: Record<string, string> = {
   "vehicle-models": "Vehicle Management",
   "vehicle-colors": "Vehicle Management",
   "vehicle-brands": "Vehicle Management",
-  settings: "System"
+  settings: "System",
+  safety: "Safety Center",
+  incidents: "Safety Center",
+  services: "Safety Center"
 };
 
 function toTitle(segment: string): string {
