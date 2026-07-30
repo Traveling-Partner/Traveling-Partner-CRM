@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
 import { getAllowedRolesForPath } from "@/lib/roles";
+import {
+  getSuppressHoverUntilLeave,
+  readSidebarCollapsed,
+  setSuppressHoverUntilLeave,
+  writeSidebarCollapsed
+} from "@/lib/sidebar-ui";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -17,15 +23,49 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title, allowedRoles, wideContent }: AppShellProps) {
-  /** Pinned closed by hamburger click (true = icon rail). */
+  /** Pinned closed by hamburger — persisted across page navigations. */
   const [collapsed, setCollapsed] = useState(false);
-  /** Temporary expand while hovering the closed sidebar nav. */
   const [hovered, setHovered] = useState(false);
+  const [suppressHover, setSuppressHover] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
+  const skipNextPathSuppress = useRef(true);
   const routeRoles = allowedRoles ?? getAllowedRolesForPath(pathname ?? "");
 
-  const isCollapsed = collapsed && !hovered;
+  // Restore pinned state after remount (new page = new AppShell)
+  useEffect(() => {
+    setCollapsed(readSidebarCollapsed());
+    // Only keep suppress across in-app nav remounts (after clicking a link while hover-open).
+    // Full page refresh resets the module flag to false, so first hover works.
+    setSuppressHover(getSuppressHoverUntilLeave());
+    setHovered(false);
+    setHydrated(true);
+  }, []);
+
+  // Close hover-open only when the route actually changes — not on refresh / first hydrate
+  useEffect(() => {
+    if (!hydrated) return;
+    if (skipNextPathSuppress.current) {
+      skipNextPathSuppress.current = false;
+      return;
+    }
+    setHovered(false);
+    if (readSidebarCollapsed()) {
+      setSuppressHoverUntilLeave(true);
+      setSuppressHover(true);
+    }
+  }, [pathname, hydrated]);
+
+  const isCollapsed = collapsed && (!hovered || suppressHover);
+
+  const closeHoverOpen = () => {
+    setHovered(false);
+    setSuppressHover(true);
+    setSuppressHoverUntilLeave(true);
+    writeSidebarCollapsed(true);
+    setCollapsed(true);
+  };
 
   return (
     <ProtectedRoute allowedRoles={routeRoles}>
@@ -36,15 +76,30 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
             isCollapsed ? "w-[4.25rem]" : "w-64"
           )}
           aria-label="Main navigation"
-          onMouseLeave={() => setHovered(false)}
+          onMouseLeave={() => {
+            setHovered(false);
+            setSuppressHover(false);
+            setSuppressHoverUntilLeave(false);
+          }}
         >
           <Sidebar
             collapsed={isCollapsed}
             pinnedCollapsed={collapsed}
-            onHoverOpen={() => setHovered(true)}
+            onHoverOpen={() => {
+              if (!getSuppressHoverUntilLeave() && !suppressHover) {
+                setHovered(true);
+              }
+            }}
+            onHoverClose={closeHoverOpen}
             onToggleCollapsed={() => {
-              setCollapsed((prev) => !prev);
+              setCollapsed((prev) => {
+                const next = !prev;
+                writeSidebarCollapsed(next);
+                return next;
+              });
               setHovered(false);
+              setSuppressHover(false);
+              setSuppressHoverUntilLeave(false);
             }}
             mobileOpen={mobileOpen}
             onMobileOpenChange={setMobileOpen}
@@ -54,7 +109,6 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
         <div
           className={cn(
             "flex min-h-screen flex-col transition-[margin] duration-200 ease-out",
-            // Same layout as pinned open/closed — hover expand must look identical
             isCollapsed ? "md:ml-[4.25rem]" : "md:ml-64"
           )}
         >

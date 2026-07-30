@@ -51,6 +51,8 @@ interface SidebarProps {
   pinnedCollapsed?: boolean;
   /** Called when pointer enters the nav while the rail is pinned closed. */
   onHoverOpen?: () => void;
+  /** Called when a nav page is clicked while hover-opened — closes until mouse leaves. */
+  onHoverClose?: () => void;
   onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
@@ -260,6 +262,7 @@ export function Sidebar({
   collapsed,
   pinnedCollapsed = false,
   onHoverOpen,
+  onHoverClose,
   onToggleCollapsed,
   mobileOpen,
   onMobileOpenChange
@@ -283,7 +286,13 @@ export function Sidebar({
     setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
-  const handleNavigate = () => onMobileOpenChange(false);
+  const handleNavigate = () => {
+    onMobileOpenChange(false);
+    // Defer close so Next.js Link can start navigation first (mousedown/sync close was canceling page changes)
+    if (pinnedCollapsed) {
+      window.setTimeout(() => onHoverClose?.(), 10);
+    }
+  };
 
   const sidebarContent = (
     <div
