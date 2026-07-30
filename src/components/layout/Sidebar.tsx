@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -325,7 +325,7 @@ export function Sidebar({
             "hidden md:inline-flex"
           )}
         >
-          {effectiveCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+          <Menu className="h-4 w-4" />
         </button>
       </div>
 

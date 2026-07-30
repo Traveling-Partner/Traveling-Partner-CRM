@@ -33,8 +33,7 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
         <aside
           className={cn(
             "fixed inset-y-0 left-0 z-40 hidden h-screen overflow-hidden transition-[width] duration-200 ease-out md:block",
-            isCollapsed ? "w-[4.25rem]" : "w-64",
-            collapsed && hovered && "shadow-xl shadow-slate-900/10"
+            isCollapsed ? "w-[4.25rem]" : "w-64"
           )}
           aria-label="Main navigation"
           onMouseLeave={() => setHovered(false)}
@@ -55,7 +54,8 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
         <div
           className={cn(
             "flex min-h-screen flex-col transition-[margin] duration-200 ease-out",
-            collapsed ? "md:ml-[4.25rem]" : "md:ml-64"
+            // Same layout as pinned open/closed — hover expand must look identical
+            isCollapsed ? "md:ml-[4.25rem]" : "md:ml-64"
           )}
         >
           <Header
