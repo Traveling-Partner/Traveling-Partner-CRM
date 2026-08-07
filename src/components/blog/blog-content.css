@@ -3,8 +3,12 @@
 .blog-prose {
   font-size: 0.975rem;
   line-height: 1.75;
-  color: hsl(var(--foreground));
-  max-width: 42rem;
+  color: #0f172a;
+  max-width: none;
+}
+
+.dark .blog-prose {
+  color: #f8fafc;
 }
 
 .blog-prose > * + * {
@@ -289,7 +293,15 @@
 }
 
 .blog-editor-toolbar-sticky {
-  background: hsl(var(--card) / 0.96);
+  background: hsl(var(--card));
+}
+
+.blog-editor-body {
+  background: #ffffff;
+}
+
+.dark .blog-editor-body {
+  background: hsl(var(--card));
 }
 
 .blog-editor-surface .ProseMirror {
@@ -299,15 +311,43 @@
   max-width: none;
   width: 100%;
   margin: 0;
-  caret-color: #fdb813;
+  /* Force readable text — count can update while text looks "invisible" without this */
+  color: #0f172a !important;
+  caret-color: #0f172a !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  font-size: 1rem !important;
+  line-height: 1.75 !important;
+  background: transparent;
 }
 
-.blog-editor-surface .ProseMirror p.is-editor-empty:first-child::before {
-  color: hsl(var(--muted-foreground));
+.dark .blog-editor-surface .ProseMirror {
+  color: #f8fafc !important;
+  caret-color: #fdb813 !important;
+}
+
+.blog-editor-surface .ProseMirror p,
+.blog-editor-surface .ProseMirror h1,
+.blog-editor-surface .ProseMirror h2,
+.blog-editor-surface .ProseMirror h3,
+.blog-editor-surface .ProseMirror h4,
+.blog-editor-surface .ProseMirror li,
+.blog-editor-surface .ProseMirror blockquote,
+.blog-editor-surface .ProseMirror td,
+.blog-editor-surface .ProseMirror th {
+  color: inherit !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.blog-editor-surface .ProseMirror p.is-editor-empty:first-child::before,
+.blog-editor-surface .ProseMirror p.is-empty:first-child::before {
+  color: #94a3b8 !important;
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
+  opacity: 1;
 }
 
 .blog-editor-surface .ProseMirror .selectedCell::after {
