@@ -16,6 +16,8 @@ const BlogRichEditorInner = dynamic(
   }
 );
 
-export function LazyBlogRichEditor(props: ComponentProps<typeof BlogRichEditorInner>) {
+export function LazyBlogRichEditor(
+  props: ComponentProps<typeof BlogRichEditorInner>
+) {
   return <BlogRichEditorInner {...props} />;
 }
