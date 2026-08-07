@@ -93,25 +93,20 @@ export function BlogEditorWorkspace({
         : "Edit post";
 
   return (
-    <div className="relative pb-24">
-      {/* Sticky action bar */}
-      <div className="sticky top-14 z-30 -mx-1 mb-6 border-b border-border/50 bg-background/90 px-1 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button variant="ghost" size="sm" asChild className="shrink-0">
+    <div className="relative pb-20">
+      {/* Top actions — not sticky, so editor toolbar can sit flush under app header */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Button variant="ghost" size="sm" asChild className="h-8 shrink-0 px-2">
               <Link href="/admin/blog" className="gap-1.5">
                 <ArrowLeft className="h-4 w-4" />
                 Blog
               </Link>
             </Button>
-            <div className="hidden h-5 w-px bg-border/70 sm:block" />
+            <div className="hidden h-4 w-px bg-border/70 sm:block" />
             <div className="min-w-0">
-              <p className="truncate font-heading text-sm font-semibold text-foreground sm:text-base">
+              <p className="truncate font-heading text-sm font-semibold text-foreground">
                 {heading}
-              </p>
-              <p className="text-2xs text-muted-foreground">
-                {mode === "create" ? "New article" : "Update article"} ·{" "}
-                {relative !== "—" ? relative : "Pick a date"}
               </p>
             </div>
           </div>
@@ -120,6 +115,7 @@ export function BlogEditorWorkspace({
               type="button"
               variant="outline"
               size="sm"
+              className="h-8"
               disabled={submitting}
               onClick={onSaveDraft}
             >
@@ -128,20 +124,20 @@ export function BlogEditorWorkspace({
             <Button
               type="button"
               size="sm"
+              className="h-8"
               disabled={submitting}
               onClick={onPublish}
             >
               {submitting ? "Publishing…" : "Publish"}
             </Button>
           </div>
-        </div>
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-8 animate-fade-in">
+      <div className="w-full space-y-5 animate-fade-in">
         {/* Cover hero */}
         <input type="hidden" {...register.coverImage} />
-        <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-muted/20 shadow-premium-sm">
-          <div className="relative aspect-[21/9] w-full min-h-[180px] sm:min-h-[220px]">
+        <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 shadow-premium-sm">
+          <div className="relative aspect-[3/1] w-full min-h-[120px] max-h-[200px] sm:min-h-[140px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imagePreview || "/mock-images/blog-cover.svg"}
@@ -185,7 +181,7 @@ export function BlogEditorWorkspace({
         </div>
 
         {/* Title fields — all original inputs kept, clearly labeled */}
-        <div className="space-y-4 rounded-2xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-5">
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-4">
           <div className="space-y-1.5">
             <label
               htmlFor="mainTitle"
@@ -275,13 +271,14 @@ export function BlogEditorWorkspace({
         </div>
 
         {/* Metadata strip */}
-        <div className="rounded-2xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-5">
+        <div className="rounded-xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Post details
             </p>
             <span className="rounded-full bg-[var(--brand-light)] px-2.5 py-0.5 text-2xs font-medium text-foreground">
               {mainTitle?.trim() ? "In progress" : "Untitled"}
+              {relative !== "—" ? ` · ${relative}` : ""}
             </span>
           </div>
 
@@ -378,24 +375,21 @@ export function BlogEditorWorkspace({
         </div>
 
         {/* Editor */}
-        <div className="space-y-2">
-          <div className="flex items-end justify-between gap-3 px-0.5">
-            <div>
-              <h2 className="font-heading text-sm font-semibold text-foreground">
-                Article body
-              </h2>
-              <p className="text-2xs text-muted-foreground">
-                Type <span className="font-medium text-foreground">/</span> for
-                blocks · drag images into the editor
-              </p>
-            </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-3 px-0.5">
+            <h2 className="font-heading text-sm font-semibold text-foreground">
+              Article body
+            </h2>
+            <p className="text-2xs text-muted-foreground">
+              Type <span className="font-medium text-foreground">/</span> for blocks
+            </p>
           </div>
           {errors.description2?.message ? (
             <p className="text-xs font-medium text-red-500">
               {errors.description2.message}
             </p>
           ) : null}
-          <div className="overflow-hidden rounded-2xl border border-border/60 shadow-premium-md">
+          <div className="rounded-xl border border-border/60 shadow-premium-md">
             {editor}
           </div>
         </div>
@@ -403,7 +397,7 @@ export function BlogEditorWorkspace({
 
       {/* Bottom floating actions on mobile */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/95 p-3 backdrop-blur sm:hidden">
-        <div className="mx-auto flex max-w-4xl gap-2">
+        <div className="mx-auto flex w-full max-w-none gap-2">
           <Button
             type="button"
             variant="outline"

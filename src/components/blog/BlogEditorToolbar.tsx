@@ -191,9 +191,7 @@ export function BlogEditorToolbar({
   editor,
   uploading,
   onPickImage,
-  onInsertVideo,
-  wordCount = 0,
-  charCount = 0
+  onInsertVideo
 }: BlogEditorToolbarProps) {
   const [, setTick] = useState(0);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -265,8 +263,8 @@ export function BlogEditorToolbar({
   };
 
   return (
-    <div className="border-b border-border/60 bg-card/95 px-2 py-1.5 backdrop-blur-md supports-[backdrop-filter]:bg-card/90">
-      {/* Row 1 — primary Google Docs style controls */}
+    <div className="border-b border-border/60 bg-card px-1.5 py-1">
+      {/* Single compact toolbar row */}
       <div className="flex flex-wrap items-center gap-0.5">
         <ToolBtn
           title="Undo (Ctrl+Z)"
@@ -816,16 +814,6 @@ export function BlogEditorToolbar({
             </div>
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-2xs text-muted-foreground">
-          Type <kbd className="rounded border border-border/60 bg-muted px-1">/</kbd>{" "}
-          for blocks · Paste from Docs/Word · Drag images
-        </p>
-        <p className="text-2xs tabular-nums text-muted-foreground">
-          {wordCount} words · {charCount} chars
-        </p>
       </div>
     </div>
   );

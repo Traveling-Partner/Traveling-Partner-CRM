@@ -234,7 +234,7 @@ export default function AdminBlogEditPage() {
   }
 
   return (
-    <AppShell title={mainTitle ? `Edit • ${mainTitle}` : "Edit Post"}>
+    <AppShell title={mainTitle ? `Edit • ${mainTitle}` : "Edit Post"} wideContent>
       <PageContainer>
         <BlogEditorWorkspace
           mode="edit"

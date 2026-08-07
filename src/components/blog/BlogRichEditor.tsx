@@ -293,8 +293,8 @@ export function BlogRichEditor({
         className
       )}
     >
-      {/* Sticky toolbar — stays visible while scrolling long posts */}
-      <div className="blog-editor-toolbar-sticky sticky top-28 z-20 rounded-t-xl border-b border-border/50 shadow-premium-sm">
+      {/* Sticky toolbar — flush under app header, no empty gap */}
+      <div className="blog-editor-toolbar-sticky sticky top-14 z-20 border-b border-border/50 bg-card shadow-sm">
         <BlogEditorToolbar
           editor={editor}
           uploading={uploading}
@@ -304,7 +304,7 @@ export function BlogRichEditor({
           charCount={chars}
         />
         {uploading ? (
-          <div className="bg-[var(--brand-light)] px-4 py-1.5 text-2xs font-medium text-foreground">
+          <div className="bg-[var(--brand-light)] px-3 py-1 text-2xs font-medium text-foreground">
             Uploading image…
           </div>
         ) : null}
@@ -380,7 +380,7 @@ export function BlogRichEditor({
       ) : null}
 
       <div
-        className="blog-editor-body min-h-[560px] cursor-text"
+        className="blog-editor-body min-h-[420px] cursor-text"
         onMouseDown={(e) => {
           // Clicking empty padding still focuses the editor so typing works immediately
           const target = e.target as HTMLElement;
@@ -390,6 +390,13 @@ export function BlogRichEditor({
         }}
       >
         <EditorContent editor={editor} />
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border/50 bg-muted/30 px-3 py-1.5 text-2xs text-muted-foreground">
+        <span>Paste from Docs/Word · Drag or paste images</span>
+        <span className="tabular-nums">
+          {words} words · {chars} chars
+        </span>
       </div>
 
       {tablePickerOpen ? (
