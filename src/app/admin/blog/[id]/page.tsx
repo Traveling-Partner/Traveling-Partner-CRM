@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -164,6 +164,14 @@ export default function AdminBlogEditPage() {
   const saveDraft = handleSubmit((vals) => void submitWithStatus(vals, "DRAFT"));
   const publish = handleSubmit((vals) => void submitWithStatus(vals, "PUBLISHED"));
 
+  const onEditorChange = useCallback(
+    (html: string) => {
+      setDescription2(html);
+      setValue("description2", html, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
   const onImageChange: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
     const inputEl = event.currentTarget;
     const file = event.target.files?.[0];
@@ -265,10 +273,7 @@ export default function AdminBlogEditPage() {
               token={token}
               className="rounded-none border-0 shadow-none"
               onUploadError={(message) => showError(message)}
-              onChange={(html) => {
-                setDescription2(html);
-                setValue("description2", html);
-              }}
+              onChange={onEditorChange}
             />
           }
         />

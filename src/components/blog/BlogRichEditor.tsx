@@ -101,8 +101,15 @@ export function BlogRichEditor({
     [insertImageUrl, onUploadError, token]
   );
 
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   const editor = useEditor({
     immediatelyRender: false,
+    editable: true,
+    autofocus: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4] },
@@ -161,7 +168,7 @@ export function BlogRichEditor({
         )
       })
     ],
-    content: value?.trim() ? value : "",
+    content: value?.trim() ? value : "<p></p>",
     editorProps: {
       attributes: {
         class: "blog-prose focus-visible:outline-none",
@@ -196,7 +203,7 @@ export function BlogRichEditor({
     onUpdate({ editor: ed }) {
       const html = ed.getHTML();
       lastEmitted.current = html;
-      onChange(html);
+      onChangeRef.current(html);
     }
   });
 
@@ -229,12 +236,18 @@ export function BlogRichEditor({
     };
   }, []);
 
+  // Never reset content while the user is typing — only sync external loads/resets.
   useEffect(() => {
     if (!editor) return;
-    if (value !== lastEmitted.current && value !== editor.getHTML()) {
-      editor.commands.setContent(value || "", false);
+    if (value === lastEmitted.current) return;
+    if (editor.isFocused) return;
+    const current = editor.getHTML();
+    if (value === current) {
       lastEmitted.current = value;
+      return;
     }
+    editor.commands.setContent(value?.trim() ? value : "<p></p>", false);
+    lastEmitted.current = value;
   }, [value, editor]);
 
   const onPickImage = () => fileInputRef.current?.click();
@@ -300,7 +313,8 @@ export function BlogRichEditor({
       {editor ? (
         <BubbleMenu
           editor={editor}
-          tippyOptions={{ duration: 120, placement: "top" }}
+          shouldShow={({ from, to }) => from !== to}
+          tippyOptions={{ duration: 120, placement: "top", zIndex: 50 }}
           className="flex items-center gap-0.5 rounded-full border border-border/60 bg-popover px-1.5 py-1 shadow-premium-lg"
         >
           <button
@@ -365,7 +379,16 @@ export function BlogRichEditor({
         </BubbleMenu>
       ) : null}
 
-      <div className="blog-editor-body min-h-[560px]">
+      <div
+        className="blog-editor-body min-h-[560px] cursor-text"
+        onMouseDown={(e) => {
+          // Clicking empty padding still focuses the editor so typing works immediately
+          const target = e.target as HTMLElement;
+          if (target.closest(".ProseMirror")) return;
+          e.preventDefault();
+          editor.chain().focus("end").run();
+        }}
+      >
         <EditorContent editor={editor} />
       </div>
 
