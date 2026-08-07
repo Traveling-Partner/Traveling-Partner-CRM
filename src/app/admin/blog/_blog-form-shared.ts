@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { BlogUpsertPayload } from "@/services/blog";
+import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 export const blogEditorSchema = z.object({
   coverImage: z.string().min(4, "Cover image is required"),
@@ -9,7 +10,6 @@ export const blogEditorSchema = z.object({
   date: z.string().min(1, "Date is required"),
   author: z.string().min(2, "Author is required"),
   categoryId: z.coerce.number().int().positive("Category ID must be greater than 0"),
-  readTime: z.string().min(2, "Read time is required"),
   tagsText: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
@@ -37,7 +37,8 @@ export function buildBlogUpsertPayload(
     description2: (values.description2 ?? "").trim() || null,
     date: values.date,
     author: values.author.trim(),
-    readTime: values.readTime.trim(),
+    // API still expects readTime — store relative post age from the post date
+    readTime: formatRelativePostTime(values.date),
     tags,
     categoryId: values.categoryId
   };
