@@ -293,9 +293,9 @@
 }
 
 .blog-editor-surface .ProseMirror {
-  min-height: 560px;
+  min-height: 420px;
   outline: none;
-  padding: 1.35rem 1.5rem 3rem;
+  padding: 1rem 1.25rem 2rem;
   max-width: none;
   width: 100%;
   margin: 0;

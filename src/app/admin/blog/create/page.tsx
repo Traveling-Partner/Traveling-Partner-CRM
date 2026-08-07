@@ -144,7 +144,7 @@ export default function AdminBlogCreatePage() {
   };
 
   return (
-    <AppShell title="Create Post">
+    <AppShell title="Create Post" wideContent>
       <PageContainer>
         <BlogEditorWorkspace
           mode="create"
