@@ -37,6 +37,14 @@
   margin-top: 1.3em;
 }
 
+.blog-prose h4 {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.2em;
+}
+
 .blog-prose p {
   margin: 0.75em 0;
 }
@@ -71,6 +79,20 @@
   background: rgba(253, 184, 19, 0.35);
   border-radius: 0.2em;
   padding: 0.05em 0.2em;
+}
+
+.blog-prose [style*="font-size"] {
+  line-height: 1.5;
+}
+
+.blog-prose sub {
+  vertical-align: sub;
+  font-size: 0.75em;
+}
+
+.blog-prose sup {
+  vertical-align: super;
+  font-size: 0.75em;
 }
 
 .blog-prose code {
@@ -261,11 +283,20 @@
 }
 
 /* TipTap editor surface */
+.blog-editor-surface {
+  /* allow sticky toolbar — do not use overflow:hidden on this root */
+  overflow: visible;
+}
+
+.blog-editor-toolbar-sticky {
+  background: hsl(var(--card) / 0.96);
+}
+
 .blog-editor-surface .ProseMirror {
-  min-height: 420px;
+  min-height: 560px;
   outline: none;
-  padding: 1.25rem 1.35rem 2.5rem;
-  max-width: 42rem;
+  padding: 1.35rem 1.5rem 3rem;
+  max-width: 46rem;
   margin: 0 auto;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import { useEditor, EditorContent, BubbleMenu, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
@@ -15,9 +15,18 @@ import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import Youtube from "@tiptap/extension-youtube";
+import TextStyle from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import FontFamily from "@tiptap/extension-font-family";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
+import CharacterCount from "@tiptap/extension-character-count";
+import Typography from "@tiptap/extension-typography";
+import { Bold, Italic, Underline as UnderlineIcon, Link2, Highlighter } from "lucide-react";
 import { uploadCarouselImage } from "@/lib/upload-carousel-image";
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/blog/extensions/callout";
+import { FontSize } from "@/components/blog/extensions/font-size";
 import { ResizableImage } from "@/components/blog/extensions/resizable-image";
 import {
   SlashCommand,
@@ -96,18 +105,27 @@ export function BlogRichEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: { levels: [1, 2, 3, 4] },
         codeBlock: { HTMLAttributes: { class: "blog-code-block" } },
         dropcursor: { color: "#fdb813", width: 2 }
       }),
       Underline,
-      Highlight.configure({ multicolor: false }),
+      TextStyle,
+      FontSize,
+      FontFamily,
+      Color,
+      Highlight.configure({ multicolor: true }),
+      Subscript,
+      Superscript,
+      Typography,
+      CharacterCount,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" }
       }),
       TextAlign.configure({
-        types: ["heading", "paragraph"]
+        types: ["heading", "paragraph"],
+        alignments: ["left", "center", "right", "justify"]
       }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -252,27 +270,107 @@ export function BlogRichEditor({
     );
   }
 
+  const chars = editor.storage.characterCount?.characters?.() ?? 0;
+  const words = editor.storage.characterCount?.words?.() ?? 0;
+
   return (
     <div
       className={cn(
-        "blog-editor-surface relative overflow-hidden rounded-xl border border-border/60 bg-card shadow-premium-xs",
+        "blog-editor-surface relative flex flex-col rounded-xl border border-border/60 bg-card shadow-premium-xs",
         className
       )}
     >
-      <BlogEditorToolbar
-        editor={editor}
-        uploading={uploading}
-        onPickImage={onPickImage}
-        onInsertVideo={onInsertVideo}
-      />
-      {uploading ? (
-        <div className="border-b border-border/60 bg-[var(--brand-light)] px-4 py-1.5 text-2xs font-medium text-foreground">
-          Uploading image…
-        </div>
+      {/* Sticky toolbar — stays visible while scrolling long posts */}
+      <div className="blog-editor-toolbar-sticky sticky top-28 z-20 rounded-t-xl border-b border-border/50 shadow-premium-sm">
+        <BlogEditorToolbar
+          editor={editor}
+          uploading={uploading}
+          onPickImage={onPickImage}
+          onInsertVideo={onInsertVideo}
+          wordCount={words}
+          charCount={chars}
+        />
+        {uploading ? (
+          <div className="bg-[var(--brand-light)] px-4 py-1.5 text-2xs font-medium text-foreground">
+            Uploading image…
+          </div>
+        ) : null}
+      </div>
+
+      {editor ? (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 120, placement: "top" }}
+          className="flex items-center gap-0.5 rounded-full border border-border/60 bg-popover px-1.5 py-1 shadow-premium-lg"
+        >
+          <button
+            type="button"
+            className={cn(
+              "rounded-full p-1.5 hover:bg-muted",
+              editor.isActive("bold") && "bg-muted"
+            )}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          >
+            <Bold className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "rounded-full p-1.5 hover:bg-muted",
+              editor.isActive("italic") && "bg-muted"
+            )}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <Italic className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "rounded-full p-1.5 hover:bg-muted",
+              editor.isActive("underline") && "bg-muted"
+            )}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+          >
+            <UnderlineIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "rounded-full p-1.5 hover:bg-muted",
+              editor.isActive("highlight") && "bg-muted"
+            )}
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+          >
+            <Highlighter className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "rounded-full p-1.5 hover:bg-muted",
+              editor.isActive("link") && "bg-muted"
+            )}
+            onClick={() => {
+              const prev = editor.getAttributes("link").href as string | undefined;
+              const url = window.prompt("Enter URL", prev || "https://");
+              if (url === null) return;
+              if (!url.trim()) {
+                editor.chain().focus().unsetLink().run();
+                return;
+              }
+              editor.chain().focus().setLink({ href: url.trim(), target: "_blank" }).run();
+            }}
+          >
+            <Link2 className="h-3.5 w-3.5" />
+          </button>
+        </BubbleMenu>
       ) : null}
-      <EditorContent editor={editor} />
+
+      <div className="blog-editor-body min-h-[560px]">
+        <EditorContent editor={editor} />
+      </div>
+
       {tablePickerOpen ? (
-        <div className="absolute inset-0 z-30 flex items-start justify-center bg-background/40 pt-16 backdrop-blur-[1px]">
+        <div className="absolute inset-0 z-30 flex items-start justify-center bg-background/40 pt-20 backdrop-blur-[1px]">
           <TableSizePickerPanel
             onInsert={(rows, cols) => {
               editor
