@@ -95,7 +95,7 @@ export function BlogEditorWorkspace({
   return (
     <div className="relative pb-24">
       {/* Sticky action bar */}
-      <div className="sticky top-0 z-30 -mx-1 mb-6 border-b border-border/50 bg-background/90 px-1 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
+      <div className="sticky top-14 z-30 -mx-1 mb-6 border-b border-border/50 bg-background/90 px-1 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <Button variant="ghost" size="sm" asChild className="shrink-0">
