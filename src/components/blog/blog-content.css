@@ -296,8 +296,10 @@
   min-height: 560px;
   outline: none;
   padding: 1.35rem 1.5rem 3rem;
-  max-width: 46rem;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  caret-color: #fdb813;
 }
 
 .blog-editor-surface .ProseMirror p.is-editor-empty:first-child::before {

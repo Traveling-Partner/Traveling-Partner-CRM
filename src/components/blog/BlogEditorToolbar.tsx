@@ -208,10 +208,10 @@ export function BlogEditorToolbar({
   useEffect(() => {
     const bump = () => setTick((t) => t + 1);
     editor.on("selectionUpdate", bump);
-    editor.on("transaction", bump);
+    editor.on("update", bump);
     return () => {
       editor.off("selectionUpdate", bump);
-      editor.off("transaction", bump);
+      editor.off("update", bump);
     };
   }, [editor]);
 

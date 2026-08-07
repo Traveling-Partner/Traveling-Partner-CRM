@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -98,6 +98,14 @@ export default function AdminBlogCreatePage() {
     }
   };
 
+  const onEditorChange = useCallback(
+    (html: string) => {
+      setDescription2(html);
+      setValue("description2", html, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
   const saveDraft = handleSubmit((vals) => void submitWithStatus(vals, "DRAFT"));
   const publish = handleSubmit((vals) => void submitWithStatus(vals, "PUBLISHED"));
 
@@ -173,10 +181,7 @@ export default function AdminBlogCreatePage() {
               token={token}
               className="rounded-none border-0 shadow-none"
               onUploadError={(message) => showError(message)}
-              onChange={(html) => {
-                setDescription2(html);
-                setValue("description2", html);
-              }}
+              onChange={onEditorChange}
             />
           }
         />
