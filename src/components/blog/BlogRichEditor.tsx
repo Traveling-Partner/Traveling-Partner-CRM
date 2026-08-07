@@ -155,7 +155,11 @@ export function BlogRichEditor({
       }),
       Callout,
       Placeholder.configure({
-        placeholder: "Start writing… Type / for commands"
+        placeholder: "Start writing… Type / for commands",
+        emptyEditorClass: "is-editor-empty",
+        emptyNodeClass: "is-empty",
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: true
       }),
       SlashCommand.configure({
         suggestion: createSlashSuggestion(() =>
@@ -171,8 +175,10 @@ export function BlogRichEditor({
     content: value?.trim() ? value : "<p></p>",
     editorProps: {
       attributes: {
-        class: "blog-prose focus-visible:outline-none",
-        spellcheck: "true"
+        class:
+          "blog-prose tiptap focus-visible:outline-none text-slate-900 dark:text-slate-50",
+        spellcheck: "true",
+        style: "min-height:420px;color:#0f172a;"
       },
       handlePaste: (_view, event) => {
         const items = event.clipboardData?.items;
