@@ -26,6 +26,7 @@ import { useBlogListQuery } from "@/hooks/queries/use-blog-list-query";
 import { queryKeys } from "@/lib/api/query-keys";
 import { deleteBlog } from "@/services/blog";
 import type { BlogRow } from "@/services/blog-list";
+import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 const DEFAULT_PAGE_SIZE = 6;
 
@@ -167,11 +168,12 @@ export default function AdminBlogPage() {
         )
       },
       {
-        accessorKey: "readTime",
-        header: "Read Time",
+        id: "postedAgo",
+        accessorKey: "date",
+        header: "Posted",
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
-            {row.original.readTime?.trim() || "—"}
+          <span className="text-xs text-muted-foreground" title={formatBlogDate(row.original.date)}>
+            {formatRelativePostTime(row.original.date)}
           </span>
         )
       },

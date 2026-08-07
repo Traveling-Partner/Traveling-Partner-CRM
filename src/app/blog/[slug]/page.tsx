@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { getBlogById } from "@/services/blog";
 import type { BlogApiRecord } from "@/services/blog";
 import { useAppSelector } from "@/store/hooks";
+import { formatRelativePostTime } from "@/lib/format-relative-post-time";
+import "@/components/blog/blog-content.css";
 
 function formatPreviewDate(value: string | null | undefined): string {
   if (!value?.trim()) return "";
@@ -66,17 +68,24 @@ export default function BlogPreviewPage() {
 
   const title = post.mainTitle;
   const dateLabel = formatPreviewDate(post.date ?? undefined);
+  const relativePosted = formatRelativePostTime(post.date ?? undefined);
   const html = post.description2?.trim() ?? "";
 
   return (
     <main className="min-h-screen bg-background px-4 py-10 text-foreground">
       <article className="mx-auto max-w-3xl space-y-4">
         <h1 className="font-heading text-3xl font-bold">{title}</h1>
-        {dateLabel ? (
-          <p className="text-sm text-muted-foreground">{dateLabel}</p>
+        {(relativePosted && relativePosted !== "—") || dateLabel ? (
+          <p className="text-sm text-muted-foreground" title={dateLabel || undefined}>
+            {relativePosted !== "—" ? relativePosted : dateLabel}
+            {dateLabel && relativePosted !== "—" ? (
+              <span className="text-muted-foreground/70"> · {dateLabel}</span>
+            ) : null}
+          </p>
         ) : null}
         {post.coverImage?.trim() ? (
           <div className="overflow-hidden rounded-xl border border-border/60">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={post.coverImage}
               alt={title}
@@ -86,7 +95,7 @@ export default function BlogPreviewPage() {
         ) : null}
         {html ? (
           <div
-            className="prose prose-sm max-w-none prose-headings:font-heading dark:prose-invert"
+            className="blog-prose max-w-none"
             // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: html }}
           />
