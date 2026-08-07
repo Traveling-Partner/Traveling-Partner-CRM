@@ -174,28 +174,103 @@
   flex: 1;
 }
 
-.blog-prose table {
+/* CRM-matched tables — rounded card, full outer border, soft inner lines */
+.blog-prose table,
+.blog-prose .blog-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
-  margin: 1.2em 0;
+  margin: 1.25em 0;
   overflow: hidden;
-  border-radius: 0.65rem;
+  border-radius: 0.75rem;
   border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-xs);
+  font-size: 0.875rem;
 }
 
 .blog-prose th,
 .blog-prose td {
-  border: 1px solid hsl(var(--border));
-  padding: 0.55rem 0.75rem;
-  vertical-align: top;
-  min-width: 80px;
+  border-top: none;
+  border-left: none;
+  border-right: 1px solid hsl(var(--border) / 0.55);
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  min-width: 96px;
+  color: inherit !important;
+}
+
+/* Left + right outer borders on side cells */
+.blog-prose th:first-child,
+.blog-prose td:first-child {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.blog-prose th:last-child,
+.blog-prose td:last-child {
+  border-right: 1px solid hsl(var(--border));
+}
+
+.blog-prose thead tr:first-child th {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.blog-prose tbody tr:last-child td {
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .blog-prose th {
-  background: hsl(var(--muted));
+  background: hsl(var(--muted) / 0.5);
+  border-bottom: 1px solid hsl(var(--border));
+  font-size: 0.6875rem;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-align: left;
+  color: hsl(var(--muted-foreground) / 0.95) !important;
+}
+
+.blog-prose tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.blog-prose tbody tr:hover td {
+  background: hsl(var(--muted) / 0.28);
+}
+
+.blog-prose tbody tr:nth-child(even) td {
+  background: hsl(var(--muted) / 0.12);
+}
+
+.blog-prose tbody tr:nth-child(even):hover td {
+  background: hsl(var(--muted) / 0.32);
+}
+
+.dark .blog-prose table,
+.dark .blog-prose .blog-table {
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
+}
+
+.dark .blog-prose th {
+  background: hsl(var(--muted) / 0.55);
+}
+
+.blog-editor-surface .ProseMirror table,
+.blog-editor-surface .ProseMirror .blog-table {
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.blog-editor-surface .ProseMirror th:first-child,
+.blog-editor-surface .ProseMirror td:first-child {
+  border-left: 1px solid hsl(var(--border)) !important;
+}
+
+.blog-editor-surface .ProseMirror th:last-child,
+.blog-editor-surface .ProseMirror td:last-child {
+  border-right: 1px solid hsl(var(--border)) !important;
 }
 
 .blog-prose .blog-image,
@@ -352,6 +427,8 @@
 
 .blog-editor-surface .ProseMirror .selectedCell::after {
   background: var(--brand-light-active);
+  border: 1.5px solid #fdb813;
+  border-radius: 2px;
   content: "";
   left: 0;
   right: 0;
@@ -364,11 +441,12 @@
 
 .blog-editor-surface .ProseMirror .column-resize-handle {
   background-color: #fdb813;
-  bottom: -2px;
+  border-radius: 2px;
+  bottom: 4px;
   position: absolute;
   right: -2px;
   pointer-events: none;
-  top: 0;
+  top: 4px;
   width: 3px;
 }
 
@@ -383,6 +461,19 @@
 .blog-editor-surface .ProseMirror td,
 .blog-editor-surface .ProseMirror th {
   position: relative;
+}
+
+/* While editing: match CRM row hover with brand tint */
+.blog-editor-surface .ProseMirror table tbody tr:hover td {
+  background: var(--brand-light);
+}
+
+.blog-editor-surface .ProseMirror table th {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--muted) / 0.65) 0%,
+    hsl(var(--muted) / 0.4) 100%
+  );
 }
 
 /* Slash menu tippy shell — keep our custom panel only */
