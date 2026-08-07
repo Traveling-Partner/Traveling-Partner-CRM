@@ -157,7 +157,9 @@ export default function AdminBlogCreatePage() {
             description1: register("description1"),
             author: register("author"),
             tagsText: register("tagsText"),
-            date: register("date")
+            date: register("date"),
+            seoTitle: register("seoTitle"),
+            seoDescription: register("seoDescription")
           }}
           onCategoryChange={(id) =>
             setValue("categoryId", id, { shouldValidate: true })

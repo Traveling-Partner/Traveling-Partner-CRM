@@ -44,6 +44,8 @@ export interface BlogEditorWorkspaceProps {
     author?: FieldError;
     categoryId?: FieldError;
     description2?: FieldError;
+    seoTitle?: FieldError;
+    seoDescription?: FieldError;
   };
   register: {
     coverImage: object;
@@ -52,6 +54,8 @@ export interface BlogEditorWorkspaceProps {
     author: object;
     tagsText: object;
     date: object;
+    seoTitle: object;
+    seoDescription: object;
   };
   onCategoryChange: (id: number) => void;
   onImageChange: ChangeEventHandler<HTMLInputElement>;
@@ -180,31 +184,45 @@ export function BlogEditorWorkspace({
           />
         </div>
 
-        {/* Title + intro — writing canvas */}
-        <div className="space-y-4 px-0.5 sm:px-1">
-          <div>
-            <input
+        {/* Title fields — all original inputs kept, clearly labeled */}
+        <div className="space-y-4 rounded-2xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-5">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="mainTitle"
+              className="text-sm font-semibold text-foreground"
+            >
+              Main Title <span className="text-red-500">*</span>
+            </label>
+            <Input
               id="mainTitle"
               placeholder="Post title"
-              className={cn(
-                "w-full border-0 bg-transparent font-heading text-3xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/45 sm:text-4xl",
-                errors.mainTitle && "placeholder:text-red-400"
-              )}
+              className="h-11 rounded-lg font-heading text-base font-semibold sm:text-lg"
               {...register.mainTitle}
             />
             {errors.mainTitle?.message ? (
-              <p className="mt-1.5 text-xs font-medium text-red-500">
+              <p className="text-xs font-medium text-red-500">
                 {errors.mainTitle.message}
               </p>
             ) : null}
           </div>
 
-          <div>
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label
+                htmlFor="description1"
+                className="text-sm font-semibold text-foreground"
+              >
+                Description 1 (Short intro)
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Short summary shown in the blog list.
+              </p>
+            </div>
             <Textarea
               id="description1"
-              rows={2}
+              rows={3}
               placeholder="Write a short intro for the blog list…"
-              className="min-h-[64px] resize-none border-0 bg-transparent px-0 text-base leading-relaxed text-muted-foreground shadow-none focus-visible:ring-0"
+              className="rounded-lg"
               {...register.description1}
             />
             {errors.description1?.message ? (
@@ -212,6 +230,47 @@ export function BlogEditorWorkspace({
                 {errors.description1.message}
               </p>
             ) : null}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="seoTitle"
+                className="text-sm font-semibold text-foreground"
+              >
+                SEO Title
+              </label>
+              <Input
+                id="seoTitle"
+                placeholder="Optional SEO title"
+                className="h-10 rounded-lg"
+                {...register.seoTitle}
+              />
+              {errors.seoTitle?.message ? (
+                <p className="text-xs font-medium text-red-500">
+                  {errors.seoTitle.message}
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="seoDescription"
+                className="text-sm font-semibold text-foreground"
+              >
+                SEO Description
+              </label>
+              <Input
+                id="seoDescription"
+                placeholder="Optional SEO description"
+                className="h-10 rounded-lg"
+                {...register.seoDescription}
+              />
+              {errors.seoDescription?.message ? (
+                <p className="text-xs font-medium text-red-500">
+                  {errors.seoDescription.message}
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
 
