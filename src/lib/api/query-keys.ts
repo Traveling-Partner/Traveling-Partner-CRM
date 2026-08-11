@@ -59,6 +59,10 @@ export const queryKeys = {
   },
   audit: {
     logs: (page: number, size: number) => ["audit", "logs", { page, size }] as const
+  },
+  tax: {
+    all: ["tax"] as const,
+    list: (filters: TaxListFilters) => ["tax", "list", filters] as const
   }
 } as const;
 
@@ -125,6 +129,12 @@ export interface NewsletterSubscribersListFilters {
 }
 
 export interface VehicleListFiltersBase {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface TaxListFilters {
   page: number;
   pageSize: number;
   search: string;

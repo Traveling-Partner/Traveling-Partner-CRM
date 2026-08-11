@@ -45,14 +45,39 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+/**
+ * Data controller consumed by the view. Provided by either
+ * usePercentageManagementMock (mock pages) or a real API hook (e.g. useTaxManagement).
+ */
+export interface PercentageManagementController {
+  items: PercentageManagementItem[];
+  totalItems: number;
+  isLoading: boolean;
+  search: string;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  setPage: (page: number) => void;
+  handleSearchChange: (value: string) => void;
+  handlePageSizeChange: (value: number) => void;
+  createItem: (values: PercentageManagementFormValues) => unknown;
+  updateItem: (id: string, values: PercentageManagementFormValues) => unknown;
+  deleteItem: (id: string) => unknown;
+}
+
 export interface PercentageManagementViewProps {
   pageTitle: string;
   sectionTitle: string;
   sectionDescription: string;
   entityLabel: string;
   searchPlaceholder: string;
-  initialData: PercentageManagementItem[];
+  /** Seed data for the built-in mock controller (ignored when `controller` is set). */
+  initialData?: PercentageManagementItem[];
+  /** Real data source; when omitted the view falls back to local mock state. */
+  controller?: PercentageManagementController;
 }
+
+const EMPTY_ITEMS: PercentageManagementItem[] = [];
 
 export function PercentageManagementView({
   pageTitle,
@@ -60,9 +85,14 @@ export function PercentageManagementView({
   sectionDescription,
   entityLabel,
   searchPlaceholder,
-  initialData
+  initialData,
+  controller
 }: PercentageManagementViewProps) {
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
+  // Hook must run unconditionally; its result is ignored when a real controller is provided.
+  const mockController = usePercentageManagementMock({
+    initialData: initialData ?? EMPTY_ITEMS
+  });
   const {
     items,
     totalItems,
@@ -77,7 +107,7 @@ export function PercentageManagementView({
     createItem,
     updateItem,
     deleteItem
-  } = usePercentageManagementMock({ initialData });
+  } = controller ?? mockController;
 
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<PercentageManagementItem | null>(null);
@@ -107,7 +137,6 @@ export function PercentageManagementView({
 
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 300));
 
     const payload: PercentageManagementFormValues = {
       name: values.name,
@@ -115,27 +144,39 @@ export function PercentageManagementView({
       status: values.status
     };
 
-    if (editingItem) {
-      updateItem(editingItem.id, payload);
-      success(`${entityLabel} updated successfully.`);
-    } else {
-      createItem(payload);
-      success(`${entityLabel} created successfully.`);
+    try {
+      if (editingItem) {
+        await updateItem(editingItem.id, payload);
+        success(`${entityLabel} updated successfully.`);
+      } else {
+        await createItem(payload);
+        success(`${entityLabel} created successfully.`);
+      }
+      setShowModal(false);
+    } catch (e) {
+      showError(
+        e instanceof Error ? e.message : `Failed to save ${entityLabel.toLowerCase()}.`
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setShowModal(false);
-    setIsSubmitting(false);
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 300));
-    deleteItem(deleteTarget.id);
-    success(`${entityLabel} deleted successfully.`);
-    setDeleteTarget(null);
-    setIsSubmitting(false);
+    try {
+      await deleteItem(deleteTarget.id);
+      success(`${entityLabel} deleted successfully.`);
+      setDeleteTarget(null);
+    } catch (e) {
+      showError(
+        e instanceof Error ? e.message : `Failed to delete ${entityLabel.toLowerCase()}.`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const showEmptyState = !isLoading && totalItems === 0;
