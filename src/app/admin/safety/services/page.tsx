@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Phone, Plus, Search } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -10,6 +11,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -18,50 +20,91 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { EmergencyServiceFormDialog } from "@/components/safety-center/EmergencyServiceFormDialog";
-import { emergencyServicesSeed } from "@/mock-data/safety-center";
-import type { EmergencyService, EmergencyServiceType } from "@/types/safety-center";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { SosServiceFormDialog } from "@/components/safety-center/SosServiceFormDialog";
+import {
+  useCreateSosMutation,
+  useDeleteSosMutation,
+  useSosDirectoryQuery,
+  useUpdateSosMutation
+} from "@/hooks/queries/use-sos-directory";
+import type { SosApiRecord, SosUpsertPayload } from "@/services/sos";
 
 export default function AdminSafetyServicesPage() {
-  const { success, toast } = useToast();
-  const [services, setServices] = useState(emergencyServicesSeed);
+  const { success, error: showError, toast } = useToast();
+
   const [search, setSearch] = useState("");
-  const [type, setType] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<EmergencyService | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<SosApiRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SosApiRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return services.filter((s) => {
-      const matchQ =
-        !q ||
-        s.name.toLowerCase().includes(q) ||
-        s.city.toLowerCase().includes(q) ||
-        s.phone.includes(q);
-      const matchType = type === "all" || s.type === (type as EmergencyServiceType);
-      return matchQ && matchType;
-    });
-  }, [services, search, type]);
+  const listQuery = useSosDirectoryQuery({ page, pageSize, search });
+  const createMutation = useCreateSosMutation();
+  const updateMutation = useUpdateSosMutation();
+  const deleteMutation = useDeleteSosMutation();
 
-  const columns: ColumnDef<EmergencyService>[] = [
-    { accessorKey: "name", header: "Service" },
+  const rows = listQuery.data?.content ?? [];
+  const totalItems = listQuery.data?.totalElements ?? rows.length;
+  const totalPages = Math.max(1, listQuery.data?.totalPages ?? 1);
+
+  // Clamp page if data shrinks (e.g. last record on last page deleted)
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const handleSave = async (payload: SosUpsertPayload, id?: number) => {
+    try {
+      if (id != null) {
+        await updateMutation.mutateAsync({ id, payload });
+        success("SOS service updated successfully.");
+      } else {
+        await createMutation.mutateAsync(payload);
+        setPage(1);
+        success("SOS service created successfully.");
+      }
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to save SOS service.");
+      throw e;
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      success("SOS service deleted successfully.");
+      setDeleteTarget(null);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to delete SOS service.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const columns: ColumnDef<SosApiRecord>[] = [
     {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => row.original.type
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>
     },
-    { accessorKey: "phone", header: "Phone" },
-    { accessorKey: "city", header: "City" },
     {
-      accessorKey: "available24h",
-      header: "24h",
-      cell: ({ row }) =>
-        row.original.available24h ? (
-          <StatusBadge status="ACTIVE" />
-        ) : (
-          <StatusBadge status="INACTIVE" />
-        )
+      accessorKey: "number",
+      header: "Number",
+      cell: ({ row }) => (
+        <span className="font-mono tabular-nums">{row.original.number}</span>
+      )
+    },
+    { accessorKey: "state", header: "State" },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.status} />
     },
     {
       id: "actions",
@@ -72,8 +115,9 @@ export default function AdminSafetyServicesPage() {
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => toast(`Mock call: ${row.original.phone}`)}
+            onClick={() => toast(`Call ${row.original.name}: ${row.original.number}`)}
           >
+            <Phone className="mr-1 h-3.5 w-3.5" />
             Call
           </Button>
           <Button
@@ -91,7 +135,7 @@ export default function AdminSafetyServicesPage() {
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => setDeleteId(row.original.id)}
+            onClick={() => setDeleteTarget(row.original)}
           >
             Delete
           </Button>
@@ -104,8 +148,8 @@ export default function AdminSafetyServicesPage() {
     <AppShell title="Emergency Services" wideContent>
       <PageContainer>
         <SectionCard
-          title="Emergency services directory"
-          description="Police, ambulance, fire, roadside — mock directory."
+          title="SOS services directory"
+          description="Emergency helpline numbers by state — police, ambulance, fire, roadside."
           headerAction={
             <Button
               type="button"
@@ -114,73 +158,100 @@ export default function AdminSafetyServicesPage() {
                 setDialogOpen(true);
               }}
             >
+              <Plus className="mr-2 h-4 w-4" />
               Add service
             </Button>
           }
         >
           <div className="mb-4 flex flex-wrap gap-2">
-            <Input
-              placeholder="Search name, city, phone..."
-              className="max-w-sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="POLICE">Police</SelectItem>
-                <SelectItem value="AMBULANCE">Ambulance</SelectItem>
-                <SelectItem value="FIRE">Fire</SelectItem>
-                <SelectItem value="ROADSIDE">Roadside</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative w-full max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search name, number, state..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
           </div>
-          <DataTable columns={columns} data={filtered} />
+
+          {listQuery.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={rows}
+              getRowId={(row) => String(row.id)}
+              emptyTitle="No SOS services found"
+              emptyDescription={
+                search.trim()
+                  ? "Try adjusting your search terms."
+                  : "Get started by adding your first SOS service."
+              }
+            />
+          )}
+
+          {!listQuery.isLoading && rows.length > 0 && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-32">
+                    <SelectValue placeholder="Page size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 / page</SelectItem>
+                    <SelectItem value="10">10 / page</SelectItem>
+                    <SelectItem value="20">20 / page</SelectItem>
+                    <SelectItem value="50">50 / page</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span>
+                  Showing {totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–
+                  {Math.min(page * pageSize, totalItems)} of {totalItems}
+                </span>
+              </div>
+              <PaginationControls
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
         </SectionCard>
 
-        <EmergencyServiceFormDialog
+        <SosServiceFormDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           initial={editing}
-          onSave={(value) => {
-            if (value.id) {
-              setServices((prev) =>
-                prev.map((s) => (s.id === value.id ? { ...s, ...value, id: value.id } : s))
-              );
-              success("Service updated");
-            } else {
-              setServices((prev) => [
-                {
-                  id: `es-${Date.now()}`,
-                  name: value.name,
-                  type: value.type,
-                  phone: value.phone,
-                  city: value.city,
-                  available24h: value.available24h,
-                  notes: value.notes
-                },
-                ...prev
-              ]);
-              success("Service added");
-            }
-          }}
+          onSave={handleSave}
         />
 
         <ConfirmDialog
-          open={Boolean(deleteId)}
-          onOpenChange={(open) => !open && setDeleteId(null)}
-          title="Delete service?"
-          description="Removes from local mock directory only."
-          confirmLabel="Delete"
+          open={Boolean(deleteTarget)}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          title="Delete SOS service?"
+          description={
+            deleteTarget
+              ? `This will permanently remove "${deleteTarget.name}" (${deleteTarget.number}). This action cannot be undone.`
+              : undefined
+          }
+          confirmLabel={isDeleting ? "Deleting…" : "Delete"}
+          cancelLabel="Cancel"
           destructive
-          onConfirm={() => {
-            setServices((prev) => prev.filter((s) => s.id !== deleteId));
-            setDeleteId(null);
-            success("Service deleted");
-          }}
+          onConfirm={handleDelete}
         />
       </PageContainer>
     </AppShell>

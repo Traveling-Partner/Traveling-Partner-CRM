@@ -63,6 +63,10 @@ export const queryKeys = {
   tax: {
     all: ["tax"] as const,
     list: (filters: TaxListFilters) => ["tax", "list", filters] as const
+  },
+  sos: {
+    all: ["sos"] as const,
+    list: (filters: SosListFilters) => ["sos", "list", filters] as const
   }
 } as const;
 
@@ -135,6 +139,12 @@ export interface VehicleListFiltersBase {
 }
 
 export interface TaxListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface SosListFilters {
   page: number;
   pageSize: number;
   search: string;
