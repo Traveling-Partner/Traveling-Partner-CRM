@@ -23,10 +23,14 @@ export async function POST(request: Request) {
 
     const data = await response.json().catch(() => ({}));
     return NextResponse.json(data, { status: response.status });
-  } catch {
+  } catch (error) {
+    console.error("[api/auth/admin/login] upstream request failed", error);
+    const reason = error instanceof Error ? error.message : String(error);
+    const cause =
+      error instanceof Error && error.cause instanceof Error ? ` (${error.cause.message})` : "";
     return NextResponse.json(
-      { success: false, message: "Unable to process login request." },
-      { status: 500 }
+      { success: false, message: `Unable to process login request: ${reason}${cause}` },
+      { status: 502 }
     );
   }
 }
