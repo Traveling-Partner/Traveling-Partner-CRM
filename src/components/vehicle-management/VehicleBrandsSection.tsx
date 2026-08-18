@@ -41,7 +41,7 @@ export function VehicleBrandsSection() {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
   const [editingId, setEditingId] = useState<number | string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
@@ -49,7 +49,7 @@ export function VehicleBrandsSection() {
   const [deleting, setDeleting] = useState(false);
 
   const brandsQuery = useVehicleBrandsQuery(page, pageSize, search);
-  const typesQuery = useVehicleTypesQuery(1, 10, "");
+  const typesQuery = useVehicleTypesQuery(1, DEFAULT_VEHICLE_PAGE_SIZE, "");
 
   const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
   const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleEntity[];
