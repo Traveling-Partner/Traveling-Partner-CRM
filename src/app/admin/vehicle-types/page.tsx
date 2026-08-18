@@ -475,12 +475,12 @@ export default function VehicleTypesPage() {
         </div>
 
         <Tabs value={tab} onValueChange={(value) => setTab(value as TabValue)}>
-          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-border/60 bg-muted/50 p-1">
+          {/* <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-border/60 bg-muted/50 p-1">
             <TabsTrigger value="vehicleTypes">Vehicle Types</TabsTrigger>
             <TabsTrigger value="vehicleModels">Vehicle Models</TabsTrigger>
             <TabsTrigger value="vehicleColors">Vehicle Colors</TabsTrigger>
             <TabsTrigger value="vehicleBrands">Vehicle Brands</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
 
           <TabsContent value="vehicleTypes">
             <Card>
