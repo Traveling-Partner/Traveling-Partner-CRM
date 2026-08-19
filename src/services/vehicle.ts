@@ -19,6 +19,18 @@ export interface VehicleBrand extends VehicleEntity {
   vehicleTypeId: number | null;
 }
 
+export interface VehicleModel extends VehicleEntity {
+  vehicleTypeId: number | null;
+  brandId: number | null;
+}
+
+export interface VehicleModelVariant extends VehicleEntity {
+  vehicleTypeId: number | null;
+  brandId: number | null;
+  modelNumberId: number | null;
+  mileage: number | null;
+}
+
 interface EnvelopePage<T> {
   success?: boolean;
   statusCode?: number;
@@ -71,14 +83,14 @@ export function fetchVehicleModels(
   filters: VehicleModelsListFilters,
   opts: RequestOpts
 ) {
-  return fetchEnvelopePage<VehicleEntity>("/modelNumbers/getAll", filters, opts, "vehicle:models");
+  return fetchEnvelopePage<VehicleModel>("/modelYears/getAll", filters, opts, "vehicle:models");
 }
 
 export function fetchVehicleColors(
   filters: VehicleColorsListFilters,
   opts: RequestOpts
 ) {
-  return fetchEnvelopePage<VehicleEntity>("/colors/getAll", filters, opts, "vehicle:colors");
+  return fetchEnvelopePage<VehicleModelVariant>("/modelVariants/getAll", filters, opts, "vehicle:model-variants");
 }
 
 export function fetchVehicleBrands(
@@ -96,6 +108,18 @@ export interface VehicleTypePayload {
 
 export interface VehicleBrandPayload extends VehicleTypePayload {
   vehicleTypeId: number;
+}
+
+export interface VehicleModelPayload extends VehicleTypePayload {
+  vehicleTypeId: number;
+  brandId: number;
+}
+
+export interface VehicleModelVariantPayload extends VehicleTypePayload {
+  vehicleTypeId?: number;
+  brandId?: number;
+  modelNumberId?: number;
+  mileage?: number;
 }
 
 export async function createVehicleType(payload: VehicleTypePayload, opts: RequestOpts) {
@@ -125,8 +149,8 @@ export async function deleteVehicleType(id: number | string, opts: RequestOpts) 
   });
 }
 
-export async function createVehicleModel(payload: VehicleTypePayload, opts: RequestOpts) {
-  return fetcher(buildApiUrl("/modelNumbers/create"), {
+export async function createVehicleModel(payload: VehicleModelPayload, opts: RequestOpts) {
+  return fetcher(buildApiUrl("/modelYears/create"), {
     ...readOpts(opts, "vehicle:model-create"),
     method: "POST",
     body: JSON.stringify(payload)
@@ -135,10 +159,10 @@ export async function createVehicleModel(payload: VehicleTypePayload, opts: Requ
 
 export async function updateVehicleModel(
   id: number | string,
-  payload: VehicleTypePayload,
+  payload: VehicleModelPayload,
   opts: RequestOpts
 ) {
-  return fetcher(buildApiUrl(`/modelNumbers/update/${id}`), {
+  return fetcher(buildApiUrl(`/modelYears/update/${id}`), {
     ...readOpts(opts, "vehicle:model-update"),
     method: "PUT",
     body: JSON.stringify(payload)
@@ -146,14 +170,14 @@ export async function updateVehicleModel(
 }
 
 export async function deleteVehicleModel(id: number | string, opts: RequestOpts) {
-  return fetcher(buildApiUrl(`/modelNumbers/delete/${id}`), {
+  return fetcher(buildApiUrl(`/modelYears/delete/${id}`), {
     ...readOpts(opts, "vehicle:model-delete"),
     method: "DELETE"
   });
 }
 
-export async function createVehicleColor(payload: VehicleTypePayload, opts: RequestOpts) {
-  return fetcher(buildApiUrl("/colors/create"), {
+export async function createVehicleColor(payload: VehicleModelVariantPayload, opts: RequestOpts) {
+  return fetcher(buildApiUrl("/modelVariants/create"), {
     ...readOpts(opts, "vehicle:color-create"),
     method: "POST",
     body: JSON.stringify(payload)
@@ -162,10 +186,10 @@ export async function createVehicleColor(payload: VehicleTypePayload, opts: Requ
 
 export async function updateVehicleColor(
   id: number | string,
-  payload: VehicleTypePayload,
+  payload: VehicleModelVariantPayload,
   opts: RequestOpts
 ) {
-  return fetcher(buildApiUrl(`/colors/update/${id}`), {
+  return fetcher(buildApiUrl(`/modelVariants/update/${id}`), {
     ...readOpts(opts, "vehicle:color-update"),
     method: "PUT",
     body: JSON.stringify(payload)
@@ -173,7 +197,7 @@ export async function updateVehicleColor(
 }
 
 export async function deleteVehicleColor(id: number | string, opts: RequestOpts) {
-  return fetcher(buildApiUrl(`/colors/delete/${id}`), {
+  return fetcher(buildApiUrl(`/modelVariants/delete/${id}`), {
     ...readOpts(opts, "vehicle:color-delete"),
     method: "DELETE"
   });

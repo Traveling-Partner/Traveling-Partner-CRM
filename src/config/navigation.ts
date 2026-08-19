@@ -132,7 +132,7 @@ export const vehicleManagementGroup: SidebarGroup = {
     { label: "Vehicle Types", href: "/admin/vehicle-types", icon: Car },
     { label: "Vehicle Brands", href: "/admin/vehicle-brands", icon: Tags },
     { label: "Vehicle Models", href: "/admin/vehicle-models", icon: Layers },
-    { label: "Vehicle Colors", href: "/admin/vehicle-colors", icon: Palette },
+    { label: "Vehicle Model Variants", href: "/admin/vehicle-model-variants", icon: Palette },
   ]
 };
 
