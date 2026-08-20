@@ -27,7 +27,7 @@ export interface VehicleModel extends VehicleEntity {
 export interface VehicleModelVariant extends VehicleEntity {
   vehicleTypeId: number | null;
   brandId: number | null;
-  modelNumberId: number | null;
+  modelYearId: number | null;
   mileage: number | null;
 }
 
@@ -118,7 +118,7 @@ export interface VehicleModelPayload extends VehicleTypePayload {
 export interface VehicleModelVariantPayload extends VehicleTypePayload {
   vehicleTypeId?: number;
   brandId?: number;
-  modelNumberId?: number;
+  modelYearId?: number;
   mileage?: number;
 }
 
