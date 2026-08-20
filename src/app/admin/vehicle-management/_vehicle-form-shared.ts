@@ -30,7 +30,7 @@ export const variantSchema = z.object({
   name: z.string().trim().min(1, "Model variant name is required."),
   vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
   brandId: z.coerce.number().min(1, "Vehicle brand is required."),
-  modelNumberId: z.coerce.number().min(1, "Vehicle model is required."),
+  modelYearId: z.coerce.number().min(1, "Vehicle model is required."),
   mileage: z.coerce.number().min(0, "Mileage is required."),
   status: z.enum(STATUS_OPTIONS),
   image: z.string().trim().min(1, "Image is required.")
