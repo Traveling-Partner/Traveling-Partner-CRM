@@ -71,7 +71,7 @@ export function VehicleModelVariantsSection() {
       name: "",
       vehicleTypeId: 0,
       brandId: 0,
-      modelNumberId: 0,
+      modelYearId: 0,
       mileage: 0,
       status: "PENDING",
       image: ""
@@ -99,7 +99,7 @@ export function VehicleModelVariantsSection() {
       name: "",
       vehicleTypeId: 0,
       brandId: 0,
-      modelNumberId: 0,
+      modelYearId: 0,
       mileage: 0,
       status: "PENDING",
       image: ""
@@ -113,7 +113,7 @@ export function VehicleModelVariantsSection() {
       name: variant.name,
       vehicleTypeId: variant.vehicleTypeId ?? 0,
       brandId: variant.brandId ?? 0,
-      modelNumberId: variant.modelNumberId ?? 0,
+      modelYearId: variant?.modelYearId ?? 0,
       mileage: variant.mileage ?? 0,
       status: (variant.status as VariantForm["status"]) ?? "PENDING",
       image: variant.image ?? ""
@@ -129,7 +129,7 @@ export function VehicleModelVariantsSection() {
         name: values.name,
         vehicleTypeId: values.vehicleTypeId,
         brandId: values.brandId,
-        modelNumberId: values.modelNumberId,
+        modelYearId: values.modelYearId,
         mileage: values.mileage,
         status: values.status,
         image: values.image
@@ -242,7 +242,7 @@ export function VehicleModelVariantsSection() {
                 header: "Model",
                 render: (item: VehicleModelVariant) => {
                   const modelName = vehicleModels.find(
-                    (model) => Number(model.id) === Number(item.modelNumberId)
+                    (model) => Number(model.id) === Number(item.modelYearId)
                   )?.name;
                   return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
                 }
@@ -333,7 +333,7 @@ export function VehicleModelVariantsSection() {
                 onValueChange={(value) => {
                   field.onChange(Number(value));
                   form.setValue("brandId", 0);
-                  form.setValue("modelNumberId", 0);
+                  form.setValue("modelYearId", 0);
                 }}
               >
                 <SelectTrigger>
@@ -359,7 +359,7 @@ export function VehicleModelVariantsSection() {
                 value={field.value ? String(field.value) : ""}
                 onValueChange={(value) => {
                   field.onChange(Number(value));
-                  form.setValue("modelNumberId", 0);
+                  form.setValue("modelYearId", 0);
                 }}
                 disabled={!selectedTypeId}
               >
@@ -379,9 +379,9 @@ export function VehicleModelVariantsSection() {
             )}
           />
         </FormField>
-        <FormField label="Vehicle Model" required error={form.formState.errors.modelNumberId}>
+        <FormField label="Vehicle Model" required error={form.formState.errors.modelYearId}>
           <Controller
-            name="modelNumberId"
+            name="modelYearId"
             control={form.control}
             render={({ field }) => (
               <Select
