@@ -67,6 +67,14 @@ export const queryKeys = {
   sos: {
     all: ["sos"] as const,
     list: (filters: SosListFilters) => ["sos", "list", filters] as const
+  },
+  platformFee: {
+    all: ["platformFee"] as const,
+    list: (filters: PlatformFeeListFilters) => ["platformFee", "list", filters] as const
+  },
+  commission: {
+    all: ["commission"] as const,
+    list: (filters: CommissionListFilters) => ["commission", "list", filters] as const
   }
 } as const;
 
@@ -145,6 +153,18 @@ export interface TaxListFilters {
 }
 
 export interface SosListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface PlatformFeeListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface CommissionListFilters {
   page: number;
   pageSize: number;
   search: string;

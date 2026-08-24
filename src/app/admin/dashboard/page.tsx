@@ -40,6 +40,7 @@ import { format, parseISO } from "date-fns";
 
 const PIE_COLORS = ["#3b82f6", "#fdb813", "#f97316", "#ef4444", "#22c55e"];
 const BAR_COLORS = ["#3b82f6", "#fdb813", "#22c55e", "#ef4444", "#f97316"];
+const DRIVER_STATUS_COLORS = ["#22c55e", "#3b82f6", "#ef4444", "#f97316", "#fdb813"];
 
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color: string }>; label?: string }) {
   if (!active || !payload?.length) return null;
@@ -104,6 +105,7 @@ export default function AdminDashboardPage() {
     ],
     [driverStatusCounts]
   );
+  const driverStatusTotal = statusRows.reduce((sum, row) => sum + row.count, 0);
 
   const rideTotal = rideStatusBreakdown.reduce((sum, r) => sum + r.count, 0);
   const isAgentPerfLoading = agentsLoading || agentsFetching;
@@ -250,6 +252,57 @@ export default function AdminDashboardPage() {
                 <StatusBadge status={row.badge} />
               </div>
             ))}
+          </div>
+          <div className="border-t border-border/40">
+            <div className="flex flex-col items-center justify-center p-4">
+              <div className="h-52 w-full max-w-[260px]">
+                {isLoading ? (
+                  <Skeleton className="mx-auto h-full w-full max-w-[200px] rounded-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusRows}
+                        dataKey="count"
+                        nameKey="label"
+                        innerRadius="55%"
+                        outerRadius="85%"
+                        paddingAngle={3}
+                        strokeWidth={0}
+                      >
+                        {statusRows.map((entry, idx) => (
+                          <Cell key={entry.label} fill={DRIVER_STATUS_COLORS[idx % DRIVER_STATUS_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<PieTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              {!isLoading ? (
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                  {statusRows.map((entry, idx) => {
+                    const pct = driverStatusTotal > 0 ? Math.round((entry.count / driverStatusTotal) * 100) : 0;
+                    return (
+                      <div key={entry.label} className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 rounded-sm"
+                          style={{ backgroundColor: DRIVER_STATUS_COLORS[idx % DRIVER_STATUS_COLORS.length] }}
+                        />
+                        <span className="text-xs text-muted-foreground">{entry.label}</span>
+                        <span className="text-xs font-semibold text-foreground tabular-nums">{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              )}
+            </div>
           </div>
         </Card>
 

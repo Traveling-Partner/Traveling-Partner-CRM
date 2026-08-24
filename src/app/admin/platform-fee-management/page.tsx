@@ -1,17 +1,19 @@
 "use client";
 
 import { PercentageManagementView } from "@/components/percentage-management/PercentageManagementView";
-import { platformFeeManagementItems } from "@/mock-data/platform-fee-management";
+import { usePlatformFeeManagement } from "@/hooks/percentage-management/usePlatformFeeManagement";
 
 export default function PlatformFeeManagementPage() {
+  const controller = usePlatformFeeManagement();
+
   return (
     <PercentageManagementView
       pageTitle="Platform Fee Management"
       sectionTitle="Platform Fee Management"
-      sectionDescription="Configure platform fee percentages charged on bookings. Data is mock until API integration."
+      sectionDescription="Configure platform fee percentages charged on bookings."
       entityLabel="Platform Fee"
       searchPlaceholder="Search platform fees..."
-      initialData={platformFeeManagementItems}
+      controller={controller}
     />
   );
 }
