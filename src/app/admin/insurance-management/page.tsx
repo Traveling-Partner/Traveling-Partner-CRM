@@ -1,17 +1,19 @@
 "use client";
 
 import { PercentageManagementView } from "@/components/percentage-management/PercentageManagementView";
-import { insuranceManagementItems } from "@/mock-data/insurance-management";
+import { useInsuranceManagement } from "@/hooks/percentage-management/useInsuranceManagement";
 
 export default function InsuranceManagementPage() {
+  const controller = useInsuranceManagement();
+
   return (
     <PercentageManagementView
       pageTitle="Insurance Management"
       sectionTitle="Insurance Management"
-      sectionDescription="Configure insurance coverage rates and premiums. Data is mock until API integration."
+      sectionDescription="Configure insurance coverage rates and premiums."
       entityLabel="Insurance"
       searchPlaceholder="Search insurance plans..."
-      initialData={insuranceManagementItems}
+      controller={controller}
     />
   );
 }
