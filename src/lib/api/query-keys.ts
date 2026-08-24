@@ -63,6 +63,17 @@ export const queryKeys = {
   tax: {
     all: ["tax"] as const,
     list: (filters: TaxListFilters) => ["tax", "list", filters] as const
+<<<<<<< Updated upstream
+=======
+  },
+  sos: {
+    all: ["sos"] as const,
+    list: (filters: SosListFilters) => ["sos", "list", filters] as const
+  },
+  platformFee: {
+    all: ["platformFee"] as const,
+    list: (filters: PlatformFeeListFilters) => ["platformFee", "list", filters] as const
+>>>>>>> Stashed changes
   }
 } as const;
 
@@ -140,6 +151,21 @@ export interface TaxListFilters {
   search: string;
 }
 
+<<<<<<< Updated upstream
+=======
+export interface SosListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface PlatformFeeListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+>>>>>>> Stashed changes
 export type VehicleTypesListFilters = VehicleListFiltersBase;
 export type VehicleModelsListFilters = VehicleListFiltersBase;
 export type VehicleColorsListFilters = VehicleListFiltersBase;
