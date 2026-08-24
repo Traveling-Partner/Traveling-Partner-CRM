@@ -75,6 +75,10 @@ export const queryKeys = {
   commission: {
     all: ["commission"] as const,
     list: (filters: CommissionListFilters) => ["commission", "list", filters] as const
+  },
+  insurance: {
+    all: ["insurance"] as const,
+    list: (filters: InsuranceListFilters) => ["insurance", "list", filters] as const
   }
 } as const;
 
@@ -165,6 +169,12 @@ export interface PlatformFeeListFilters {
 }
 
 export interface CommissionListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface InsuranceListFilters {
   page: number;
   pageSize: number;
   search: string;
