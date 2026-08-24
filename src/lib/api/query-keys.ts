@@ -71,6 +71,10 @@ export const queryKeys = {
   platformFee: {
     all: ["platformFee"] as const,
     list: (filters: PlatformFeeListFilters) => ["platformFee", "list", filters] as const
+  },
+  commission: {
+    all: ["commission"] as const,
+    list: (filters: CommissionListFilters) => ["commission", "list", filters] as const
   }
 } as const;
 
@@ -155,6 +159,12 @@ export interface SosListFilters {
 }
 
 export interface PlatformFeeListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface CommissionListFilters {
   page: number;
   pageSize: number;
   search: string;
