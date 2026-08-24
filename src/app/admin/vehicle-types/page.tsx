@@ -76,6 +76,8 @@ interface VehicleTypesApiResponse {
 interface VehicleModel {
   id: number | string;
   name: string;
+  vehicleTypeId: number | null;
+  brandId: number | null;
   status: string | null;
   image: string | null;
 }
@@ -172,6 +174,8 @@ const vehicleTypeSchema = z.object({
 
 const modelSchema = z.object({
   name: z.string().trim().min(1, "Model name is required."),
+  vehicleTypeId: z.coerce.number().min(1, "Vehicle type is required."),
+  brandId: z.coerce.number().min(1, "Vehicle brand is required."),
   status: z.enum(STATUS_OPTIONS),
   image: z.string().trim().min(1, "Image is required.")
 });
@@ -256,8 +260,13 @@ export default function VehicleTypesPage() {
 
   const modelForm = useForm<ModelForm>({
     resolver: zodResolver(modelSchema),
-    defaultValues: { name: "", status: "PENDING", image: "" }
+    defaultValues: { name: "", vehicleTypeId: 0, brandId: 0, status: "PENDING", image: "" }
   });
+
+  const selectedModelTypeId = modelForm.watch("vehicleTypeId");
+  const brandsForModelType = vehicleBrands.filter(
+    (brand) => Number(brand.vehicleTypeId) === Number(selectedModelTypeId)
+  );
 
   const colorForm = useForm<ColorForm>({
     resolver: zodResolver(colorSchema),
@@ -287,7 +296,7 @@ export default function VehicleTypesPage() {
 
   const openAddModel = () => {
     setEditingModelId(null);
-    modelForm.reset({ name: "", status: "PENDING", image: "" });
+    modelForm.reset({ name: "", vehicleTypeId: 0, brandId: 0, status: "PENDING", image: "" });
     setShowModelModal(true);
   };
 
@@ -295,6 +304,8 @@ export default function VehicleTypesPage() {
     setEditingModelId(model.id);
     modelForm.reset({
       name: model.name,
+      vehicleTypeId: model.vehicleTypeId ?? 0,
+      brandId: model.brandId ?? 0,
       status: (model.status as ModelForm["status"]) ?? "PENDING",
       image: model.image ?? ""
     });
@@ -363,7 +374,13 @@ export default function VehicleTypesPage() {
     if (!token) return;
     setModelSubmitting(true);
     try {
-      const payload = { name: values.name, status: values.status, image: values.image };
+      const payload = {
+        name: values.name,
+        vehicleTypeId: values.vehicleTypeId,
+        brandId: values.brandId,
+        status: values.status,
+        image: values.image
+      };
       if (editingModelId) {
         await updateVehicleModel(editingModelId, payload, { token });
         success("Vehicle model updated successfully.");
@@ -475,12 +492,12 @@ export default function VehicleTypesPage() {
         </div>
 
         <Tabs value={tab} onValueChange={(value) => setTab(value as TabValue)}>
-          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-border/60 bg-muted/50 p-1">
+          {/* <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-border/60 bg-muted/50 p-1">
             <TabsTrigger value="vehicleTypes">Vehicle Types</TabsTrigger>
             <TabsTrigger value="vehicleModels">Vehicle Models</TabsTrigger>
             <TabsTrigger value="vehicleColors">Vehicle Colors</TabsTrigger>
             <TabsTrigger value="vehicleBrands">Vehicle Brands</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
 
           <TabsContent value="vehicleTypes">
             <Card>
@@ -927,12 +944,64 @@ export default function VehicleTypesPage() {
         open={showModelModal}
         onOpenChange={setShowModelModal}
         title={editingModelId ? "Edit Vehicle Model" : "Add Vehicle Model"}
-        description="Add or update model entries."
+        description="Map a model to a vehicle type and brand."
         submitLabel={modelSubmitting ? (editingModelId ? "Updating…" : "Creating…") : editingModelId ? "Update Model" : "Create Model"}
         isSubmitting={modelSubmitting}
         onCancel={() => setShowModelModal(false)}
         onSubmit={() => void modelForm.handleSubmit(submitModel)()}
       >
+        <FormField label="Vehicle Type" required error={modelForm.formState.errors.vehicleTypeId}>
+          <Controller
+            name="vehicleTypeId"
+            control={modelForm.control}
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => {
+                  field.onChange(Number(value));
+                  modelForm.setValue("brandId", 0);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select vehicle type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicleTypes.map((type) => (
+                    <SelectItem key={type.id} value={String(type.id)}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Vehicle Brand" required error={modelForm.formState.errors.brandId}>
+          <Controller
+            name="brandId"
+            control={modelForm.control}
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={!selectedModelTypeId}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={selectedModelTypeId ? "Select vehicle brand" : "Select vehicle type first"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {brandsForModelType.map((brand) => (
+                    <SelectItem key={brand.id} value={String(brand.id)}>
+                      {brand.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
         <FormField label="Model Name" required error={modelForm.formState.errors.name}>
           <Input placeholder="e.g., Corolla 2022" {...modelForm.register("name")} />
         </FormField>

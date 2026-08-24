@@ -6,9 +6,14 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useAuthToken } from "@/hooks/api/use-auth-token";
-import { useVehicleBrandsQuery, useVehicleModelsQuery, useVehicleTypesQuery } from "@/hooks/queries";
-import { createVehicleModel, deleteVehicleModel, updateVehicleModel } from "@/services/vehicle";
-import type { VehicleBrand, VehicleEntity, VehicleModel } from "@/services/vehicle";
+import {
+  useVehicleBrandsQuery,
+  useVehicleColorsQuery,
+  useVehicleModelsQuery,
+  useVehicleTypesQuery
+} from "@/hooks/queries";
+import { createVehicleColor, deleteVehicleColor, updateVehicleColor } from "@/services/vehicle";
+import type { VehicleBrand, VehicleEntity, VehicleModel, VehicleModelVariant } from "@/services/vehicle";
 import { FormField } from "@/components/common/FormField";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
 import { ImageUploadField } from "@/components/vehicle-management/ImageUploadField";
@@ -30,11 +35,11 @@ import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
   STATUS_OPTIONS,
-  modelSchema,
-  type ModelForm
+  variantSchema,
+  type VariantForm
 } from "@/app/admin/vehicle-management/_vehicle-form-shared";
 
-export function VehicleModelsSection() {
+export function VehicleModelVariantsSection() {
   const { success, error } = useToast();
   const token = useAuthToken();
   const queryClient = useQueryClient();
@@ -48,49 +53,75 @@ export function VehicleModelsSection() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const modelsQuery = useVehicleModelsQuery(page, pageSize, search);
+  const variantsQuery = useVehicleColorsQuery(page, pageSize, search);
   const typesQuery = useVehicleTypesQuery(1, 100, "");
   const brandsQuery = useVehicleBrandsQuery(1, 100, "");
+  const modelsQuery = useVehicleModelsQuery(1, 100, "");
 
-  const vehicleModels = (modelsQuery.data?.content ?? []) as VehicleModel[];
+  const vehicleModelVariants = (variantsQuery.data?.content ?? []) as VehicleModelVariant[];
   const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleEntity[];
   const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
-  const totalPages = modelsQuery.data?.totalPages ?? 1;
-  const loading = modelsQuery.isLoading || modelsQuery.isFetching;
+  const vehicleModels = (modelsQuery.data?.content ?? []) as VehicleModel[];
+  const totalPages = variantsQuery.data?.totalPages ?? 1;
+  const loading = variantsQuery.isLoading || variantsQuery.isFetching;
 
-  const form = useForm<ModelForm>({
-    resolver: zodResolver(modelSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, brandId: 0, status: "PENDING", image: "" }
+  const form = useForm<VariantForm>({
+    resolver: zodResolver(variantSchema),
+    defaultValues: {
+      name: "",
+      vehicleTypeId: 0,
+      brandId: 0,
+      modelYearId: 0,
+      mileage: 0,
+      status: "PENDING",
+      image: ""
+    }
   });
 
   const selectedTypeId = form.watch("vehicleTypeId");
+  const selectedBrandId = form.watch("brandId");
   const brandsForType = vehicleBrands.filter(
     (brand) => Number(brand.vehicleTypeId) === Number(selectedTypeId)
   );
+  const modelsForBrand = vehicleModels.filter(
+    (model) =>
+      Number(model.vehicleTypeId) === Number(selectedTypeId) &&
+      Number(model.brandId) === Number(selectedBrandId)
+  );
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["vehicle", "models"] });
+    await queryClient.invalidateQueries({ queryKey: ["vehicle", "colors"] });
   };
 
   const openAdd = () => {
     setEditingId(null);
-    form.reset({ name: "", vehicleTypeId: 0, brandId: 0, status: "PENDING", image: "" });
-    setShowModal(true);
-  };
-
-  const openEdit = (model: VehicleModel) => {
-    setEditingId(model.id);
     form.reset({
-      name: model.name,
-      vehicleTypeId: model.vehicleTypeId ?? 0,
-      brandId: model.brandId ?? 0,
-      status: (model.status as ModelForm["status"]) ?? "PENDING",
-      image: model.image ?? ""
+      name: "",
+      vehicleTypeId: 0,
+      brandId: 0,
+      modelYearId: 0,
+      mileage: 0,
+      status: "PENDING",
+      image: ""
     });
     setShowModal(true);
   };
 
-  const submit = async (values: ModelForm) => {
+  const openEdit = (variant: VehicleModelVariant) => {
+    setEditingId(variant.id);
+    form.reset({
+      name: variant.name,
+      vehicleTypeId: variant.vehicleTypeId ?? 0,
+      brandId: variant.brandId ?? 0,
+      modelYearId: variant?.modelYearId ?? 0,
+      mileage: variant.mileage ?? 0,
+      status: (variant.status as VariantForm["status"]) ?? "PENDING",
+      image: variant.image ?? ""
+    });
+    setShowModal(true);
+  };
+
+  const submit = async (values: VariantForm) => {
     if (!token) return;
     setSubmitting(true);
     try {
@@ -98,20 +129,22 @@ export function VehicleModelsSection() {
         name: values.name,
         vehicleTypeId: values.vehicleTypeId,
         brandId: values.brandId,
+        modelYearId: values.modelYearId,
+        mileage: values.mileage,
         status: values.status,
         image: values.image
       };
       if (editingId) {
-        await updateVehicleModel(editingId, payload, { token });
-        success("Vehicle model updated successfully.");
+        await updateVehicleColor(editingId, payload, { token });
+        success("Vehicle model variant updated successfully.");
       } else {
-        await createVehicleModel(payload, { token });
-        success("Vehicle model created successfully.");
+        await createVehicleColor(payload, { token });
+        success("Vehicle model variant created successfully.");
       }
       setShowModal(false);
       await invalidate();
     } catch (err) {
-      error(err instanceof Error ? err.message : "Failed to save vehicle model.");
+      error(err instanceof Error ? err.message : "Failed to save vehicle model variant.");
     } finally {
       setSubmitting(false);
     }
@@ -121,8 +154,8 @@ export function VehicleModelsSection() {
     if (!deleteTarget || !token) return;
     setDeleting(true);
     try {
-      await deleteVehicleModel(deleteTarget.id, { token });
-      success("Vehicle model deleted successfully.");
+      await deleteVehicleColor(deleteTarget.id, { token });
+      success("Vehicle model variant deleted successfully.");
       setDeleteTarget(null);
       await invalidate();
     } catch (err) {
@@ -138,14 +171,14 @@ export function VehicleModelsSection() {
       <Card>
         <CardHeader className="flex flex-col gap-3 border-b border-border/50 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Vehicle Models</CardTitle>
+            <CardTitle>Vehicle Model Variants</CardTitle>
             <p className="text-xs text-muted-foreground sm:text-sm">
-              Model years for marketplace availability.
+              Manage vehicle model variants mapped to models.
             </p>
           </div>
           <Button onClick={openAdd}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Model
+            Add Model Variant
           </Button>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
@@ -158,21 +191,21 @@ export function VehicleModelsSection() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Search model..."
+                placeholder="Search model variant..."
                 className="pl-9"
               />
             </div>
           </div>
           <ManagementTable
             isLoading={loading}
-            rows={vehicleModels}
-            emptyLabel="No models found."
+            rows={vehicleModelVariants}
+            emptyLabel="No model variants found."
             columns={[
               {
                 key: "image",
                 header: "Image",
                 className: "w-[80px]",
-                render: (item: VehicleModel) =>
+                render: (item: VehicleModelVariant) =>
                   item.image ? (
                     <img src={item.image} alt={item.name} className="h-10 w-16 rounded object-contain" />
                   ) : (
@@ -181,13 +214,13 @@ export function VehicleModelsSection() {
               },
               {
                 key: "name",
-                header: "Name",
-                render: (item: VehicleModel) => <span className="font-medium">{item.name}</span>
+                header: "Variant",
+                render: (item: VehicleModelVariant) => <span className="font-medium">{item.name}</span>
               },
               {
                 key: "vehicleType",
                 header: "Vehicle Type",
-                render: (item: VehicleModel) => {
+                render: (item: VehicleModelVariant) => {
                   const typeName = vehicleTypes.find(
                     (type) => Number(type.id) === Number(item.vehicleTypeId)
                   )?.name;
@@ -197,7 +230,7 @@ export function VehicleModelsSection() {
               {
                 key: "brand",
                 header: "Brand",
-                render: (item: VehicleModel) => {
+                render: (item: VehicleModelVariant) => {
                   const brandName = vehicleBrands.find(
                     (brand) => Number(brand.id) === Number(item.brandId)
                   )?.name;
@@ -205,9 +238,28 @@ export function VehicleModelsSection() {
                 }
               },
               {
+                key: "model",
+                header: "Model",
+                render: (item: VehicleModelVariant) => {
+                  const modelName = vehicleModels.find(
+                    (model) => Number(model.id) === Number(item.modelYearId)
+                  )?.name;
+                  return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
+                }
+              },
+              {
+                key: "mileage",
+                header: "Mileage",
+                render: (item: VehicleModelVariant) => (
+                  <span className="text-xs text-muted-foreground">
+                    {item.mileage != null ? item.mileage : "—"}
+                  </span>
+                )
+              },
+              {
                 key: "status",
                 header: "Status",
-                render: (item: VehicleModel) => (
+                render: (item: VehicleModelVariant) => (
                   <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
                     {item.status ?? "—"}
                   </span>
@@ -217,7 +269,7 @@ export function VehicleModelsSection() {
                 key: "actions",
                 header: "Actions",
                 className: "w-[140px]",
-                render: (item: VehicleModel) => (
+                render: (item: VehicleModelVariant) => (
                   <div className="flex items-center gap-2">
                     <Button
                       size="icon"
@@ -256,16 +308,16 @@ export function VehicleModelsSection() {
       <EntityModal
         open={showModal}
         onOpenChange={setShowModal}
-        title={editingId ? "Edit Vehicle Model" : "Add Vehicle Model"}
-        description="Map a model to a vehicle type and brand."
+        title={editingId ? "Edit Vehicle Model Variant" : "Add Vehicle Model Variant"}
+        description="Map a variant to a vehicle type, brand, and model."
         submitLabel={
           submitting
             ? editingId
               ? "Updating…"
               : "Creating…"
             : editingId
-              ? "Update Model"
-              : "Create Model"
+              ? "Update Variant"
+              : "Create Variant"
         }
         isSubmitting={submitting}
         onCancel={() => setShowModal(false)}
@@ -281,6 +333,7 @@ export function VehicleModelsSection() {
                 onValueChange={(value) => {
                   field.onChange(Number(value));
                   form.setValue("brandId", 0);
+                  form.setValue("modelYearId", 0);
                 }}
               >
                 <SelectTrigger>
@@ -304,7 +357,10 @@ export function VehicleModelsSection() {
             render={({ field }) => (
               <Select
                 value={field.value ? String(field.value) : ""}
-                onValueChange={(value) => field.onChange(Number(value))}
+                onValueChange={(value) => {
+                  field.onChange(Number(value));
+                  form.setValue("modelYearId", 0);
+                }}
                 disabled={!selectedTypeId}
               >
                 <SelectTrigger>
@@ -323,8 +379,43 @@ export function VehicleModelsSection() {
             )}
           />
         </FormField>
-        <FormField label="Model Name" required error={form.formState.errors.name}>
-          <Input placeholder="e.g., Corolla 2022" {...form.register("name")} />
+        <FormField label="Vehicle Model" required error={form.formState.errors.modelYearId}>
+          <Controller
+            name="modelYearId"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={!selectedBrandId}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={selectedBrandId ? "Select vehicle model" : "Select vehicle brand first"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelsForBrand.map((model) => (
+                    <SelectItem key={model.id} value={String(model.id)}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FormField>
+        <FormField label="Model Variant" required error={form.formState.errors.name}>
+          <Input placeholder="e.g., GLI 1.8" {...form.register("name")} />
+        </FormField>
+        <FormField label="Mileage" required error={form.formState.errors.mileage}>
+          <Input
+            type="number"
+            min={0}
+            step={1}
+            placeholder="e.g., 15000"
+            {...form.register("mileage", { valueAsNumber: true })}
+          />
         </FormField>
         <FormField label="Status" required error={form.formState.errors.status}>
           <Controller
@@ -348,7 +439,7 @@ export function VehicleModelsSection() {
         </FormField>
         <FormField label="Image" required error={form.formState.errors.image}>
           <ImageUploadField
-            id="model-image-upload"
+            id="variant-image-upload"
             value={form.watch("image")}
             onChange={(url) => form.setValue("image", url, { shouldValidate: true })}
             token={token}
@@ -360,7 +451,7 @@ export function VehicleModelsSection() {
         open={Boolean(deleteTarget)}
         deleting={deleting}
         recordName={deleteTarget?.name}
-        entityLabel="vehicle model"
+        entityLabel="vehicle model variant"
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}
       />
