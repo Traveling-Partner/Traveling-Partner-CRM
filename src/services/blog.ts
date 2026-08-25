@@ -15,6 +15,7 @@ export interface BlogUpsertPayload {
   readTime: string;
   tags: string[];
   categoryId: number;
+  categoryName: string;
 }
 
 export interface BlogCategory {

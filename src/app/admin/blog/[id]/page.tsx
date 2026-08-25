@@ -15,10 +15,9 @@ import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import {
   getBlogById,
-  updateBlog,
-  getAllBlogCategories,
-  type BlogCategory
+  updateBlog
 } from "@/services/blog";
+import { BLOG_CATEGORIES, resolveBlogCategoryId } from "@/lib/blog-categories";
 import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
@@ -47,7 +46,6 @@ export default function AdminBlogEditPage() {
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
 
   const {
     register,
@@ -65,7 +63,7 @@ export default function AdminBlogEditPage() {
       description2: "",
       date: new Date().toISOString().slice(0, 10),
       author: "Admin",
-      categoryId: 1,
+      categoryId: BLOG_CATEGORIES[0]?.id ?? 1,
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
@@ -77,22 +75,6 @@ export default function AdminBlogEditPage() {
   const description1 = watch("description1") ?? "";
   const categoryId = watch("categoryId");
   const date = watch("date");
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadCategories = async () => {
-      try {
-        const list = await getAllBlogCategories(token);
-        if (!cancelled) setCategories(list);
-      } catch {
-        if (!cancelled) setCategories([]);
-      }
-    };
-    void loadCategories();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
 
   useEffect(() => {
     if (!Number.isFinite(idNum)) {
@@ -124,7 +106,7 @@ export default function AdminBlogEditPage() {
           description2: desc2,
           date: dateStr,
           author: row.author ?? "Admin",
-          categoryId: row.categoryId ?? 1,
+          categoryId: resolveBlogCategoryId(row.categoryId, row.categoryName),
           tagsText: (row.tags ?? []).join(", "),
           seoTitle: row.seoTitle ?? "",
           seoDescription: row.seoDescription ?? "",
@@ -242,7 +224,7 @@ export default function AdminBlogEditPage() {
           submitting={submitting}
           coverUploading={coverUploading}
           imagePreview={imagePreview}
-          categories={categories}
+          categories={BLOG_CATEGORIES}
           mainTitle={mainTitle}
           description1={description1}
           author={watch("author")}
