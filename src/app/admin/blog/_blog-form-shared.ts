@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { BlogUpsertPayload } from "@/services/blog";
+import { getBlogCategoryName } from "@/lib/blog-categories";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 export const blogEditorSchema = z.object({
@@ -40,7 +41,8 @@ export function buildBlogUpsertPayload(
     // API still expects readTime — store relative post age from the post date
     readTime: formatRelativePostTime(values.date),
     tags,
-    categoryId: values.categoryId
+    categoryId: values.categoryId,
+    categoryName: getBlogCategoryName(values.categoryId)
   };
 }
 
