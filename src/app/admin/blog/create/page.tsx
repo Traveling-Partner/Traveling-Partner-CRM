@@ -11,7 +11,7 @@ import { BlogEditorWorkspace } from "@/components/blog/BlogEditorWorkspace";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import { createBlog } from "@/services/blog";
-import { BLOG_CATEGORIES, DEFAULT_BLOG_CATEGORY_ID } from "@/lib/blog-categories";
+import { BLOG_CATEGORIES, toggleCategoryName } from "@/lib/blog-categories";
 import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
@@ -53,7 +53,7 @@ export default function AdminBlogCreatePage() {
       description2: "",
       date: new Date().toISOString().slice(0, 10),
       author: authUser?.name || "Admin",
-      categoryId: DEFAULT_BLOG_CATEGORY_ID,
+      categoryNames: [],
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
@@ -64,7 +64,7 @@ export default function AdminBlogCreatePage() {
 
   const mainTitle = watch("mainTitle");
   const description1 = watch("description1") ?? "";
-  const categoryId = watch("categoryId");
+  const categoryNames = watch("categoryNames") ?? [];
   const date = watch("date");
 
   const submitWithStatus = async (
@@ -143,7 +143,7 @@ export default function AdminBlogCreatePage() {
           author={watch("author")}
           tagsText={watch("tagsText") ?? ""}
           date={date}
-          categoryId={categoryId}
+          categoryNames={categoryNames}
           errors={errors}
           register={{
             coverImage: register("coverImage"),
@@ -155,8 +155,11 @@ export default function AdminBlogCreatePage() {
             seoTitle: register("seoTitle"),
             seoDescription: register("seoDescription")
           }}
-          onCategoryChange={(id) =>
-            setValue("categoryId", id, { shouldValidate: true })
+          onCategoryToggle={(name) =>
+            setValue("categoryNames", toggleCategoryName(categoryNames, name), {
+              shouldValidate: true,
+              shouldDirty: true
+            })
           }
           onImageChange={onImageChange}
           onSaveDraft={() => void saveDraft()}

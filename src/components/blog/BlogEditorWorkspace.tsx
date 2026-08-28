@@ -18,13 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 import type { BlogCategory } from "@/services/blog";
@@ -42,12 +35,12 @@ export interface BlogEditorWorkspaceProps {
   author: string;
   tagsText: string;
   date: string;
-  categoryId: number;
+  categoryNames: string[];
   errors: {
     mainTitle?: FieldError;
     description1?: FieldError;
     author?: FieldError;
-    categoryId?: FieldError;
+    categoryNames?: FieldError;
     description2?: FieldError;
     seoTitle?: FieldError;
     seoDescription?: FieldError;
@@ -62,7 +55,7 @@ export interface BlogEditorWorkspaceProps {
     seoTitle: object;
     seoDescription: object;
   };
-  onCategoryChange: (id: number) => void;
+  onCategoryToggle: (name: string) => void;
   onImageChange: ChangeEventHandler<HTMLInputElement>;
   onSaveDraft: () => void;
   onPublish: () => void;
@@ -80,10 +73,10 @@ export function BlogEditorWorkspace({
   mainTitle,
   description1,
   date,
-  categoryId,
+  categoryNames,
   errors,
   register,
-  onCategoryChange,
+  onCategoryToggle,
   onImageChange,
   onSaveDraft,
   onPublish,
@@ -291,29 +284,35 @@ export function BlogEditorWorkspace({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
               <label className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground">
                 <Tag className="h-3 w-3" />
-                Category
+                Categories
               </label>
-              <Select
-                value={String(categoryId)}
-                onValueChange={(value) => onCategoryChange(Number(value))}
-              >
-                <SelectTrigger className="h-9 rounded-lg">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={String(category.id)}>
+              <div className="flex flex-wrap gap-2 rounded-lg border border-border/70 bg-background p-2">
+                {categories.map((category) => {
+                  const selected = categoryNames.includes(category.name);
+                  return (
+                    <button
+                      key={category.name}
+                      type="button"
+                      onClick={() => onCategoryToggle(category.name)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-medium transition",
+                        selected
+                          ? "border-[#fdb813]/60 bg-[var(--brand-light)] text-foreground shadow-sm"
+                          : "border-border/70 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                      )}
+                    >
                       {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.categoryId?.message ? (
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-2xs text-muted-foreground">Select one or more. Saved as text, no ID.</p>
+              {errors.categoryNames?.message ? (
                 <p className="text-2xs font-medium text-red-500">
-                  {errors.categoryId.message}
+                  {errors.categoryNames.message}
                 </p>
               ) : null}
             </div>
