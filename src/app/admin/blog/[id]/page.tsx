@@ -17,7 +17,7 @@ import {
   getBlogById,
   updateBlog
 } from "@/services/blog";
-import { BLOG_CATEGORIES, resolveBlogCategoryId } from "@/lib/blog-categories";
+import { BLOG_CATEGORIES, parseCategoryNames, toggleCategoryName } from "@/lib/blog-categories";
 import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
@@ -65,7 +65,7 @@ export default function AdminBlogEditPage() {
       description2: "",
       date: new Date().toISOString().slice(0, 10),
       author: "Admin",
-      categoryId: BLOG_CATEGORIES[0]?.id ?? 1,
+      categoryNames: [],
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
@@ -76,7 +76,7 @@ export default function AdminBlogEditPage() {
 
   const mainTitle = watch("mainTitle");
   const description1 = watch("description1") ?? "";
-  const categoryId = watch("categoryId");
+  const categoryNames = watch("categoryNames") ?? [];
   const date = watch("date");
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function AdminBlogEditPage() {
           description2: desc2,
           date: dateStr,
           author: row.author ?? "Admin",
-          categoryId: resolveBlogCategoryId(row.categoryId, row.categoryName),
+          categoryNames: parseCategoryNames(row.categoryName),
           tagsText: (row.tags ?? []).join(", "),
           seoTitle: row.seoTitle ?? "",
           seoDescription: row.seoDescription ?? "",
@@ -234,7 +234,7 @@ export default function AdminBlogEditPage() {
           author={watch("author")}
           tagsText={watch("tagsText") ?? ""}
           date={date}
-          categoryId={categoryId}
+          categoryNames={categoryNames}
           errors={errors}
           register={{
             coverImage: register("coverImage"),
@@ -246,8 +246,11 @@ export default function AdminBlogEditPage() {
             seoTitle: register("seoTitle"),
             seoDescription: register("seoDescription")
           }}
-          onCategoryChange={(id) =>
-            setValue("categoryId", id, { shouldValidate: true })
+          onCategoryToggle={(name) =>
+            setValue("categoryNames", toggleCategoryName(categoryNames, name), {
+              shouldValidate: true,
+              shouldDirty: true
+            })
           }
           onImageChange={onImageChange}
           onSaveDraft={() => void saveDraft()}

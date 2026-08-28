@@ -1,6 +1,6 @@
 import type { BlogCategory } from "@/services/blog";
 
-/** Frontend-owned blog categories. Sent with create/update as categoryId + categoryName. */
+/** Frontend-owned blog category names. Sent as a comma-separated string (no IDs). */
 export const BLOG_CATEGORIES: BlogCategory[] = [
   { id: 1, name: "Booking" },
   { id: 2, name: "Rides" },
@@ -16,20 +16,24 @@ export const BLOG_CATEGORIES: BlogCategory[] = [
   { id: 12, name: "Pool Ride" }
 ];
 
-export const DEFAULT_BLOG_CATEGORY_ID = BLOG_CATEGORIES[0]?.id ?? 1;
-
-export function getBlogCategoryName(id: number): string {
-  return BLOG_CATEGORIES.find((category) => category.id === id)?.name ?? BLOG_CATEGORIES[0]?.name ?? "";
+export function joinCategoryNames(names: string[]): string {
+  return names.map((name) => name.trim()).filter(Boolean).join(", ");
 }
 
-export function resolveBlogCategoryId(categoryId?: number | null, categoryName?: string | null): number {
-  const byName = categoryName?.trim().toLowerCase();
-  if (byName) {
-    const match = BLOG_CATEGORIES.find((category) => category.name.toLowerCase() === byName);
-    if (match) return match.id;
+export function parseCategoryNames(value?: string | null): string[] {
+  if (!value?.trim()) return [];
+  const allowed = new Set(BLOG_CATEGORIES.map((category) => category.name.toLowerCase()));
+  return value
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .filter((name) => allowed.has(name.toLowerCase()))
+    .map((name) => BLOG_CATEGORIES.find((category) => category.name.toLowerCase() === name.toLowerCase())?.name ?? name);
+}
+
+export function toggleCategoryName(selected: string[], name: string): string[] {
+  if (selected.includes(name)) {
+    return selected.filter((item) => item !== name);
   }
-  if (typeof categoryId === "number" && BLOG_CATEGORIES.some((category) => category.id === categoryId)) {
-    return categoryId;
-  }
-  return DEFAULT_BLOG_CATEGORY_ID;
+  return [...selected, name];
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { BlogUpsertPayload } from "@/services/blog";
-import { getBlogCategoryName } from "@/lib/blog-categories";
+import { joinCategoryNames } from "@/lib/blog-categories";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 export const blogEditorSchema = z.object({
@@ -10,7 +10,7 @@ export const blogEditorSchema = z.object({
   description2: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   author: z.string().min(2, "Author is required"),
-  categoryId: z.coerce.number().int().positive("Category ID must be greater than 0"),
+  categoryNames: z.array(z.string().trim().min(1)).min(1, "Select at least one category"),
   tagsText: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
@@ -57,8 +57,7 @@ export function buildBlogUpsertPayload(
     // API still expects readTime — store relative post age from the post date
     readTime: formatRelativePostTime(values.date),
     tags,
-    categoryId: values.categoryId,
-    categoryName: getBlogCategoryName(values.categoryId),
+    categoryName: joinCategoryNames(values.categoryNames),
     ...(faqs.length > 0 ? { faqs } : {})
   };
 }
