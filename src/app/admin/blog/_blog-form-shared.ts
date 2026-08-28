@@ -14,7 +14,15 @@ export const blogEditorSchema = z.object({
   tagsText: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED"])
+  status: z.enum(["DRAFT", "PUBLISHED"]),
+  faqs: z
+    .array(
+      z.object({
+        question: z.string().optional(),
+        answer: z.string().optional()
+      })
+    )
+    .optional()
 });
 
 export type BlogEditorFormValues = z.infer<typeof blogEditorSchema>;
@@ -27,6 +35,14 @@ export function buildBlogUpsertPayload(
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
+
+  const faqs = (values.faqs ?? [])
+    .map((item, index) => ({
+      question: (item.question ?? "").trim(),
+      answer: (item.answer ?? "").trim(),
+      sortOrder: index + 1
+    }))
+    .filter((item) => item.question.length > 0 && item.answer.length > 0);
 
   return {
     coverImage: values.coverImage.trim(),
@@ -42,8 +58,19 @@ export function buildBlogUpsertPayload(
     readTime: formatRelativePostTime(values.date),
     tags,
     categoryId: values.categoryId,
-    categoryName: getBlogCategoryName(values.categoryId)
+    categoryName: getBlogCategoryName(values.categoryId),
+    ...(faqs.length > 0 ? { faqs } : {})
   };
+}
+
+export function faqsFromApi(faqs: BlogUpsertPayload["faqs"] | null | undefined) {
+  if (!Array.isArray(faqs) || faqs.length === 0) return [];
+  return [...faqs]
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .map((item) => ({
+      question: item.question ?? "",
+      answer: item.answer ?? ""
+    }));
 }
 
 export function normalizeBlogStatusForForm(api: string | null | undefined): "DRAFT" | "PUBLISHED" {

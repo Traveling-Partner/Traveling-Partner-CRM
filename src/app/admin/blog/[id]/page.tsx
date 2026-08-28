@@ -23,6 +23,7 @@ import {
   blogEditorSchema,
   type BlogEditorFormValues,
   buildBlogUpsertPayload,
+  faqsFromApi,
   normalizeBlogStatusForForm
 } from "@/app/admin/blog/_blog-form-shared";
 
@@ -53,6 +54,7 @@ export default function AdminBlogEditPage() {
     setValue,
     watch,
     reset,
+    control,
     formState: { errors }
   } = useForm<BlogEditorFormValues>({
     resolver: zodResolver(blogEditorSchema),
@@ -67,7 +69,8 @@ export default function AdminBlogEditPage() {
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
-      status: "DRAFT"
+      status: "DRAFT",
+      faqs: []
     }
   });
 
@@ -110,7 +113,8 @@ export default function AdminBlogEditPage() {
           tagsText: (row.tags ?? []).join(", "),
           seoTitle: row.seoTitle ?? "",
           seoDescription: row.seoDescription ?? "",
-          status: normalizeBlogStatusForForm(row.status)
+          status: normalizeBlogStatusForForm(row.status),
+          faqs: faqsFromApi(row.faqs)
         });
         setDescription2(desc2);
         setImagePreview(row.coverImage?.trim() || "/mock-images/blog-cover.svg");
@@ -248,6 +252,7 @@ export default function AdminBlogEditPage() {
           onImageChange={onImageChange}
           onSaveDraft={() => void saveDraft()}
           onPublish={() => void publish()}
+          control={control}
           editor={
             <LazyBlogRichEditor
               key={idNum}

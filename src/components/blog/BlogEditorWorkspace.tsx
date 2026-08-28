@@ -2,12 +2,17 @@
 
 import { useId, type ChangeEventHandler, type ReactNode } from "react";
 import Link from "next/link";
+import { useFieldArray, type Control, type FieldError } from "react-hook-form";
 import {
   ArrowLeft,
   CalendarDays,
+  ChevronDown,
+  HelpCircle,
   ImagePlus,
   Loader2,
+  Plus,
   Tag,
+  Trash2,
   UserRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 import type { BlogCategory } from "@/services/blog";
-import type { FieldError } from "react-hook-form";
+import type { BlogEditorFormValues } from "@/app/admin/blog/_blog-form-shared";
 
 export interface BlogEditorWorkspaceProps {
   mode: "create" | "edit";
@@ -62,6 +67,7 @@ export interface BlogEditorWorkspaceProps {
   onSaveDraft: () => void;
   onPublish: () => void;
   editor: ReactNode;
+  control: Control<BlogEditorFormValues>;
 }
 
 export function BlogEditorWorkspace({
@@ -81,9 +87,11 @@ export function BlogEditorWorkspace({
   onImageChange,
   onSaveDraft,
   onPublish,
-  editor
+  editor,
+  control
 }: BlogEditorWorkspaceProps) {
   const coverInputId = useId();
+  const { fields, append, remove } = useFieldArray({ control, name: "faqs" });
   const relative = formatRelativePostTime(date);
   const heading =
     mode === "create"
@@ -392,6 +400,99 @@ export function BlogEditorWorkspace({
           <div className="rounded-xl border border-border/60 shadow-premium-md">
             {editor}
           </div>
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-light)] text-foreground">
+                  <HelpCircle className="h-4 w-4" />
+                </span>
+                <div>
+                  <h2 className="font-heading text-sm font-semibold text-foreground">
+                    Explore Common Questions
+                  </h2>
+                  <p className="text-2xs text-muted-foreground">
+                    Optional. Add FAQs for this post. Empty items are not sent.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => append({ question: "", answer: "" })}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add question
+            </Button>
+          </div>
+
+          {fields.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => append({ question: "", answer: "" })}
+              className="flex w-full items-center justify-between rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-3.5 text-left shadow-sm transition hover:border-[#fdb813]/50 hover:bg-[var(--brand-light)]/40"
+            >
+              <span className="text-sm font-medium text-muted-foreground">
+                No FAQs yet. Click to add the first question.
+              </span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ) : (
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-3 border-b border-border/50 bg-muted/20 px-4 py-2.5">
+                    <p className="text-sm font-semibold text-foreground">
+                      Question {index + 1}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Remove question ${index + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Question
+                      </label>
+                      <Input
+                        placeholder="How can I get started?"
+                        className="h-10 rounded-lg font-medium"
+                        {...control.register(`faqs.${index}.question`)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Answer
+                      </label>
+                      <Textarea
+                        rows={3}
+                        placeholder="Write a short, clear answer…"
+                        className="rounded-lg"
+                        {...control.register(`faqs.${index}.answer`)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="text-center text-2xs text-muted-foreground">
+            Still have questions? Contact our support
+          </p>
         </div>
       </div>
 
