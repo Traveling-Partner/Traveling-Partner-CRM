@@ -42,6 +42,7 @@ export default function AdminBlogCreatePage() {
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors }
   } = useForm<BlogEditorFormValues>({
     resolver: zodResolver(blogEditorSchema),
@@ -56,7 +57,8 @@ export default function AdminBlogCreatePage() {
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
-      status: "DRAFT"
+      status: "DRAFT",
+      faqs: []
     }
   });
 
@@ -159,6 +161,7 @@ export default function AdminBlogCreatePage() {
           onImageChange={onImageChange}
           onSaveDraft={() => void saveDraft()}
           onPublish={() => void publish()}
+          control={control}
           editor={
             <LazyBlogRichEditor
               value={description2}

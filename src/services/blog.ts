@@ -16,6 +16,14 @@ export interface BlogUpsertPayload {
   tags: string[];
   categoryId: number;
   categoryName: string;
+  faqs?: BlogFaqPayload[];
+}
+
+export interface BlogFaqPayload {
+  id?: number;
+  question: string;
+  answer: string;
+  sortOrder: number;
 }
 
 export interface BlogCategory {
@@ -39,6 +47,7 @@ export interface BlogApiRecord {
   status?: string | null;
   categoryId?: number | null;
   categoryName?: string | null;
+  faqs?: BlogFaqPayload[] | null;
 }
 
 export function unwrapBlogData<T>(res: unknown): T | null {
