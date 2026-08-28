@@ -2,7 +2,7 @@
 
 import { useId, type ChangeEventHandler, type ReactNode } from "react";
 import Link from "next/link";
-import { useFieldArray, type Control, type FieldError } from "react-hook-form";
+import { useFieldArray, type Control, type FieldErrors } from "react-hook-form";
 import {
   ArrowLeft,
   CalendarDays,
@@ -36,15 +36,7 @@ export interface BlogEditorWorkspaceProps {
   tagsText: string;
   date: string;
   categoryNames: string[];
-  errors: {
-    mainTitle?: FieldError;
-    description1?: FieldError;
-    author?: FieldError;
-    categoryNames?: FieldError;
-    description2?: FieldError;
-    seoTitle?: FieldError;
-    seoDescription?: FieldError;
-  };
+  errors: FieldErrors<BlogEditorFormValues>;
   register: {
     coverImage: object;
     mainTitle: object;
