@@ -1,8 +1,49 @@
 import { fetcher } from "@/lib/fetcher";
 import { apiUrl } from "@/lib/api-base";
 
+export interface BlogFaqPayload {
+  id?: number;
+  question: string;
+  answer: string;
+  sortOrder: number;
+}
+
+/**
+ * Website-only article sections. Portal editor does not collect these;
+ * they must be round-tripped on update so PUT does not wipe them.
+ */
+export interface BlogWebsiteFields {
+  mainSubDescription?: string | null;
+  subtitle?: string | null;
+  subtitleDescription?: string | null;
+  subtitleCover?: string | null;
+  imageContextText?: string | null;
+  storyQuotation?: string | null;
+  learningSectionText?: string | null;
+  storyFeedback?: string | null;
+  additionalFeedback?: string | null;
+  middleTitle?: string | null;
+  middleDescription?: string | null;
+  middleSubtitle?: string | null;
+  middleSubBulletPoints?: string[] | null;
+  keyInsight?: string | null;
+  lastTitle?: string | null;
+  lastDescription?: string | null;
+  lastCover?: string | null;
+  textBeforeLastSection?: string | null;
+  finalTitle?: string | null;
+  finalDescription?: string | null;
+  whatWeTeachTitle?: string | null;
+  whatWeTeachDescription?: string | null;
+  whatWeTeachBulletPoints?: string[] | null;
+  primaryKeywords?: string[] | null;
+  secondaryKeywords?: string[] | null;
+  semanticKeywords?: string[] | null;
+  isFeatured?: boolean | null;
+}
+
 /** Payload for POST /blog/create and PUT /blog/update/{id} */
-export interface BlogUpsertPayload {
+export interface BlogUpsertPayload extends BlogWebsiteFields {
   coverImage: string;
   mainTitle: string;
   seoTitle: string;
@@ -14,15 +55,8 @@ export interface BlogUpsertPayload {
   author: string;
   readTime: string;
   tags: string[];
-  categoryName: string;
+  categoryName: string[];
   faqs?: BlogFaqPayload[];
-}
-
-export interface BlogFaqPayload {
-  id?: number;
-  question: string;
-  answer: string;
-  sortOrder: number;
 }
 
 export interface BlogCategory {
@@ -31,7 +65,7 @@ export interface BlogCategory {
   description?: string | null;
 }
 
-export interface BlogApiRecord {
+export interface BlogApiRecord extends BlogWebsiteFields {
   id?: number;
   coverImage?: string | null;
   mainTitle?: string | null;
@@ -45,8 +79,54 @@ export interface BlogApiRecord {
   seoDescription?: string | null;
   status?: string | null;
   categoryId?: number | null;
-  categoryName?: string | null;
+  categoryName?: string | string[] | null;
   faqs?: BlogFaqPayload[] | null;
+  views?: number | null;
+}
+
+const WEBSITE_FIELD_KEYS: Array<keyof BlogWebsiteFields> = [
+  "mainSubDescription",
+  "subtitle",
+  "subtitleDescription",
+  "subtitleCover",
+  "imageContextText",
+  "storyQuotation",
+  "learningSectionText",
+  "storyFeedback",
+  "additionalFeedback",
+  "middleTitle",
+  "middleDescription",
+  "middleSubtitle",
+  "middleSubBulletPoints",
+  "keyInsight",
+  "lastTitle",
+  "lastDescription",
+  "lastCover",
+  "textBeforeLastSection",
+  "finalTitle",
+  "finalDescription",
+  "whatWeTeachTitle",
+  "whatWeTeachDescription",
+  "whatWeTeachBulletPoints",
+  "primaryKeywords",
+  "secondaryKeywords",
+  "semanticKeywords",
+  "isFeatured"
+];
+
+/** Copy website-template fields from getById so update does not null them. */
+export function pickWebsiteBlogFields(
+  existing?: BlogApiRecord | null
+): BlogWebsiteFields {
+  if (!existing) return {};
+  const out: BlogWebsiteFields = {};
+  for (const key of WEBSITE_FIELD_KEYS) {
+    const value = existing[key];
+    if (value === undefined) continue;
+    if (key === "isFeatured" && typeof value !== "boolean") continue;
+    (out as Record<string, unknown>)[key] = value;
+  }
+  return out;
 }
 
 export function unwrapBlogData<T>(res: unknown): T | null {

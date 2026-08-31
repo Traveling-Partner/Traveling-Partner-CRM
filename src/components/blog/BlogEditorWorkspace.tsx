@@ -301,7 +301,7 @@ export function BlogEditorWorkspace({
                   );
                 })}
               </div>
-              <p className="text-2xs text-muted-foreground">Select one or more. Saved as text, no ID.</p>
+              <p className="text-2xs text-muted-foreground">Select one or more. Saved as names, no IDs.</p>
               {errors.categoryNames?.message ? (
                 <p className="text-2xs font-medium text-red-500">
                   {errors.categoryNames.message}
@@ -405,7 +405,7 @@ export function BlogEditorWorkspace({
                     Explore Common Questions
                   </h2>
                   <p className="text-2xs text-muted-foreground">
-                    Optional. Add FAQs for this post. Empty items are not sent.
+                    Optional. Add FAQs for this post. Incomplete rows are skipped.
                   </p>
                 </div>
               </div>
