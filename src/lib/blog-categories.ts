@@ -1,6 +1,6 @@
 import type { BlogCategory } from "@/services/blog";
 
-/** Frontend-owned blog category names. Sent as a comma-separated string (no IDs). */
+/** Frontend-owned blog category names. Sent as a string array (no IDs). */
 export const BLOG_CATEGORIES: BlogCategory[] = [
   { id: 1, name: "Booking" },
   { id: 2, name: "Rides" },
@@ -16,19 +16,45 @@ export const BLOG_CATEGORIES: BlogCategory[] = [
   { id: 12, name: "Pool Ride" }
 ];
 
-export function joinCategoryNames(names: string[]): string {
-  return names.map((name) => name.trim()).filter(Boolean).join(", ");
+function canonicalCategoryName(name: string): string {
+  const match = BLOG_CATEGORIES.find(
+    (category) => category.name.toLowerCase() === name.toLowerCase()
+  );
+  return match?.name ?? name;
 }
 
-export function parseCategoryNames(value?: string | null): string[] {
-  if (!value?.trim()) return [];
-  const allowed = new Set(BLOG_CATEGORIES.map((category) => category.name.toLowerCase()));
-  return value
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean)
-    .filter((name) => allowed.has(name.toLowerCase()))
-    .map((name) => BLOG_CATEGORIES.find((category) => category.name.toLowerCase() === name.toLowerCase())?.name ?? name);
+/** Normalize selected names for `categoryName: string[]` on create/update. */
+export function normalizeCategoryNames(names: string[]): string[] {
+  return parseCategoryNames(names);
+}
+
+/** Accepts API array `["Drivers", "Partner"]` or legacy comma-separated string. */
+export function parseCategoryNames(value?: unknown): string[] {
+  const raw: string[] = [];
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (typeof item === "string" && item.trim()) raw.push(item.trim());
+    }
+  } else if (typeof value === "string" && value.trim()) {
+    raw.push(
+      ...value
+        .split(",")
+        .map((name) => name.trim())
+        .filter(Boolean)
+    );
+  }
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const name of raw) {
+    const canonical = canonicalCategoryName(name);
+    const key = canonical.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(canonical);
+  }
+  return out;
 }
 
 export function toggleCategoryName(selected: string[], name: string): string[] {

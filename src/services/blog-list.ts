@@ -17,7 +17,9 @@ export interface BlogRow {
   seoDescription?: string | null;
   status?: string | null;
   categoryId?: number | null;
-  categoryName?: string | null;
+  categoryName?: string | string[] | null;
+  faqs?: Array<{ id?: number; question?: string; answer?: string; sortOrder?: number }> | null;
+  isFeatured?: boolean | null;
   views?: number | string | null;
   viewCount?: number | string | null;
 }

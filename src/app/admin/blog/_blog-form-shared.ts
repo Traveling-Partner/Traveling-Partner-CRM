@@ -1,6 +1,7 @@
 import { z } from "zod";
-import type { BlogUpsertPayload } from "@/services/blog";
-import { joinCategoryNames } from "@/lib/blog-categories";
+import type { BlogApiRecord, BlogFaqPayload, BlogUpsertPayload } from "@/services/blog";
+import { pickWebsiteBlogFields } from "@/services/blog";
+import { normalizeCategoryNames } from "@/lib/blog-categories";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 export const blogEditorSchema = z.object({
@@ -27,24 +28,31 @@ export const blogEditorSchema = z.object({
 
 export type BlogEditorFormValues = z.infer<typeof blogEditorSchema>;
 
-export function buildBlogUpsertPayload(
-  values: BlogEditorFormValues,
-  status: "DRAFT" | "PUBLISHED"
-): BlogUpsertPayload {
-  const tags = (values.tagsText ?? "")
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-
-  const faqs = (values.faqs ?? [])
+function buildFaqPayload(values: BlogEditorFormValues): BlogFaqPayload[] {
+  return (values.faqs ?? [])
     .map((item, index) => ({
       question: (item.question ?? "").trim(),
       answer: (item.answer ?? "").trim(),
       sortOrder: index + 1
     }))
     .filter((item) => item.question.length > 0 && item.answer.length > 0);
+}
+
+export function buildBlogUpsertPayload(
+  values: BlogEditorFormValues,
+  status: "DRAFT" | "PUBLISHED",
+  existing?: BlogApiRecord | null
+): BlogUpsertPayload {
+  const tags = (values.tagsText ?? "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+  const faqs = buildFaqPayload(values);
+  const preserved = pickWebsiteBlogFields(existing);
 
   return {
+    ...preserved,
     coverImage: values.coverImage.trim(),
     mainTitle: values.mainTitle.trim(),
     seoTitle: (values.seoTitle ?? "").trim(),
@@ -54,15 +62,14 @@ export function buildBlogUpsertPayload(
     description2: (values.description2 ?? "").trim() || null,
     date: values.date,
     author: values.author.trim(),
-    // API still expects readTime — store relative post age from the post date
     readTime: formatRelativePostTime(values.date),
     tags,
-    categoryName: joinCategoryNames(values.categoryNames),
-    ...(faqs.length > 0 ? { faqs } : {})
+    categoryName: normalizeCategoryNames(values.categoryNames),
+    faqs
   };
 }
 
-export function faqsFromApi(faqs: BlogUpsertPayload["faqs"] | null | undefined) {
+export function faqsFromApi(faqs: BlogFaqPayload[] | null | undefined) {
   if (!Array.isArray(faqs) || faqs.length === 0) return [];
   return [...faqs]
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))

@@ -15,7 +15,8 @@ import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import {
   getBlogById,
-  updateBlog
+  updateBlog,
+  type BlogApiRecord
 } from "@/services/blog";
 import { BLOG_CATEGORIES, parseCategoryNames, toggleCategoryName } from "@/lib/blog-categories";
 import { apiUrl } from "@/lib/api-base";
@@ -47,6 +48,7 @@ export default function AdminBlogEditPage() {
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [existingRecord, setExistingRecord] = useState<BlogApiRecord | null>(null);
 
   const {
     register,
@@ -96,6 +98,7 @@ export default function AdminBlogEditPage() {
           return;
         }
 
+        setExistingRecord(row);
         const desc2 = row.description2 ?? "";
         const dateStr =
           typeof row.date === "string" && row.date.trim()
@@ -136,7 +139,7 @@ export default function AdminBlogEditPage() {
   ) => {
     setSubmitting(true);
     try {
-      const payload = buildBlogUpsertPayload(values, nextStatus);
+      const payload = buildBlogUpsertPayload(values, nextStatus, existingRecord);
       await updateBlog(idNum, payload, token);
       success(`Blog "${values.mainTitle.trim()}" updated.`);
       router.push("/admin/blog");
