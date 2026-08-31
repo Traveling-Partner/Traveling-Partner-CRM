@@ -40,6 +40,33 @@ import type { DriverRow } from "@/services/users";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 
 type DecisionType = "APPROVE" | "REJECT";
+type DocumentKind = "cnic" | "license" | "vehicle";
+
+interface DocumentQueueRow {
+  rowId: string;
+  kind: DocumentKind;
+  previewId: PreviewDocument["id"];
+  label: string;
+  driver: DriverRow;
+  status: ApiDocStatus;
+}
+
+const DOCUMENT_ENTRIES: Array<{
+  kind: DocumentKind;
+  previewId: PreviewDocument["id"];
+  label: string;
+  apiFilter: string;
+}> = [
+  { kind: "cnic", previewId: "id-document", label: "CNIC", apiFilter: "CNIC" },
+  { kind: "license", previewId: "driver-license", label: "License", apiFilter: "LICENSE" },
+  { kind: "vehicle", previewId: "vehicle-registration", label: "Vehicle", apiFilter: "VEHICLE" }
+];
+
+const PENDING_STATUSES: DocumentStatusPayload = {
+  cnicStatus: "PENDING",
+  licenseStatus: "PENDING",
+  vehicleStatus: "PENDING"
+};
 
 const DEFAULT_PAGE_SIZE = 25;
 const fallbackImage = "/mock-images/document-fallback.svg";
@@ -111,10 +138,39 @@ export default function DocumentsQueuePage() {
   });
 
   const drivers = queueQuery.data?.drivers.content ?? [];
-  const documentStatusByDriverId = queueQuery.data?.documentStatusByDriverId ?? {};
+  const documentStatusesByDriverId = queueQuery.data?.documentStatusesByDriverId ?? {};
   const totalPages = queueQuery.data?.drivers.totalPages ?? 1;
   const loading = queueQuery.isLoading || queueQuery.isFetching;
   const resetPage = () => setPage(0);
+
+  const documentRows: DocumentQueueRow[] = useMemo(() => {
+    const rows = drivers.flatMap((driver) =>
+      DOCUMENT_ENTRIES.map((entry) => {
+        const raw = documentStatusesByDriverId[driver.id];
+        const statusValue =
+          entry.kind === "cnic"
+            ? raw?.cnicStatus
+            : entry.kind === "license"
+              ? raw?.licenseStatus
+              : raw?.vehicleStatus;
+        return {
+          rowId: `${driver.id}-${entry.kind}`,
+          kind: entry.kind,
+          previewId: entry.previewId,
+          label: entry.label,
+          driver,
+          status: normalizeApiDocStatus(statusValue)
+        };
+      })
+    );
+
+    if (documentTypeFilter === "all") return rows;
+    return rows.filter(
+      (row) =>
+        DOCUMENT_ENTRIES.find((entry) => entry.kind === row.kind)?.apiFilter ===
+        documentTypeFilter
+    );
+  }, [drivers, documentStatusesByDriverId, documentTypeFilter]);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDriver, setPreviewDriver] = useState<DriverRow | null>(null);
@@ -134,7 +190,6 @@ export default function DocumentsQueuePage() {
   };
 
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
-  const [decisionScope, setDecisionScope] = useState<"table" | "preview">("table");
   const [decisionType, setDecisionType] = useState<DecisionType | null>(null);
   const [decisionDriver, setDecisionDriver] = useState<DriverRow | null>(null);
   const [tableActionMenuVersion, setTableActionMenuVersion] = useState(0);
@@ -160,21 +215,23 @@ export default function DocumentsQueuePage() {
   const selectedDocIsFinalized = isFinalDecisionStatus(selectedDocument?.status);
 
   useEffect(() => {
-    if (previewDocuments.length > 0) {
-      setPreviewSrc(previewDocuments[0].frontUrl);
+    const selected =
+      previewDocuments.find((doc) => doc.id === selectedDocumentId) ?? previewDocuments[0];
+    if (selected) {
+      setPreviewSrc(selected.frontUrl);
     }
-  }, [previewDocuments]);
+  }, [previewDocuments, selectedDocumentId]);
 
-  const openPreview = (driver: DriverRow) => {
+  const openPreview = (driver: DriverRow, previewId: PreviewDocument["id"] = "id-document") => {
     setPreviewDriver(driver);
     setPreviewOpen(true);
-    setSelectedDocumentId("driver-license");
+    setSelectedDocumentId(previewId);
     setPreviewSrc(fallbackImage);
   };
 
-  const openDecision = (driver: DriverRow, type: DecisionType) => {
-    setDecisionScope("table");
-    setDecisionDriver(driver);
+  const openDecision = (row: DocumentQueueRow, type: DecisionType) => {
+    setDecisionDriver(row.driver);
+    setSelectedDocumentId(row.previewId);
     setDecisionType(type);
     setRejectReason("");
     setDecisionDialogOpen(true);
@@ -182,7 +239,6 @@ export default function DocumentsQueuePage() {
 
   const openPreviewDecision = (type: DecisionType) => {
     if (!previewDriver) return;
-    setDecisionScope("preview");
     setDecisionDriver(previewDriver);
     setDecisionType(type);
     setRejectReason("");
@@ -219,36 +275,24 @@ export default function DocumentsQueuePage() {
 
   const buildDecisionPayload = (
     type: DecisionType,
-    scope: "table" | "preview",
+    driver: DriverRow,
     selectedId: PreviewDocument["id"],
     rejectedValue: "REJECTED" | "REJECT" = "REJECTED",
     rejectionReasonText?: string
   ): DocumentStatusPayload => {
-    let payload: DocumentStatusPayload;
+    const fromPreview =
+      previewDriver?.id === driver.id ? rawDocumentStatuses : undefined;
+    const payload: DocumentStatusPayload = {
+      ...(fromPreview ?? documentStatusesByDriverId[driver.id] ?? PENDING_STATUSES)
+    };
 
-    if (scope === "table") {
-      payload =
-        type === "APPROVE"
-          ? {
-              cnicStatus: "APPROVED",
-              licenseStatus: "APPROVED",
-              vehicleStatus: "APPROVED"
-            }
-          : {
-              cnicStatus: rejectedValue,
-              licenseStatus: rejectedValue,
-              vehicleStatus: rejectedValue
-            };
+    const decision = type === "APPROVE" ? "APPROVED" : rejectedValue;
+    if (selectedId === "driver-license") {
+      payload.licenseStatus = decision;
+    } else if (selectedId === "vehicle-registration") {
+      payload.vehicleStatus = decision;
     } else {
-      const decision = type === "APPROVE" ? "APPROVED" : rejectedValue;
-      payload = { ...rawDocumentStatuses };
-      if (selectedId === "driver-license") {
-        payload.licenseStatus = decision;
-      } else if (selectedId === "vehicle-registration") {
-        payload.vehicleStatus = decision;
-      } else {
-        payload.cnicStatus = decision;
-      }
+      payload.cnicStatus = decision;
     }
 
     if (type === "REJECT" && rejectionReasonText) {
@@ -266,7 +310,7 @@ export default function DocumentsQueuePage() {
   ) => {
     const payload = buildDecisionPayload(
       type,
-      decisionScope,
+      driver,
       selectedDocumentId,
       rejectedValue,
       rejectionReasonText
@@ -301,19 +345,11 @@ export default function DocumentsQueuePage() {
             trimmedRejectReason
           );
         }
-        if (decisionScope === "table") {
-          success(
-            decisionType === "APPROVE"
-              ? "All documents approved successfully."
-              : "All documents rejected successfully."
-          );
-        } else {
-          success(
-            decisionType === "APPROVE"
-              ? `${previewDocLabel(selectedDocumentId)} approved successfully.`
-              : `${previewDocLabel(selectedDocumentId)} rejected successfully.`
-          );
-        }
+        success(
+          decisionType === "APPROVE"
+            ? `${previewDocLabel(selectedDocumentId)} approved successfully.`
+            : `${previewDocLabel(selectedDocumentId)} rejected successfully.`
+        );
         setDecisionDialogOpen(false);
       } catch {
         error("Failed to update document status.");
@@ -322,13 +358,14 @@ export default function DocumentsQueuePage() {
     void run();
   };
 
-  const columns: ColumnDef<DriverRow>[] = useMemo(
+  const columns: ColumnDef<DocumentQueueRow>[] = useMemo(
     () => [
       {
-        accessorKey: "name",
+        accessorKey: "driver",
         header: "Driver",
         cell: ({ row }) => {
-          const driverName = row.original.name || row.original.username || "—";
+          const driver = row.original.driver;
+          const driverName = driver.name || driver.username || "—";
           const initials = driverName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
           return (
             <div className="flex items-center gap-3">
@@ -337,57 +374,61 @@ export default function DocumentsQueuePage() {
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{driverName}</p>
-                <p className="text-[11px] text-muted-foreground">{row.original.mobileNumber || "—"}</p>
+                <p className="text-[11px] text-muted-foreground">{driver.mobileNumber || "—"}</p>
               </div>
             </div>
           );
         }
       },
       {
-        accessorKey: "cnicNumber",
-        header: "CNIC",
+        accessorKey: "label",
+        header: "Document",
         cell: ({ row }) => (
-          <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
+          <span className="text-[13px] font-medium text-foreground">{row.original.label}</span>
         )
       },
       {
-        accessorKey: "email",
+        id: "cnicNumber",
+        header: "CNIC",
+        cell: ({ row }) => (
+          <span className="text-[13px] text-muted-foreground tabular-nums">
+            {row.original.driver.cnicNumber || "—"}
+          </span>
+        )
+      },
+      {
+        id: "email",
         header: "Email",
         cell: ({ row }) => (
-          <span className="text-[13px] text-muted-foreground">{row.original.email || "—"}</span>
+          <span className="text-[13px] text-muted-foreground">{row.original.driver.email || "—"}</span>
         )
       },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => {
-          const documentStatus =
-            documentStatusByDriverId[row.original.id] ?? normalizeApiDocStatus(row.original.status);
-          return <StatusBadge status={documentStatus} />;
-        }
+        cell: ({ row }) => <StatusBadge status={row.original.status} />
       },
       {
         id: "actions",
         header: "",
         cell: ({ row }) => {
-          const documentStatus =
-            documentStatusByDriverId[row.original.id] ?? normalizeApiDocStatus(row.original.status);
+          const entry = row.original;
           return (
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 variant="ghost"
                 className="text-xs font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => void openPreview(row.original)}
+                onClick={() => void openPreview(entry.driver, entry.previewId)}
               >
                 Preview →
               </Button>
-              {!isFinalDecisionStatus(documentStatus) ? (
+              {!isFinalDecisionStatus(entry.status) ? (
                 <Select
-                  key={`doc-action-${row.original.id}-${tableActionMenuVersion}`}
+                  key={`doc-action-${entry.rowId}-${tableActionMenuVersion}`}
                   onValueChange={(value) => {
                     if (value === "APPROVE" || value === "REJECT") {
-                      openDecision(row.original, value);
+                      openDecision(entry, value);
                       setTableActionMenuVersion((prev) => prev + 1);
                     }
                   }}
@@ -406,7 +447,7 @@ export default function DocumentsQueuePage() {
         }
       }
     ],
-    [documentStatusByDriverId, tableActionMenuVersion]
+    [tableActionMenuVersion]
   );
 
   return (
@@ -414,7 +455,7 @@ export default function DocumentsQueuePage() {
       <PageContainer>
         <SectionCard
           title="Verification queue"
-          description="Review and act on pending driver documents before they go live."
+          description="Each driver has three entries: CNIC, License, and Vehicle. Approve or reject one document at a time."
         >
           <>
             <div className="space-y-2.5 pb-3">
@@ -511,13 +552,17 @@ export default function DocumentsQueuePage() {
                   <Skeleton key={i} className="h-10 w-full rounded-md" />
                 ))}
               </div>
-            ) : drivers.length === 0 ? (
+            ) : documentRows.length === 0 ? (
               <EmptyState
                 title="No records found"
-                description="Try changing filters to see more drivers."
+                description="Try changing filters to see more documents."
               />
             ) : (
-              <DataTable columns={columns} data={drivers} />
+              <DataTable
+                columns={columns}
+                data={documentRows}
+                getRowId={(row) => row.rowId}
+              />
             )}
 
             <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -766,22 +811,14 @@ export default function DocumentsQueuePage() {
           onOpenChange={setDecisionDialogOpen}
           onConfirm={onDecisionConfirm}
           title={
-            decisionScope === "preview"
-              ? decisionType === "APPROVE"
-                ? `Approve ${previewDocLabel(selectedDocumentId)}`
-                : `Reject ${previewDocLabel(selectedDocumentId)}`
-              : decisionType === "APPROVE"
-                ? "Approve all documents"
-                : "Reject all documents"
+            decisionType === "APPROVE"
+              ? `Approve ${previewDocLabel(selectedDocumentId)}`
+              : `Reject ${previewDocLabel(selectedDocumentId)}`
           }
           description={
-            decisionScope === "preview"
-              ? decisionType === "APPROVE"
-                ? "Only the selected document’s verification status will be set to APPROVED. Other documents stay as they are on the server."
-                : "Only the selected document’s verification status will be set to REJECTED. Other documents stay as they are on the server."
-              : decisionType === "APPROVE"
-                ? "This will mark all three document statuses (CNIC, license, vehicle) as APPROVED."
-                : "This will mark all three document statuses (CNIC, license, vehicle) as REJECTED."
+            decisionType === "APPROVE"
+              ? "Only this document’s verification status will be set to APPROVED. The other two documents stay as they are on the server."
+              : "Only this document’s verification status will be set to REJECTED. The other two documents stay as they are on the server."
           }
           confirmLabel={decisionLoading ? "Updating..." : decisionType === "APPROVE" ? "Approve" : "Reject"}
           destructive={decisionType === "REJECT"}
