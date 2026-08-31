@@ -58,7 +58,8 @@ export const queryKeys = {
     detail: (id: number) => ["carousel", "detail", id] as const
   },
   audit: {
-    logs: (page: number, size: number) => ["audit", "logs", { page, size }] as const
+    all: ["audit"] as const,
+    logs: (filters: AuditLogsFilters) => ["audit", "logs", filters] as const
   },
   tax: {
     all: ["tax"] as const,
@@ -178,6 +179,14 @@ export interface InsuranceListFilters {
   page: number;
   pageSize: number;
   search: string;
+}
+
+export interface AuditLogsFilters {
+  page: number;
+  pageSize: number;
+  userType: string;
+  search: string;
+  fromDate: string;
 }
 
 export type VehicleTypesListFilters = VehicleListFiltersBase;

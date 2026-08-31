@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
+import { format, parseISO } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
+import { EmptyState } from "@/components/common/EmptyState";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -14,125 +16,189 @@ import {
   SelectContent,
   SelectItem
 } from "@/components/ui/select";
-import { auditLogs } from "@/mock-data/audit-logs";
-import { allUsers } from "@/mock-data/users";
-import type { AuditLog } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { useAuditLogsQuery } from "@/hooks/queries/use-audit-logs-query";
+import type { AuditLogRow } from "@/services/audit-logs";
 
-const PAGE_SIZE = 15;
-const actions = Array.from(new Set(auditLogs.map((a) => a.action)));
-const entityTypes = Array.from(new Set(auditLogs.map((a) => a.entityType)));
+const DEFAULT_PAGE_SIZE = 20;
 
-type Row = AuditLog & { actorName: string };
+const USER_TYPE_OPTIONS = [
+  { value: "all", label: "All user types" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "DRIVER", label: "Driver" },
+  { value: "PARTNER", label: "Partner" },
+  { value: "AGENT", label: "Agent" }
+] as const;
+
+function formatTimestamp(value: string | null | undefined): string {
+  const text = value?.trim();
+  if (!text) return "—";
+  try {
+    const d = parseISO(text);
+    if (Number.isNaN(d.getTime())) return text;
+    return format(d, "MMM d, yyyy HH:mm");
+  } catch {
+    return text;
+  }
+}
 
 export default function AdminAuditLogsPage() {
-  const [actionFilter, setActionFilter] = useState<string>("all");
-  const [actorFilter, setActorFilter] = useState<string>("all");
-  const [entityFilter, setEntityFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [userType, setUserType] = useState("all");
+  const [fromDate, setFromDate] = useState("");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const rows: Row[] = useMemo(
-    () =>
-      auditLogs.map((log) => ({
-        ...log,
-        actorName: allUsers.find((u) => u.id === log.actorId)?.name ?? log.actorId
-      })),
+  const { data, isLoading, isFetching, error } = useAuditLogsQuery({
+    page,
+    pageSize,
+    userType,
+    search,
+    fromDate
+  });
+
+  const rows = data?.content ?? [];
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const totalElements = data?.totalElements ?? rows.length;
+  const showSkeleton = isLoading && !data;
+
+  const columns: ColumnDef<AuditLogRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: "description",
+        header: "Activity",
+        cell: ({ row }) => (
+          <span className="block max-w-xl whitespace-normal text-sm text-foreground">
+            {row.original.description?.trim() || "—"}
+          </span>
+        )
+      },
+      {
+        accessorKey: "userType",
+        header: "User type",
+        cell: ({ row }) =>
+          row.original.userType ? (
+            <span className="rounded bg-muted/60 px-1.5 py-0.5 text-[11px] font-medium">
+              {row.original.userType}
+            </span>
+          ) : (
+            "—"
+          )
+      },
+      {
+        accessorKey: "mobileNumber",
+        header: "Mobile",
+        cell: ({ row }) => row.original.mobileNumber?.trim() || "—"
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Timestamp",
+        cell: ({ row }) => (
+          <span className="tabular-nums text-muted-foreground">
+            {formatTimestamp(row.original.createdAt)}
+          </span>
+        )
+      }
+    ],
     []
   );
-
-  const filtered = useMemo(
-    () =>
-      rows.filter((log) => {
-        const matchAction = actionFilter === "all" || log.action === actionFilter;
-        const matchActor = actorFilter === "all" || log.actorId === actorFilter;
-        const matchEntity = entityFilter === "all" || log.entityType === entityFilter;
-        return matchAction && matchActor && matchEntity;
-      }),
-    [rows, actionFilter, actorFilter, entityFilter]
-  );
-
-  const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  const columns: ColumnDef<Row>[] = [
-    { accessorKey: "action", header: "Action" },
-    { accessorKey: "actorName", header: "Actor" },
-    { accessorKey: "entityType", header: "Entity type" },
-    { accessorKey: "entityId", header: "Entity ID" },
-    {
-      accessorKey: "createdAt",
-      header: "Timestamp",
-      cell: ({ row }) => new Date(row.original.createdAt).toLocaleString()
-    }
-  ];
 
   return (
     <AppShell title="Audit Logs">
       <PageContainer>
         <SectionCard
           title="Audit logs"
-          description="Enterprise activity log. Filter by action, actor, or entity type."
+          description="Filter by user type, search text, or starting date."
         >
-          <div className="flex flex-wrap gap-2 pb-4">
-            <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
+          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Input
+              placeholder="Search logs…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="max-w-xs"
+            />
+            <Select
+              value={userType}
+              onValueChange={(value) => {
+                setUserType(value);
+                setPage(0);
+              }}
+            >
               <SelectTrigger className="w-44">
-                <SelectValue placeholder="Action" />
+                <SelectValue placeholder="User type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All actions</SelectItem>
-                {actions.map((a) => (
-                  <SelectItem key={a} value={a}>{a}</SelectItem>
+                {USER_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={actorFilter} onValueChange={(v) => { setActorFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Actor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All actors</SelectItem>
-                {allUsers.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Entity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                {entityTypes.map((e) => (
-                  <SelectItem key={e} value={e}>{e}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(0);
+              }}
+              className="w-44"
+              aria-label="From date"
+            />
           </div>
-          <DataTable columns={columns} data={paginated} />
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Showing {paginated.length ? page * PAGE_SIZE + 1 : 0} – {page * PAGE_SIZE + paginated.length} of {filtered.length}</span>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                className="rounded border border-border/60 bg-background px-2 py-1 text-xs disabled:opacity-50"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <button
-                type="button"
-                className="rounded border border-border/60 bg-background px-2 py-1 text-xs disabled:opacity-50"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </button>
+          {error ? (
+            <p className="pb-3 text-sm text-destructive">{error.message}</p>
+          ) : null}
+          {showSkeleton ? (
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted/60" />
+              ))}
             </div>
+          ) : rows.length === 0 ? (
+            <EmptyState
+              title="No audit logs found"
+              description="Try another search, user type, or from date."
+            />
+          ) : (
+            <div className={isFetching ? "opacity-70 transition-opacity" : undefined}>
+              <DataTable
+                columns={columns}
+                data={rows}
+                getRowId={(row, index) => String(row.id ?? index)}
+              />
+            </div>
+          )}
+          <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Show</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span>per page</span>
+              <span className="hidden sm:inline">· {totalElements} total</span>
+            </div>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p - 1)}
+            />
           </div>
         </SectionCard>
       </PageContainer>
