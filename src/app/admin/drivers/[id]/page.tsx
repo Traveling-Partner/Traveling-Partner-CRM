@@ -250,8 +250,7 @@ console.log(documents , "documents");
           <SectionCard title="Approval controls">
             <div className="space-y-3 text-sm">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Simulate approval actions for this driver. Changes are not
-                persisted and are safe to experiment with.
+                Block or approve this driver. Changes are saved on the server.
               </p>
               <div className="flex flex-wrap gap-2">
                 {showApproveAction ? (

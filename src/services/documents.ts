@@ -35,6 +35,7 @@ export interface DocumentStatusPayload {
 export interface DocumentsQueuePage {
   drivers: PaginatedResponse<DriverRow>;
   documentStatusByDriverId: Record<number, ApiDocStatus>;
+  documentStatusesByDriverId: Record<number, DocumentStatusPayload>;
 }
 
 const FALLBACK_BY_TYPE = {
@@ -95,26 +96,41 @@ export async function fetchDocumentsQueueDrivers(
   });
 }
 
+const PENDING_DOC_STATUSES: DocumentStatusPayload = {
+  cnicStatus: "PENDING",
+  licenseStatus: "PENDING",
+  vehicleStatus: "PENDING"
+};
+
 export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
   opts: RequestOpts
 ): Promise<DocumentsQueuePage> {
   const drivers = await fetchDocumentsQueueDrivers(filters, opts);
 
-  const statusEntries = await Promise.all(
+  const details = await Promise.all(
     drivers.content.map(async (driver) => {
       try {
-        const status = await fetchDriverDocumentSummaryStatus(driver.id, opts);
-        return [driver.id, status] as const;
+        const payload = await fetchDriverDocumentsPayload(driver.id, opts);
+        return {
+          id: driver.id,
+          summary: summarizeDocumentVerificationStatus(payload),
+          raw: buildRawDocumentStatuses(payload)
+        };
       } catch {
-        return [driver.id, "PENDING" as ApiDocStatus] as const;
+        return {
+          id: driver.id,
+          summary: "PENDING" as ApiDocStatus,
+          raw: { ...PENDING_DOC_STATUSES }
+        };
       }
     })
   );
 
   return {
     drivers,
-    documentStatusByDriverId: Object.fromEntries(statusEntries)
+    documentStatusByDriverId: Object.fromEntries(details.map((item) => [item.id, item.summary])),
+    documentStatusesByDriverId: Object.fromEntries(details.map((item) => [item.id, item.raw]))
   };
 }
 
