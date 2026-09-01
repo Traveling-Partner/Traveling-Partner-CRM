@@ -33,9 +33,12 @@ export const queryKeys = {
   vehicle: {
     all: ["vehicle"] as const,
     types: (filters: VehicleTypesListFilters) => ["vehicle", "types", filters] as const,
+    typeOptions: () => ["vehicle", "types", "options"] as const,
     models: (filters: VehicleModelsListFilters) => ["vehicle", "models", filters] as const,
+    modelOptions: () => ["vehicle", "models", "options"] as const,
     colors: (filters: VehicleColorsListFilters) => ["vehicle", "colors", filters] as const,
-    brands: (filters: VehicleBrandsListFilters) => ["vehicle", "brands", filters] as const
+    brands: (filters: VehicleBrandsListFilters) => ["vehicle", "brands", filters] as const,
+    brandOptions: () => ["vehicle", "brands", "options"] as const
   },
   blog: {
     all: ["blog"] as const,

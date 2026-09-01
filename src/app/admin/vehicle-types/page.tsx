@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useAuthToken } from "@/hooks/api/use-auth-token";
 import {
+  useVehicleTypeOptionsQuery,
+  useVehicleBrandOptionsQuery,
   useVehicleTypesQuery,
   useVehicleModelsQuery,
   useVehicleColorsQuery,
@@ -198,7 +200,7 @@ type ModelForm = z.infer<typeof modelSchema>;
 type ColorForm = z.infer<typeof colorSchema>;
 type BrandForm = z.infer<typeof brandSchema>;
 
-const DEFAULT_PAGE_SIZE = 6;
+const DEFAULT_PAGE_SIZE = 10;
 
 export default function VehicleTypesPage() {
   const { success, error } = useToast();
@@ -225,8 +227,11 @@ export default function VehicleTypesPage() {
   const modelsQuery = useVehicleModelsQuery(modelPage, modelPageSize, modelSearch);
   const colorsQuery = useVehicleColorsQuery(colorPage, colorPageSize, colorSearch);
   const brandsQuery = useVehicleBrandsQuery(brandPage, brandPageSize, brandSearch);
+  const typeOptionsQuery = useVehicleTypeOptionsQuery();
+  const brandOptionsQuery = useVehicleBrandOptionsQuery();
 
   const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleType[];
+  const typeOptions = (typeOptionsQuery.data ?? []) as VehicleType[];
   const typeTotalPages = typesQuery.data?.totalPages ?? 1;
   const typeLoading = typesQuery.isLoading || typesQuery.isFetching;
 
@@ -239,6 +244,7 @@ export default function VehicleTypesPage() {
   const colorLoading = colorsQuery.isLoading || colorsQuery.isFetching;
 
   const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
+  const brandOptions = (brandOptionsQuery.data ?? []) as VehicleBrand[];
   const brandTotalPages = brandsQuery.data?.totalPages ?? 1;
   const brandLoading = brandsQuery.isLoading || brandsQuery.isFetching;
 
@@ -264,7 +270,7 @@ export default function VehicleTypesPage() {
   });
 
   const selectedModelTypeId = modelForm.watch("vehicleTypeId");
-  const brandsForModelType = vehicleBrands.filter(
+  const brandsForModelType = brandOptions.filter(
     (brand) => Number(brand.vehicleTypeId) === Number(selectedModelTypeId)
   );
 
@@ -596,7 +602,6 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
                       <SelectItem value="10">10 / page</SelectItem>
                       <SelectItem value="20">20 / page</SelectItem>
                       <SelectItem value="50">50 / page</SelectItem>
@@ -693,7 +698,6 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
                       <SelectItem value="10">10 / page</SelectItem>
                       <SelectItem value="20">20 / page</SelectItem>
                       <SelectItem value="50">50 / page</SelectItem>
@@ -787,7 +791,6 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
                       <SelectItem value="10">10 / page</SelectItem>
                       <SelectItem value="20">20 / page</SelectItem>
                       <SelectItem value="50">50 / page</SelectItem>
@@ -839,7 +842,7 @@ export default function VehicleTypesPage() {
                       key: "vehicleType",
                       header: "Vehicle Type",
                       render: (item: VehicleBrand) => {
-                        const typeName = vehicleTypes.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
+                        const typeName = typeOptions.find((t) => Number(t.id) === Number(item.vehicleTypeId))?.name;
                         return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
                       }
                     },
@@ -889,7 +892,6 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="6">6 / page</SelectItem>
                       <SelectItem value="10">10 / page</SelectItem>
                       <SelectItem value="20">20 / page</SelectItem>
                       <SelectItem value="50">50 / page</SelectItem>
@@ -966,7 +968,7 @@ export default function VehicleTypesPage() {
                   <SelectValue placeholder="Select vehicle type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {vehicleTypes.map((type) => (
+                  {typeOptions.map((type) => (
                     <SelectItem key={type.id} value={String(type.id)}>
                       {type.name}
                     </SelectItem>
@@ -1087,7 +1089,7 @@ export default function VehicleTypesPage() {
               <Select value={field.value ? String(field.value) : ""} onValueChange={(v) => field.onChange(Number(v))}>
                 <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
                 <SelectContent>
-                  {vehicleTypes.map((type) => (
+                  {typeOptions.map((type) => (
                     <SelectItem key={type.id} value={String(type.id)}>{type.name}</SelectItem>
                   ))}
                 </SelectContent>
