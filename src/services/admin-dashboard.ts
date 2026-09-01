@@ -1,6 +1,8 @@
 import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
+import { unwrapEnvelope } from "@/lib/api/unwrap";
 import { fetcher } from "@/lib/fetcher";
+import { fetchAuditLogs } from "@/services/audit-logs";
 
 export interface DashboardCounts {
   totalDrivers: number;
@@ -71,11 +73,6 @@ interface RideStatusCountResponse {
   completed: number;
 }
 
-interface AuditLogsResponse {
-  content: DashboardAuditLogItem[];
-  totalPages: number;
-}
-
 const EMPTY_COUNTS: DashboardCounts = {
   totalDrivers: 0,
   totalPartners: 0,
@@ -108,32 +105,36 @@ export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
 };
 
 function mapDashboardResponse(
-  countsRes: CountsResponse,
-  driverStatusRes: DriverStatusCountsResponse,
-  ridesTrendRes: Last14DaysGraphResponse,
-  rideStatusRes: RideStatusCountResponse,
-  auditLogsRes: AuditLogsResponse,
+  countsRes: unknown,
+  driverStatusRes: unknown,
+  ridesTrendRes: unknown,
+  rideStatusRes: unknown,
+  recentActivity: DashboardAuditLogItem[],
   recentActivityLimit: number
 ): AdminDashboardData {
-  const recentActivity = [...(auditLogsRes.content ?? [])]
+  const counts = unwrapEnvelope<CountsResponse>(countsRes);
+  const driverStatusCounts = unwrapEnvelope<DriverStatusCountsResponse>(driverStatusRes);
+  const ridesTrendPayload = unwrapEnvelope<Last14DaysGraphResponse>(ridesTrendRes);
+  const rideStatus = unwrapEnvelope<RideStatusCountResponse>(rideStatusRes);
+  const activity = [...recentActivity]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, recentActivityLimit);
 
   return {
-    counts: countsRes,
-    driverStatusCounts: driverStatusRes,
-    ridesTrend: (ridesTrendRes.dates ?? []).map((date, idx) => ({
+    counts,
+    driverStatusCounts,
+    ridesTrend: (ridesTrendPayload.dates ?? []).map((date, idx) => ({
       day: format(parseISO(date), "MMM d"),
-      count: ridesTrendRes.counts?.[idx] ?? 0
+      count: ridesTrendPayload.counts?.[idx] ?? 0
     })),
     rideStatusBreakdown: [
-      { status: "REQUESTED", count: rideStatusRes.requested ?? 0 },
-      { status: "ACCEPTED", count: rideStatusRes.accepted ?? 0 },
-      { status: "STARTED", count: rideStatusRes.started ?? 0 },
-      { status: "CANCELED", count: rideStatusRes.canceled ?? 0 },
-      { status: "COMPLETED", count: rideStatusRes.completed ?? 0 }
+      { status: "REQUESTED", count: rideStatus.requested ?? 0 },
+      { status: "ACCEPTED", count: rideStatus.accepted ?? 0 },
+      { status: "STARTED", count: rideStatus.started ?? 0 },
+      { status: "CANCELED", count: rideStatus.canceled ?? 0 },
+      { status: "COMPLETED", count: rideStatus.completed ?? 0 }
     ],
-    recentActivity
+    recentActivity: activity
   };
 }
 
@@ -150,15 +151,15 @@ export async function fetchAdminDashboardData(
   const label = debugSource ? `admin-dashboard:${debugSource}` : "admin-dashboard";
   const requestInit = { token, signal, dedupe: false as const, debugLabel: label };
 
-  const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes, auditLogsRes] =
+  const [countsRes, driverStatusRes, ridesTrendRes, rideStatusRes, auditLogsPage] =
     await Promise.all([
-      fetcher<CountsResponse>(buildApiUrl("/users/counts"), requestInit),
-      fetcher<DriverStatusCountsResponse>(buildApiUrl("/users/driver-status-counts"), requestInit),
-      fetcher<Last14DaysGraphResponse>(buildApiUrl("/users/graph/last-14-days"), requestInit),
-      fetcher<RideStatusCountResponse>(buildApiUrl("/users/ride-status-count"), requestInit),
-      fetcher<AuditLogsResponse>(
-        buildApiUrl("/audit-logs/getAll", { page: 0, size: recentActivityLimit }),
-        requestInit
+      fetcher<unknown>(buildApiUrl("/users/counts"), requestInit),
+      fetcher<unknown>(buildApiUrl("/users/driver-status-counts"), requestInit),
+      fetcher<unknown>(buildApiUrl("/users/graph/last-14-days"), requestInit),
+      fetcher<unknown>(buildApiUrl("/users/ride-status-count"), requestInit),
+      fetchAuditLogs(
+        { page: 0, pageSize: recentActivityLimit, userType: "all", search: "", fromDate: "" },
+        { token, signal }
       )
     ]);
 
@@ -167,7 +168,7 @@ export async function fetchAdminDashboardData(
     driverStatusRes,
     ridesTrendRes,
     rideStatusRes,
-    auditLogsRes,
+    auditLogsPage.content ?? [],
     recentActivityLimit
   );
 }
