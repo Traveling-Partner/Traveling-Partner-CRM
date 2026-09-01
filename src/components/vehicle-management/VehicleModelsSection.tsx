@@ -6,7 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useAuthToken } from "@/hooks/api/use-auth-token";
-import { useVehicleBrandsQuery, useVehicleModelsQuery, useVehicleTypesQuery } from "@/hooks/queries";
+import { useVehicleBrandOptionsQuery, useVehicleModelsQuery, useVehicleTypeOptionsQuery } from "@/hooks/queries";
 import { createVehicleModel, deleteVehicleModel, updateVehicleModel } from "@/services/vehicle";
 import type { VehicleBrand, VehicleEntity, VehicleModel } from "@/services/vehicle";
 import { FormField } from "@/components/common/FormField";
@@ -49,12 +49,12 @@ export function VehicleModelsSection() {
   const [deleting, setDeleting] = useState(false);
 
   const modelsQuery = useVehicleModelsQuery(page, pageSize, search);
-  const typesQuery = useVehicleTypesQuery(1, 100, "");
-  const brandsQuery = useVehicleBrandsQuery(1, 100, "");
+  const typesQuery = useVehicleTypeOptionsQuery();
+  const brandsQuery = useVehicleBrandOptionsQuery();
 
   const vehicleModels = (modelsQuery.data?.content ?? []) as VehicleModel[];
-  const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleEntity[];
-  const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
+  const vehicleTypes = (typesQuery.data ?? []) as VehicleEntity[];
+  const vehicleBrands = (brandsQuery.data ?? []) as VehicleBrand[];
   const totalPages = modelsQuery.data?.totalPages ?? 1;
   const loading = modelsQuery.isLoading || modelsQuery.isFetching;
 

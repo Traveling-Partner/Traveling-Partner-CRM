@@ -21,5 +21,8 @@ export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
   useVehicleColorsQuery,
-  useVehicleBrandsQuery
+  useVehicleBrandsQuery,
+  useVehicleTypeOptionsQuery,
+  useVehicleBrandOptionsQuery,
+  useVehicleModelOptionsQuery
 } from "@/hooks/queries/use-vehicle-queries";
