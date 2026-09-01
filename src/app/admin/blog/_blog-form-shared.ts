@@ -15,6 +15,7 @@ export const blogEditorSchema = z.object({
   tagsText: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
+  isFeatured: z.boolean(),
   status: z.enum(["DRAFT", "PUBLISHED"]),
   faqs: z
     .array(
@@ -65,7 +66,8 @@ export function buildBlogUpsertPayload(
     readTime: formatRelativePostTime(values.date),
     tags,
     categoryName: normalizeCategoryNames(values.categoryNames),
-    faqs
+    faqs,
+    isFeatured: Boolean(values.isFeatured)
   };
 }
 

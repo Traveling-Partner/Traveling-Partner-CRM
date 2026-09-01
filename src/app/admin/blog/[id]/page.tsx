@@ -71,6 +71,7 @@ export default function AdminBlogEditPage() {
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
+      isFeatured: false,
       status: "DRAFT",
       faqs: []
     }
@@ -116,6 +117,7 @@ export default function AdminBlogEditPage() {
           tagsText: (row.tags ?? []).join(", "),
           seoTitle: row.seoTitle ?? "",
           seoDescription: row.seoDescription ?? "",
+          isFeatured: row.isFeatured === true,
           status: normalizeBlogStatusForForm(row.status),
           faqs: faqsFromApi(row.faqs)
         });

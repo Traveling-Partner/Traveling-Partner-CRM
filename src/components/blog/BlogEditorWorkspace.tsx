@@ -2,7 +2,7 @@
 
 import { useId, type ChangeEventHandler, type ReactNode } from "react";
 import Link from "next/link";
-import { useFieldArray, type Control, type FieldErrors } from "react-hook-form";
+import { Controller, useFieldArray, type Control, type FieldErrors } from "react-hook-form";
 import {
   ArrowLeft,
   CalendarDays,
@@ -11,11 +11,13 @@ import {
   ImagePlus,
   Loader2,
   Plus,
+  Star,
   Tag,
   Trash2,
   UserRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -307,6 +309,38 @@ export function BlogEditorWorkspace({
                   {errors.categoryNames.message}
                 </p>
               ) : null}
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
+              <label className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground">
+                <Star className="h-3 w-3" />
+                Website homepage
+              </label>
+              <Controller
+                name="isFeatured"
+                control={control}
+                render={({ field }) => (
+                  <label
+                    htmlFor="isFeatured"
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2.5"
+                  >
+                    <Checkbox
+                      id="isFeatured"
+                      className="mt-0.5"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-foreground">
+                        Feature this blog
+                      </span>
+                      <span className="mt-0.5 block text-2xs text-muted-foreground">
+                        Shown on the website homepage featured list when published.
+                      </span>
+                    </span>
+                  </label>
+                )}
+              />
             </div>
 
             <div className="space-y-1.5">

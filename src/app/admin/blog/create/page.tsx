@@ -57,6 +57,7 @@ export default function AdminBlogCreatePage() {
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
+      isFeatured: false,
       status: "DRAFT",
       faqs: []
     }
