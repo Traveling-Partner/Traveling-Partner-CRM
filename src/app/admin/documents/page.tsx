@@ -349,16 +349,18 @@ export default function DocumentsQueuePage() {
     type: DecisionType,
     driver: DriverRow,
     selectedId: PreviewDocument["id"],
-    rejectedValue: "REJECTED" | "REJECT" = "REJECTED",
     rejectionReasonText?: string
   ): DocumentStatusPayload => {
     const fromPreview =
       previewDriver?.id === driver.id ? rawDocumentStatuses : undefined;
+    const source = fromPreview ?? documentStatusesByDriverId[driver.id] ?? PENDING_STATUSES;
     const payload: DocumentStatusPayload = {
-      ...(fromPreview ?? documentStatusesByDriverId[driver.id] ?? PENDING_STATUSES)
+      cnicStatus: normalizeApiDocStatus(source.cnicStatus),
+      licenseStatus: normalizeApiDocStatus(source.licenseStatus),
+      vehicleStatus: normalizeApiDocStatus(source.vehicleStatus)
     };
 
-    const decision = type === "APPROVE" ? "APPROVED" : rejectedValue;
+    const decision = type === "APPROVE" ? "APPROVED" : "REJECTED";
     if (selectedId === "driver-license") {
       payload.licenseStatus = decision;
     } else if (selectedId === "vehicle-registration") {
@@ -377,14 +379,12 @@ export default function DocumentsQueuePage() {
   const submitDecision = async (
     driver: DriverRow,
     type: DecisionType,
-    rejectedValue: "REJECTED" | "REJECT",
     rejectionReasonText?: string
   ) => {
     const payload = buildDecisionPayload(
       type,
       driver,
       selectedDocumentId,
-      rejectedValue,
       rejectionReasonText
     );
     await decisionMutation.mutateAsync({
@@ -405,32 +405,15 @@ export default function DocumentsQueuePage() {
       }
 
       try {
-        try {
-          await submitDecision(
-            decisionDriver,
-            decisionType,
-            "REJECTED",
-            trimmedRejectReason
-          );
-        } catch {
-          if (decisionType !== "REJECT" || decisionRole === "PARTNER") {
-            throw new Error("reject-failed");
-          }
-          await submitDecision(
-            decisionDriver,
-            decisionType,
-            "REJECT",
-            trimmedRejectReason
-          );
-        }
+        await submitDecision(decisionDriver, decisionType, trimmedRejectReason);
         success(
           decisionType === "APPROVE"
             ? `${previewDocLabel(selectedDocumentId)} approved successfully.`
             : `${previewDocLabel(selectedDocumentId)} rejected successfully.`
         );
         setDecisionDialogOpen(false);
-      } catch {
-        error("Failed to update document status.");
+      } catch (err) {
+        error(err instanceof Error ? err.message : "Failed to update document status.");
       }
     };
     void run();
@@ -918,7 +901,7 @@ export default function DocumentsQueuePage() {
             decisionType === "REJECT" ? (
               <div className="rounded-lg border border-border/80 bg-muted/40 p-3">
                 <label className="mb-2 block text-xs font-medium text-foreground">
-                  Rejection reason (optional)
+                  Rejection reason
                 </label>
                 <Input
                   placeholder="e.g. Document expired or unclear"

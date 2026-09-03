@@ -205,10 +205,14 @@ export default function AdminDriverDetailPage() {
   };
 
   const buildSelectedDocPayload = (status: ApiDocStatus, reason?: string): DocumentStatusPayload => {
-    const payload: DocumentStatusPayload = { ...rawStatuses };
-    if (selectedDocumentId === "driver-license") payload.licenseStatus = status;
-    else if (selectedDocumentId === "vehicle-registration") payload.vehicleStatus = status;
-    else payload.cnicStatus = status;
+    const payload: DocumentStatusPayload = {
+      cnicStatus: normalizeApiDocStatus(rawStatuses.cnicStatus),
+      licenseStatus: normalizeApiDocStatus(rawStatuses.licenseStatus),
+      vehicleStatus: normalizeApiDocStatus(rawStatuses.vehicleStatus)
+    };
+    if (selectedDocumentId === "driver-license") payload.licenseStatus = status === "REJECT" ? "REJECTED" : status;
+    else if (selectedDocumentId === "vehicle-registration") payload.vehicleStatus = status === "REJECT" ? "REJECTED" : status;
+    else payload.cnicStatus = status === "REJECT" ? "REJECTED" : status;
     if (status === "REJECTED" && reason) payload.rejectionReason = reason;
     return payload;
   };

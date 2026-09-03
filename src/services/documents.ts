@@ -2,6 +2,7 @@ import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import {
   mapRawStatus,
+  normalizeApiDocStatus,
   normalizeDocumentStatus,
   pickVehicleStatus,
   summarizeDocumentVerificationStatus,
@@ -31,6 +32,18 @@ export interface DocumentStatusPayload {
   licenseStatus: ApiDocStatus;
   vehicleStatus: ApiDocStatus;
   rejectionReason?: string;
+}
+
+/** Body the documents status PUT actually accepts (GET uses vehicleDocStatus, not vehicleStatus). */
+export function toDriverDocumentStatusBody(payload: DocumentStatusPayload): Record<string, string> {
+  const body: Record<string, string> = {
+    cnicStatus: normalizeApiDocStatus(payload.cnicStatus),
+    licenseStatus: normalizeApiDocStatus(payload.licenseStatus),
+    vehicleDocStatus: normalizeApiDocStatus(payload.vehicleStatus)
+  };
+  const reason = payload.rejectionReason?.trim();
+  if (reason) body.rejectionReason = reason;
+  return body;
 }
 
 export interface DocumentsQueuePage {
@@ -234,7 +247,7 @@ export async function updateDriverDocumentStatus(
     signal: opts.signal,
     dedupe: false,
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(toDriverDocumentStatusBody(payload)),
     debugLabel: "documents:status-update"
   });
 }
