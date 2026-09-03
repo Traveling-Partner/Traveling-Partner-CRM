@@ -243,13 +243,16 @@ export interface PartnerDetail {
   updatedAt: string | null;
   basicInformation?: {
     firstName: string | null;
-    profilePicture: string | null;
     lastName: string | null;
     gender?: string | null;
     email?: string | null;
+    whatsApp?: string | null;
+    cnicNumber?: string | null;
+    cnicVerified?: boolean | null;
     city: string | null;
     cnicFront: string | null;
     cnicBack: string | null;
+    profilePicture: string | null;
     referralCode: string | null;
     acceptTerm: boolean | null;
     filterDeleted: boolean | null;
@@ -323,4 +326,43 @@ export async function updateUserStatus(
     method: opts.method ?? "PUT",
     body: JSON.stringify({ status })
   });
+}
+
+/** Partial profile update — send only fields that changed. */
+export interface ProfileUpdateBody {
+  mobileNumber?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  email?: string;
+  whatsApp?: string;
+  cnicNumber?: string;
+  city?: string;
+  profilePicture?: string;
+}
+
+export async function updatePartnerProfile(
+  id: string | number,
+  body: ProfileUpdateBody,
+  opts: RequestOpts
+): Promise<PartnerDetail> {
+  const response = await fetcher<unknown>(buildApiUrl(`/users/partners/update/${id}`), {
+    ...readOpts({ ...opts, debugLabel: "users:partner-update" }),
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+  return unwrapEnvelope<PartnerDetail>(response);
+}
+
+export async function updateDriverProfile(
+  id: string | number,
+  body: ProfileUpdateBody,
+  opts: RequestOpts
+): Promise<DriverDetail> {
+  const response = await fetcher<unknown>(buildApiUrl(`/users/drivers/update/${id}`), {
+    ...readOpts({ ...opts, debugLabel: "users:driver-update" }),
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+  return unwrapEnvelope<DriverDetail>(response);
 }

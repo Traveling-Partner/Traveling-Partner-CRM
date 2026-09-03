@@ -2,15 +2,16 @@ import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import {
   mapRawStatus,
-  normalizeApiDocStatus,
   normalizeDocumentStatus,
   pickVehicleStatus,
   summarizeDocumentVerificationStatus,
   type ApiDocStatus,
-  type DriverDocumentsPayload
+  type DriverDocumentsPayload,
+  isPartnerDocumentsPayload
 } from "@/lib/documents-utils";
 import { fetcher } from "@/lib/fetcher";
-import type { DriverRow } from "@/services/users";
+import type { DriverRow, PartnerRow } from "@/services/users";
+import { fetchPartnersList } from "@/services/users";
 import type { DocumentsQueueFilters } from "@/lib/api/query-keys";
 import type { PaginatedResponse } from "@/lib/api/types";
 
@@ -34,8 +35,10 @@ export interface DocumentStatusPayload {
 
 export interface DocumentsQueuePage {
   drivers: PaginatedResponse<DriverRow>;
+  partners: PaginatedResponse<PartnerRow>;
   documentStatusByDriverId: Record<number, ApiDocStatus>;
   documentStatusesByDriverId: Record<number, DocumentStatusPayload>;
+  documentStatusesByPartnerId: Record<number, Pick<DocumentStatusPayload, "cnicStatus">>;
 }
 
 const FALLBACK_BY_TYPE = {
@@ -106,7 +109,29 @@ export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
   opts: RequestOpts
 ): Promise<DocumentsQueuePage> {
-  const drivers = await fetchDocumentsQueueDrivers(filters, opts);
+  const includePartners = filters.documentType === "all" || filters.documentType === "CNIC";
+  const [drivers, partners] = await Promise.all([
+    fetchDocumentsQueueDrivers(filters, opts),
+    includePartners
+      ? fetchPartnersList(
+          {
+            page: filters.page,
+            pageSize: filters.pageSize,
+            status: filters.status,
+            name: filters.name,
+            mobileNumber: filters.mobileNumber,
+            city: filters.city,
+            gender: filters.gender
+          },
+          opts
+        )
+      : Promise.resolve({
+          content: [] as PartnerRow[],
+          totalPages: 0,
+          totalElements: 0,
+          number: filters.page
+        } as PaginatedResponse<PartnerRow>)
+  ]);
 
   const details = await Promise.all(
     drivers.content.map(async (driver) => {
@@ -127,16 +152,47 @@ export async function fetchDocumentsQueuePage(
     })
   );
 
+  const partnerDetails = await Promise.all(
+    partners.content.map(async (partner) => {
+      try {
+        const payload = await fetchDriverDocumentsPayload(partner.id, opts);
+        return {
+          id: partner.id,
+          cnicStatus: mapRawStatus(payload.cnicStatus)
+        };
+      } catch {
+        return { id: partner.id, cnicStatus: "PENDING" as ApiDocStatus };
+      }
+    })
+  );
+
   return {
     drivers,
+    partners,
     documentStatusByDriverId: Object.fromEntries(details.map((item) => [item.id, item.summary])),
-    documentStatusesByDriverId: Object.fromEntries(details.map((item) => [item.id, item.raw]))
+    documentStatusesByDriverId: Object.fromEntries(details.map((item) => [item.id, item.raw])),
+    documentStatusesByPartnerId: Object.fromEntries(
+      partnerDetails.map((item) => [item.id, { cnicStatus: item.cnicStatus }])
+    )
   };
 }
 
 export function buildPreviewDocuments(payload: DriverDocumentsPayload): PreviewDocument[] {
   const payloadRecord = payload as unknown as Record<string, unknown>;
   const vehicleStatusRaw = pickVehicleStatus(payloadRecord);
+
+  const cnic: PreviewDocument = {
+    id: "id-document",
+    type: "ID_DOCUMENT",
+    fileName: "id-document.jpg",
+    frontUrl: safeImageUrl(payload.cnicFront) || FALLBACK_BY_TYPE.ID_DOCUMENT,
+    backUrl: safeImageUrl(payload.cnicBack) || FALLBACK_BY_TYPE.ID_DOCUMENT,
+    status: normalizeDocumentStatus(payload.cnicStatus)
+  };
+
+  if (isPartnerDocumentsPayload(payload)) {
+    return [cnic];
+  }
 
   return [
     {
@@ -155,14 +211,7 @@ export function buildPreviewDocuments(payload: DriverDocumentsPayload): PreviewD
       backUrl: safeImageUrl(payload.registrationBack) || FALLBACK_BY_TYPE.VEHICLE_REGISTRATION,
       status: normalizeDocumentStatus(vehicleStatusRaw)
     },
-    {
-      id: "id-document",
-      type: "ID_DOCUMENT",
-      fileName: "id-document.jpg",
-      frontUrl: safeImageUrl(payload.cnicFront) || FALLBACK_BY_TYPE.ID_DOCUMENT,
-      backUrl: safeImageUrl(payload.cnicBack) || FALLBACK_BY_TYPE.ID_DOCUMENT,
-      status: normalizeDocumentStatus(payload.cnicStatus)
-    }
+    cnic
   ];
 }
 
@@ -187,5 +236,20 @@ export async function updateDriverDocumentStatus(
     method: "PUT",
     body: JSON.stringify(payload),
     debugLabel: "documents:status-update"
+  });
+}
+
+export async function updatePartnerCnicStatus(
+  partnerId: number,
+  payload: { cnicStatus: ApiDocStatus; rejectionReason?: string },
+  opts: RequestOpts
+): Promise<void> {
+  await fetcher(buildApiUrl(`/users/documents/status/${partnerId}`), {
+    token: opts.token,
+    signal: opts.signal,
+    dedupe: false,
+    method: "PUT",
+    body: JSON.stringify(payload),
+    debugLabel: "documents:partner-cnic-status"
   });
 }

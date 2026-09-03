@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowLeft, Pencil, Users, UserCircle, BadgeDollarSign } from "lucide-react";
@@ -15,11 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useToast } from "@/components/ui/toast";
+import { useApiMutation } from "@/hooks/api";
 import {
   AgentDriversTable,
   AgentPassengersTable
 } from "@/components/admin/agents/AgentOnboardingTables";
 import { useAgentDetailQuery } from "@/hooks/queries/use-agent-detail-query";
+import { queryKeys } from "@/lib/api/query-keys";
+import { updateUserStatus } from "@/services/users";
 import {
   formatAgentCurrency,
   formatAgentDate,
@@ -36,6 +41,24 @@ export default function AdminAgentDetailPage() {
   const router = useRouter();
   const { data: agent, isLoading, isError } = useAgentDetailQuery(params.id);
   const loading = isLoading;
+  const { success, error: showError } = useToast();
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+  const agentStatus = optimisticStatus ?? agent?.status;
+  const isBlocked = String(agentStatus || "").toUpperCase() === "BLOCKED";
+  const nextStatus = isBlocked ? "ACTIVE" : "BLOCKED";
+
+  const statusMutation = useApiMutation<void, { userId: number; status: string }>({
+    mutationFn: ({ token, variables }) =>
+      updateUserStatus(variables.userId, variables.status, { token }),
+    invalidateKeys: [queryKeys.users.agentDetail(params.id), queryKeys.users.all],
+    onSuccess: (_data, variables) => {
+      setOptimisticStatus(variables.status);
+      success(variables.status === "BLOCKED" ? "Agent blocked." : "Agent unblocked.");
+      setStatusConfirmOpen(false);
+    },
+    onError: (err) => showError(err.message)
+  });
   const fallbackCnicImage = "/mock-images/id-document.svg";
 
   const agentDrivers = useMemo(() => getAgentDrivers(params.id), [params.id]);
@@ -215,11 +238,22 @@ export default function AdminAgentDetailPage() {
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:col-span-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
                   <div className="mt-0.5">
-                    <StatusBadge status={agent?.status || "PENDING"} />
+                    <StatusBadge status={agentStatus || "PENDING"} />
                   </div>
                 </div>
               </div>
             )}
+            {!loading && agent ? (
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant={isBlocked ? "default" : "destructive"}
+                  disabled={statusMutation.isPending}
+                  onClick={() => setStatusConfirmOpen(true)}
+                >
+                  {isBlocked ? "Unblock" : "Block"}
+                </Button>
+              </div>
+            ) : null}
           </SectionCard>
           <SectionCard title="Payment summary" description="Commission totals">
             <div className="space-y-3 text-sm">
@@ -323,6 +357,24 @@ export default function AdminAgentDetailPage() {
             </div>
           </div>
         </SectionCard>
+        <ConfirmDialog
+          open={statusConfirmOpen}
+          onOpenChange={setStatusConfirmOpen}
+          onConfirm={() => {
+            if (!agent) return;
+            statusMutation.mutate({ userId: agent.id, status: nextStatus });
+          }}
+          title={isBlocked ? "Unblock agent?" : "Block agent?"}
+          description={
+            agent
+              ? isBlocked
+                ? `Unblock "${agent.name || "this agent"}"?`
+                : `Block "${agent.name || "this agent"}"? They will not be able to use the app.`
+              : undefined
+          }
+          confirmLabel={statusMutation.isPending ? "Updating..." : isBlocked ? "Unblock" : "Block"}
+          destructive={!isBlocked}
+        />
       </PageContainer>
     </AppShell>
   );
