@@ -8,6 +8,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   ActivityList,
+  MiniMetric,
   RoleKpiCard,
   SimpleBarChart
 } from "@/components/role-workspace/RoleDashboardWidgets";
@@ -45,7 +46,7 @@ export default function SalesManagerDashboardPage() {
   return (
     <AppShell title="Sales Manager Dashboard" wideContent>
       <PageContainer>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
           <RoleKpiCard
             label="Total sales"
             value={formatCurrency(salesManagerKpis.totalSales)}
@@ -57,7 +58,6 @@ export default function SalesManagerDashboardPage() {
             label="Monthly revenue"
             value={formatCurrency(salesManagerKpis.monthlyRevenue)}
             hint="Current month"
-            tone="brand"
             icon={Wallet}
           />
           <RoleKpiCard
@@ -75,38 +75,29 @@ export default function SalesManagerDashboardPage() {
           />
         </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <SectionCard
-            title="Revenue analytics"
-            description="Monthly revenue performance"
-            className="lg:col-span-2"
-          >
-            <SimpleBarChart data={salesMonthlySeries} valueKey="revenue" />
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="rounded-lg border border-border/50 bg-muted/20 p-2">
-                <p className="text-muted-foreground">Conversion</p>
-                <p className="font-heading font-semibold">{salesManagerKpis.conversionRate}%</p>
-              </div>
-              <div className="rounded-lg border border-border/50 bg-muted/20 p-2">
-                <p className="text-muted-foreground">Sales (Jul)</p>
-                <p className="font-heading font-semibold">{salesMonthlySeries.at(-1)?.sales}</p>
-              </div>
-              <div className="rounded-lg border border-border/50 bg-muted/20 p-2">
-                <p className="text-muted-foreground">Growth</p>
-                <p className="font-heading font-semibold text-emerald-600">+8.2%</p>
-              </div>
-            </div>
-          </SectionCard>
+        <SectionCard
+          title="Revenue analytics"
+          description="Monthly revenue performance"
+        >
+          <SimpleBarChart data={salesMonthlySeries} valueKey="revenue" />
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <MiniMetric label="Conversion" value={`${salesManagerKpis.conversionRate}%`} />
+            <MiniMetric label="Sales (Jul)" value={salesMonthlySeries.at(-1)?.sales ?? "—"} />
+            <MiniMetric
+              label="Growth"
+              value="+8.2%"
+              accent="text-emerald-600 dark:text-emerald-400"
+            />
+          </div>
+        </SectionCard>
 
-          <SectionCard title="Recent activities" description="Sales ops timeline">
-            <ActivityList items={salesManagerActivities} />
-          </SectionCard>
-        </div>
+        <SectionCard title="Recent activities" description="Sales ops timeline">
+          <ActivityList items={salesManagerActivities} />
+        </SectionCard>
 
         <SectionCard
           title="Top performing agents"
           description="Leaders by sales this month"
-          className="mt-4"
         >
           <DataTable columns={agentColumns} data={topPerformingAgents} />
         </SectionCard>
@@ -114,29 +105,24 @@ export default function SalesManagerDashboardPage() {
         <SectionCard
           title="Commission overview"
           description="Paid vs pending snapshot"
-          className="mt-4"
         >
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <p className="text-xs text-muted-foreground">Pending</p>
-              <p className="mt-1 text-xl font-heading font-semibold text-amber-600">
-                {formatCurrency(salesManagerKpis.pendingCommissions)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <p className="text-xs text-muted-foreground">Paid</p>
-              <p className="mt-1 text-xl font-heading font-semibold text-emerald-600">
-                {formatCurrency(salesManagerKpis.commissionPaid)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <p className="text-xs text-muted-foreground">Total tracked</p>
-              <p className="mt-1 text-xl font-heading font-semibold">
-                {formatCurrency(
-                  salesManagerKpis.pendingCommissions + salesManagerKpis.commissionPaid
-                )}
-              </p>
-            </div>
+            <MiniMetric
+              label="Pending"
+              value={formatCurrency(salesManagerKpis.pendingCommissions)}
+              accent="text-amber-600 dark:text-amber-400"
+            />
+            <MiniMetric
+              label="Paid"
+              value={formatCurrency(salesManagerKpis.commissionPaid)}
+              accent="text-emerald-600 dark:text-emerald-400"
+            />
+            <MiniMetric
+              label="Total tracked"
+              value={formatCurrency(
+                salesManagerKpis.pendingCommissions + salesManagerKpis.commissionPaid
+              )}
+            />
           </div>
         </SectionCard>
       </PageContainer>

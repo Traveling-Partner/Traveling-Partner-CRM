@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import { BadgeDollarSign, UserPlus, Handshake, Wallet } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/common/EmptyState";
+import { RoleKpiCard } from "@/components/role-workspace/RoleDashboardWidgets";
 import { useAuthStore } from "@/store/auth.store";
 import { drivers } from "@/mock-data/drivers";
 import { partners } from "@/mock-data/partners";
@@ -40,6 +41,13 @@ export default function AgentDashboardPage() {
     () => myCommissions.reduce((acc, c) => acc + c.amount, 0),
     [myCommissions]
   );
+  const pendingCommission = useMemo(
+    () =>
+      myCommissions
+        .filter((c) => c.status === "PENDING")
+        .reduce((acc, c) => acc + c.amount, 0),
+    [myCommissions]
+  );
   const recentActivity = useMemo(
     () =>
       auditLogs
@@ -57,69 +65,38 @@ export default function AgentDashboardPage() {
   return (
     <AppShell title="Agent Dashboard">
       <PageContainer>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
-            <CardContent className="space-y-2 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide">
-                My Commission
-              </p>
-              <p className="text-2xl font-heading font-semibold">
-                {currency(totalCommission)}
-              </p>
-              <p className="text-[0.7rem] opacity-90">
-                {myCommissions.length} pay periods
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
-            <CardContent className="space-y-2 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide">
-                Drivers Onboarded
-              </p>
-              <p className="text-2xl font-heading font-semibold">
-                {myDrivers.length}
-              </p>
-              <p className="text-[0.7rem] opacity-90">
-                Created by you
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-b from-[#fce001] to-[#fdb813] text-slate-900 shadow-md">
-            <CardContent className="space-y-2 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide">
-                Partners Onboarded
-              </p>
-              <p className="text-2xl font-heading font-semibold">
-                {myPartners.length}
-              </p>
-              <p className="text-[0.7rem] opacity-90">
-                Created by you
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/80 bg-card shadow-md">
-            <CardContent className="space-y-2 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Pending Commission
-              </p>
-              <p className="text-xl font-heading font-semibold">
-                {currency(
-                  myCommissions
-                    .filter((c) => c.status === "PENDING")
-                    .reduce((acc, c) => acc + c.amount, 0)
-                )}
-              </p>
-              <p className="text-[0.7rem] text-muted-foreground">
-                Awaiting payout
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+          <RoleKpiCard
+            label="My Commission"
+            value={currency(totalCommission)}
+            hint={`${myCommissions.length} pay periods`}
+            tone="brand"
+            icon={BadgeDollarSign}
+          />
+          <RoleKpiCard
+            label="Drivers Onboarded"
+            value={myDrivers.length}
+            hint="Created by you"
+            icon={UserPlus}
+          />
+          <RoleKpiCard
+            label="Partners Onboarded"
+            value={myPartners.length}
+            hint="Created by you"
+            icon={Handshake}
+          />
+          <RoleKpiCard
+            label="Pending Commission"
+            value={currency(pendingCommission)}
+            hint="Awaiting payout"
+            tone="warning"
+            icon={Wallet}
+          />
         </div>
 
         <SectionCard
           title="Recent activity"
           description="Your recent actions in the portal."
-          className="mt-6"
         >
           {recentActivity.length === 0 ? (
             <EmptyState
@@ -127,19 +104,19 @@ export default function AgentDashboardPage() {
               description="Your onboarding and approval actions will appear here."
             />
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
               {recentActivity.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs transition-colors hover:bg-muted/60"
+                  className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
                 >
-                  <div>
-                    <p className="font-medium">{log.action}</p>
-                    <p className="text-[0.7rem] text-muted-foreground">
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground">{log.action}</p>
+                    <p className="text-[11px] text-muted-foreground">
                       {log.entityType} • {log.entityId}
                     </p>
                   </div>
-                  <span className="text-[0.7rem] text-muted-foreground">
+                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
                     {format(parseISO(log.createdAt), "MMM d, HH:mm")}
                   </span>
                 </div>

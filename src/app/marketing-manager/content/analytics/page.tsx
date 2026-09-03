@@ -19,12 +19,12 @@ export default function MarketingAnalyticsPage() {
   return (
     <AppShell title="Content analytics">
       <PageContainer>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
           <RoleKpiCard label="Engagement" value={`${marketingKpis.engagementRate}%`} tone="brand" />
           <RoleKpiCard label="Reach" value={marketingKpis.reach.toLocaleString()} />
           <RoleKpiCard label="Published" value={marketingKpis.published} />
         </div>
-        <SectionCard title="Social activity" description="Posts over the last 6 months" className="mt-4">
+        <SectionCard title="Social activity" description="Posts over the last 6 months">
           <SimpleBarChart data={series} valueKey="revenue" />
         </SectionCard>
       </PageContainer>

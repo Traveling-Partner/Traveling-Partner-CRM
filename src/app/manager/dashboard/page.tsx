@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import {
   ActivityList,
+  MiniMetric,
   RoleKpiCard,
   SimpleBarChart
 } from "@/components/role-workspace/RoleDashboardWidgets";
@@ -20,7 +21,7 @@ export default function ManagerDashboardPage() {
   return (
     <AppShell title="Manager Dashboard" wideContent>
       <PageContainer>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
           <RoleKpiCard
             label="Revenue"
             value={formatCurrency(managerKpis.revenue)}
@@ -37,25 +38,17 @@ export default function ManagerDashboardPage() {
           />
         </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <SectionCard title="Business summary" description="Operational KPIs" className="lg:col-span-2">
-            <div className="mb-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-                <p className="text-xs text-muted-foreground">Active drivers</p>
-                <p className="mt-1 text-2xl font-heading font-semibold">{managerKpis.activeDrivers}</p>
-              </div>
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-                <p className="text-xs text-muted-foreground">Active partners</p>
-                <p className="mt-1 text-2xl font-heading font-semibold">{managerKpis.activePartners}</p>
-              </div>
-            </div>
-            <SimpleBarChart data={salesMonthlySeries} valueKey="revenue" />
-          </SectionCard>
+        <SectionCard title="Business summary" description="Operational KPIs">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <MiniMetric label="Active drivers" value={managerKpis.activeDrivers} />
+            <MiniMetric label="Active partners" value={managerKpis.activePartners} />
+          </div>
+          <SimpleBarChart data={salesMonthlySeries} valueKey="revenue" />
+        </SectionCard>
 
-          <SectionCard title="Recent activity" description="Management actions">
-            <ActivityList items={managerActivities} />
-          </SectionCard>
-        </div>
+        <SectionCard title="Recent activity" description="Management actions">
+          <ActivityList items={managerActivities} />
+        </SectionCard>
       </PageContainer>
     </AppShell>
   );
