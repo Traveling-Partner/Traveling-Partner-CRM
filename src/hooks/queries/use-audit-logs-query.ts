@@ -11,8 +11,15 @@ export function useAuditLogsQuery(params: {
   userType: string;
   search: string;
   fromDate: string;
+  toDate: string;
+  module: string;
+  action: string;
+  userId: string;
 }) {
   const debouncedSearch = useDebouncedValue(params.search);
+  const debouncedModule = useDebouncedValue(params.module);
+  const debouncedAction = useDebouncedValue(params.action);
+  const debouncedUserId = useDebouncedValue(params.userId);
 
   const filters = useMemo<AuditLogsFilters>(
     () => ({
@@ -20,9 +27,23 @@ export function useAuditLogsQuery(params: {
       pageSize: params.pageSize,
       userType: params.userType,
       search: debouncedSearch,
-      fromDate: params.fromDate
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      module: debouncedModule,
+      action: debouncedAction,
+      userId: debouncedUserId
     }),
-    [params.page, params.pageSize, params.userType, debouncedSearch, params.fromDate]
+    [
+      params.page,
+      params.pageSize,
+      params.userType,
+      debouncedSearch,
+      params.fromDate,
+      params.toDate,
+      debouncedModule,
+      debouncedAction,
+      debouncedUserId
+    ]
   );
 
   return usePaginatedQuery({

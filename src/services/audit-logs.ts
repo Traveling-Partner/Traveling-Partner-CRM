@@ -19,6 +19,13 @@ function toFromDateParam(dateOnly: string): string | undefined {
   return `${trimmed}T00:00:00`;
 }
 
+function toToDateParam(dateOnly: string): string | undefined {
+  const trimmed = dateOnly.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.includes("T")) return trimmed;
+  return `${trimmed}T23:59:59`;
+}
+
 function parseAuditLogsResponse(res: unknown): PaginatedResponse<AuditLogRow> {
   if (!res || typeof res !== "object") {
     return { content: [], totalPages: 1, totalElements: 0 };
@@ -46,7 +53,11 @@ export async function fetchAuditLogs(
     size: filters.pageSize,
     userType: filters.userType !== "all" ? filters.userType : undefined,
     search: filters.search.trim() || undefined,
-    fromDate: toFromDateParam(filters.fromDate)
+    fromDate: toFromDateParam(filters.fromDate),
+    toDate: toToDateParam(filters.toDate),
+    module: filters.module.trim() || undefined,
+    action: filters.action.trim() || undefined,
+    userId: filters.userId.trim() || undefined
   });
 
   const res = await fetcher<unknown>(url, {

@@ -13,13 +13,13 @@ import {
   buildAgentPerformanceRow,
   getAgentCommissions
 } from "@/lib/agent-onboarding";
+import { AuditLogsSection } from "@/components/audit-logs/AuditLogsSection";
 import {
   Users,
   Briefcase,
   UserCircle2,
   Car,
   TrendingUp,
-  Clock,
   BadgeDollarSign
 } from "lucide-react";
 import {
@@ -91,8 +91,7 @@ export default function AdminDashboardPage() {
     counts,
     driverStatusCounts,
     ridesTrend,
-    rideStatusBreakdown,
-    recentActivity
+    rideStatusBreakdown
   } = data;
 
   const statusRows = useMemo(
@@ -572,72 +571,8 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* ── Recent Activity ── */}
-        <Card>
-          <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Recent activity</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Key events across drivers, partners &amp; agents</p>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              Latest
-            </div>
-          </div>
-
-          <div className="px-4 py-2 sm:px-5">
-            {isLoading ? (
-              <div className="space-y-4 py-2">
-                {Array.from({ length: 5 }).map((_, idx) => (
-                  <div key={idx} className="flex items-center gap-4">
-                    <Skeleton className="h-2 w-2 shrink-0 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/3" />
-                    </div>
-                    <Skeleton className="h-3 w-16 shrink-0" />
-                  </div>
-                ))}
-              </div>
-            ) : recentActivity.length === 0 ? (
-              <div className="rounded-lg bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                No recent activity found.
-              </div>
-            ) : (
-              <div className="relative">
-                <div className="absolute left-[7px] top-3 bottom-3 w-px bg-border/40" />
-                {recentActivity.map((log, idx) => (
-                  <div
-                    key={log.id}
-                    className="group relative flex gap-4 py-2.5"
-                  >
-                    <div className="relative z-10 mt-1.5 flex h-[15px] w-[15px] shrink-0 items-center justify-center">
-                      <span className="h-2 w-2 rounded-full bg-muted-foreground/30 transition-colors group-hover:bg-[#fdb813]" />
-                    </div>
-                    <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-foreground truncate">
-                          {log.description?.trim() || "—"}
-                        </p>
-                        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                          {log.userType && (
-                            <span className="rounded bg-muted/60 px-1.5 py-0.5 font-medium">
-                              {log.userType}
-                            </span>
-                          )}
-                          {log.mobileNumber && <span>{log.mobileNumber}</span>}
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-[11px] text-muted-foreground/60 tabular-nums">
-                        {format(parseISO(log.createdAt), "MMM d, HH:mm")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+        {/* ── Audit logs (GET /audit-logs/getAll — same filters as the ticket) ── */}
+        <AuditLogsSection variant="dashboard" />
       </PageContainer>
     </AppShell>
   );

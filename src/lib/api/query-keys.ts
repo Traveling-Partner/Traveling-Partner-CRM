@@ -190,6 +190,10 @@ export interface AuditLogsFilters {
   userType: string;
   search: string;
   fromDate: string;
+  toDate: string;
+  module: string;
+  action: string;
+  userId: string;
 }
 
 export type VehicleTypesListFilters = VehicleListFiltersBase;
