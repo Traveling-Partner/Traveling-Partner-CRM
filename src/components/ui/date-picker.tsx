@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   addDays,
   addMonths,
+  addYears,
   endOfMonth,
   endOfWeek,
   format,
@@ -16,7 +17,7 @@ import {
   startOfMonth,
   startOfWeek
 } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -130,8 +131,10 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
     const maxDate = parseBound(typeof max === "string" ? max : undefined);
 
     const [open, setOpen] = React.useState(false);
+    const [panel, setPanel] = React.useState<"days" | "months" | "years">("days");
     const [viewDate, setViewDate] = React.useState(() => selected ?? new Date());
     const inputRef = React.useRef<HTMLInputElement | null>(null);
+    const yearListRef = React.useRef<HTMLDivElement | null>(null);
 
     const assignRef = (node: HTMLInputElement | null) => {
       inputRef.current = node;
@@ -150,6 +153,18 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
       const next = parseSelected(current);
       if (next) setViewDate(next);
     }, [current]);
+
+    React.useEffect(() => {
+      if (!open) setPanel("days");
+    }, [open]);
+
+    React.useEffect(() => {
+      if (panel !== "years") return;
+      const active = yearListRef.current?.querySelector("[data-active-year='true']");
+      if (active instanceof HTMLElement) {
+        active.scrollIntoView({ block: "center" });
+      }
+    }, [panel, viewDate]);
 
     const setValue = (next: string) => {
       if (!isControlled) setUncontrolled(next);
@@ -241,58 +256,115 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
               <CalendarDays className="h-4 w-4 shrink-0 text-[#fdb813]" />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-[18.5rem] overflow-hidden p-0" align="start">
-            <div className="flex items-center gap-1 bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-2.5">
+          <PopoverContent className="w-[18.5rem] overflow-hidden border-border/70 bg-popover p-0 shadow-xl" align="start">
+            <div className="flex items-center gap-1 bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-2">
               <button
                 type="button"
-                className="flex h-7 w-7 items-center justify-center rounded-md text-foreground hover:bg-background/25"
-                onClick={() => setViewDate((d) => addMonths(d, -1))}
-                aria-label="Previous month"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-black/10"
+                onClick={() => {
+                  if (panel === "years") setViewDate((d) => addYears(d, -12));
+                  else if (panel === "months") setViewDate((d) => addYears(d, -1));
+                  else setViewDate((d) => addMonths(d, -1));
+                }}
+                aria-label={panel === "days" ? "Previous month" : "Previous"}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
-                <select
-                  aria-label="Month"
-                  className="max-w-[7.5rem] cursor-pointer truncate rounded-md bg-background/20 px-1.5 py-1 text-xs font-semibold text-foreground outline-none hover:bg-background/30"
-                  value={viewDate.getMonth()}
-                  onChange={(e) => {
-                    const month = Number(e.target.value);
-                    setViewDate((d) => new Date(d.getFullYear(), month, 1));
-                  }}
+                <button
+                  type="button"
+                  aria-label="Choose month"
+                  aria-pressed={panel === "months"}
+                  onClick={() => setPanel((p) => (p === "months" ? "days" : "months"))}
+                  className={cn(
+                    "inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-foreground transition-colors",
+                    panel === "months" ? "bg-black/15" : "hover:bg-black/10"
+                  )}
                 >
-                  {MONTHS.map((label, index) => (
-                    <option key={label} value={index}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Year"
-                  className="cursor-pointer rounded-md bg-background/20 px-1.5 py-1 text-xs font-semibold text-foreground outline-none hover:bg-background/30"
-                  value={viewDate.getFullYear()}
-                  onChange={(e) => {
-                    const nextYear = Number(e.target.value);
-                    setViewDate((d) => new Date(nextYear, d.getMonth(), 1));
-                  }}
+                  {format(viewDate, "MMMM")}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", panel === "months" && "rotate-180")} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Choose year"
+                  aria-pressed={panel === "years"}
+                  onClick={() => setPanel((p) => (p === "years" ? "days" : "years"))}
+                  className={cn(
+                    "inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-foreground transition-colors",
+                    panel === "years" ? "bg-black/15" : "hover:bg-black/10"
+                  )}
                 >
-                  {years.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
+                  {format(viewDate, "yyyy")}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", panel === "years" && "rotate-180")} />
+                </button>
               </div>
               <button
                 type="button"
-                className="flex h-7 w-7 items-center justify-center rounded-md text-foreground hover:bg-background/25"
-                onClick={() => setViewDate((d) => addMonths(d, 1))}
-                aria-label="Next month"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-black/10"
+                onClick={() => {
+                  if (panel === "years") setViewDate((d) => addYears(d, 12));
+                  else if (panel === "months") setViewDate((d) => addYears(d, 1));
+                  else setViewDate((d) => addMonths(d, 1));
+                }}
+                aria-label={panel === "days" ? "Next month" : "Next"}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
+            {panel === "months" ? (
+              <div className="grid grid-cols-3 gap-1.5 p-3">
+                {MONTHS.map((label, index) => {
+                  const active = viewDate.getMonth() === index;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        setViewDate((d) => new Date(d.getFullYear(), index, 1));
+                        setPanel("days");
+                      }}
+                      className={cn(
+                        "h-9 rounded-lg text-xs font-medium transition-colors",
+                        active
+                          ? "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-foreground shadow-sm"
+                          : "bg-muted/40 text-foreground hover:bg-[var(--brand-light-hover)] dark:bg-white/5"
+                      )}
+                    >
+                      {label.slice(0, 3)}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : panel === "years" ? (
+              <div
+                ref={yearListRef}
+                className="grid max-h-[14.75rem] grid-cols-3 gap-1.5 overflow-y-auto p-3 scrollbar-thin scrollbar-brand"
+              >
+                {years.map((y) => {
+                  const active = y === year;
+                  return (
+                    <button
+                      key={y}
+                      type="button"
+                      data-active-year={active ? "true" : undefined}
+                      onClick={() => {
+                        setViewDate((d) => new Date(y, d.getMonth(), 1));
+                        setPanel("days");
+                      }}
+                      className={cn(
+                        "h-9 rounded-lg text-xs font-medium tabular-nums transition-colors",
+                        active
+                          ? "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-foreground shadow-sm"
+                          : "bg-muted/40 text-foreground hover:bg-[var(--brand-light-hover)] dark:bg-white/5"
+                      )}
+                    >
+                      {y}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
             <div className="px-2.5 pb-2 pt-2">
               <div className="mb-1 grid grid-cols-7">
                 {WEEKDAYS.map((day) => (
@@ -332,6 +404,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
                 })}
               </div>
             </div>
+            )}
 
             {isDateTime ? (
               <div className="border-t border-border/60 px-3 py-2">
