@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,12 @@ function formatTimestamp(value: string | null | undefined): string {
 }
 
 export function auditLogSearchHref(log: AuditLogRow): string {
+  const params = new URLSearchParams();
   const q = (log.description ?? "").trim().slice(0, 80);
-  if (!q) return "/admin/audit-logs";
-  return `/admin/audit-logs?search=${encodeURIComponent(q)}`;
+  if (q) params.set("search", q);
+  if (log.id != null) params.set("highlightId", String(log.id));
+  const qs = params.toString();
+  return qs ? `/admin/audit-logs?${qs}` : "/admin/audit-logs";
 }
 
 interface AuditLogDetailDialogProps {
@@ -38,6 +41,15 @@ interface AuditLogDetailDialogProps {
 }
 
 export function AuditLogDetailDialog({ log, onOpenChange }: AuditLogDetailDialogProps) {
+  const router = useRouter();
+
+  const handleFind = () => {
+    if (!log) return;
+    const href = auditLogSearchHref(log);
+    onOpenChange(false);
+    router.push(href);
+  };
+
   return (
     <Dialog open={Boolean(log)} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -95,8 +107,8 @@ export function AuditLogDetailDialog({ log, onOpenChange }: AuditLogDetailDialog
             Close
           </Button>
           {log ? (
-            <Button asChild>
-              <Link href={auditLogSearchHref(log)}>Find in audit logs</Link>
+            <Button type="button" onClick={handleFind}>
+              Find in audit logs
             </Button>
           ) : null}
         </DialogFooter>
