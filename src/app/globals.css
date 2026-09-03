@@ -142,6 +142,30 @@
   .brand-focus:focus-visible {
     box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--brand-focus-ring);
   }
+
+  .glass-panel {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+  }
+
+  html.dark .glass-panel {
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .app-mesh-bg {
+    background-color: #f3f4f6;
+    background-image:
+      radial-gradient(ellipse 50% 36% at 100% 0%, rgba(253, 184, 19, 0.14), transparent 60%);
+  }
+
+  html.dark .app-mesh-bg {
+    background-color: #0b0f18;
+    background-image:
+      radial-gradient(ellipse 50% 36% at 100% 0%, rgba(253, 184, 19, 0.1), transparent 60%);
+  }
 }
 
 @layer utilities {
@@ -215,8 +239,14 @@ nav[aria-label="Breadcrumb"] ol {
   animation: fade-in 0.3s ease-out both;
 }
 
-.animate-slide-up {
-  animation: slide-up 0.35s ease-out both;
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.bar-fill {
+  transform-origin: left center;
+  animation: bar-fill 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 input[type="date"],
