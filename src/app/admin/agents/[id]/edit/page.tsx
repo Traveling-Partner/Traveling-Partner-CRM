@@ -15,6 +15,7 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
+import TPLoader from "@/components/TPLoader";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
 import {
@@ -193,7 +194,7 @@ export default function AdminEditAgentPage() {
       <AppShell title="Edit Agent">
         <PageContainer>
           <div className="flex items-center justify-center py-20">
-            <p className="text-muted-foreground">Loading…</p>
+            <TPLoader variant="inline" size={120} label="Loading…" />
           </div>
         </PageContainer>
       </AppShell>

@@ -19,6 +19,7 @@ import {
   toProfileUpdateBody,
   type ProfileEditValues
 } from "@/components/admin/users/ProfileEditForm";
+import TPLoader from "@/components/TPLoader";
 
 export default function AdminEditDriverPage() {
   const params = useParams<{ id: string }>();
@@ -80,7 +81,9 @@ export default function AdminEditDriverPage() {
         </div>
         <SectionCard title="Edit driver profile" description="Saves via PUT /users/drivers/update/{id}. License and vehicle docs are unchanged.">
           {isLoading || !defaultValues ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <div className="flex justify-center py-10">
+              <TPLoader variant="inline" size={120} label="Loading…" />
+            </div>
           ) : (
             <ProfileEditForm
               key={driver?.id}

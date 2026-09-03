@@ -9,12 +9,12 @@ import {
   ChevronDown,
   HelpCircle,
   ImagePlus,
-  Loader2,
   Plus,
   Tag,
   Trash2,
   UserRound
 } from "lucide-react";
+import TPLoader from "@/components/TPLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -155,7 +155,7 @@ export function BlogEditorWorkspace({
                 )}
               >
                 {coverUploading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <TPLoader variant="inline" size={120} />
                 ) : (
                   <ImagePlus className="h-3.5 w-3.5" />
                 )}

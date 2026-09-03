@@ -11,6 +11,7 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { Button } from "@/components/ui/button";
 import { LazyBlogRichEditor } from "@/components/blog/LazyBlogRichEditor";
 import { BlogEditorWorkspace } from "@/components/blog/BlogEditorWorkspace";
+import TPLoader from "@/components/TPLoader";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import {
@@ -199,7 +200,9 @@ export default function AdminBlogEditPage() {
     return (
       <AppShell title="Edit Post">
         <PageContainer>
-          <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+          <div className="flex justify-center py-12">
+            <TPLoader variant="inline" size={120} label="Loading…" />
+          </div>
         </PageContainer>
       </AppShell>
     );
