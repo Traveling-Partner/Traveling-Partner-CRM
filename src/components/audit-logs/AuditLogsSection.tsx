@@ -227,26 +227,38 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
             className="w-36 bg-background/90"
             aria-label="User ID"
           />
-          <Input
-            type="date"
-            value={fromDate}
-            onChange={(e) => {
-              setFromDate(e.target.value);
-              setPage(0);
-            }}
-            className="w-44 bg-background/90"
-            aria-label="From date"
-          />
-          <Input
-            type="date"
-            value={toDate}
-            onChange={(e) => {
-              setToDate(e.target.value);
-              setPage(0);
-            }}
-            className="w-44 bg-background/90"
-            aria-label="To date"
-          />
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
+              From
+            </span>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(0);
+              }}
+              className="w-40 bg-background/90"
+              placeholder="Start date"
+              aria-label="From date"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
+              To
+            </span>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(0);
+              }}
+              className="w-40 bg-background/90"
+              placeholder="End date"
+              aria-label="To date"
+            />
+          </div>
         </div>
       </div>
       {error ? <p className="pb-3 text-sm text-destructive">{error.message}</p> : null}
