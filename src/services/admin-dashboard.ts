@@ -158,7 +158,17 @@ export async function fetchAdminDashboardData(
       fetcher<unknown>(buildApiUrl("/users/graph/last-14-days"), requestInit),
       fetcher<unknown>(buildApiUrl("/users/ride-status-count"), requestInit),
       fetchAuditLogs(
-        { page: 0, pageSize: recentActivityLimit, userType: "all", search: "", fromDate: "" },
+        {
+          page: 0,
+          pageSize: recentActivityLimit,
+          userType: "all",
+          search: "",
+          fromDate: "",
+          toDate: "",
+          module: "",
+          action: "",
+          userId: ""
+        },
         { token, signal }
       )
     ]);
