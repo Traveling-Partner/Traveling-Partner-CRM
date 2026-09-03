@@ -24,6 +24,8 @@ interface DataTableProps<TData, TValue> {
   className?: string;
   /** Stable row id (e.g. database id) so cells stay aligned when data updates. */
   getRowId?: (originalRow: TData, index: number) => string;
+  /** Optional extra classes for a row (e.g. highlight). Other tables can omit this. */
+  getRowClassName?: (originalRow: TData, index: number) => string | undefined;
 }
 
 export function DataTable<TData, TValue>({
@@ -32,7 +34,8 @@ export function DataTable<TData, TValue>({
   emptyTitle = "No data yet",
   emptyDescription = "Once records are available, they will appear here.",
   className,
-  getRowId
+  getRowId,
+  getRowClassName
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -72,7 +75,11 @@ export function DataTable<TData, TValue>({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              data-row-id={row.id}
+              className={getRowClassName?.(row.original, row.index)}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(

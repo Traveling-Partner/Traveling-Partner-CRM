@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ScrollText } from "lucide-react";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -21,6 +21,7 @@ import {
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { useAuditLogsQuery } from "@/hooks/queries/use-audit-logs-query";
 import type { AuditLogRow } from "@/services/audit-logs";
+import { cn } from "@/lib/utils";
 
 const USER_TYPE_OPTIONS = [
   { value: "all", label: "All user types" },
@@ -29,6 +30,8 @@ const USER_TYPE_OPTIONS = [
   { value: "PARTNER", label: "Partner" },
   { value: "AGENT", label: "Agent" }
 ] as const;
+
+const HIGHLIGHT_FADE_MS = 4000;
 
 function formatTimestamp(value: string | null | undefined): string {
   const text = value?.trim();
@@ -51,6 +54,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const isDashboard = variant === "dashboard";
   const searchParams = useSearchParams();
   const urlSearch = searchParams.get("search") ?? "";
+  const highlightId = searchParams.get("highlightId") ?? "";
   const [search, setSearch] = useState(urlSearch);
   const [userType, setUserType] = useState("all");
   const [fromDate, setFromDate] = useState("");
@@ -60,12 +64,24 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(isDashboard ? 10 : 20);
+  const [highlightVisible, setHighlightVisible] = useState(Boolean(highlightId));
+  const tableWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!urlSearch) return;
     setSearch(urlSearch);
     setPage(0);
   }, [urlSearch]);
+
+  useEffect(() => {
+    if (!highlightId) {
+      setHighlightVisible(false);
+      return;
+    }
+    setHighlightVisible(true);
+    const timer = window.setTimeout(() => setHighlightVisible(false), HIGHLIGHT_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [highlightId]);
 
   const { data, isLoading, isFetching, error } = useAuditLogsQuery({
     page,
@@ -83,6 +99,13 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const totalPages = Math.max(1, data?.totalPages ?? 1);
   const totalElements = data?.totalElements ?? rows.length;
   const showSkeleton = isLoading && !data;
+
+  useEffect(() => {
+    if (!highlightId || showSkeleton) return;
+    const el = tableWrapRef.current?.querySelector(`[data-row-id="${highlightId}"]`);
+    if (!(el instanceof HTMLElement)) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [highlightId, rows, showSkeleton]);
 
   const columns: ColumnDef<AuditLogRow>[] = useMemo(
     () => [
@@ -129,6 +152,11 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
     <SectionCard
       title="Audit logs"
       description="Admin activity log: who did what in the CRM. Filter by user type, search the description, module, action, user ID, or date range."
+      icon={
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#fce001] to-[#fdb813] shadow-sm">
+          <ScrollText className="h-5 w-5 text-foreground" />
+        </div>
+      }
       headerAction={
         isDashboard ? (
           <Button variant="outline" size="sm" asChild>
@@ -140,84 +168,86 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
         ) : null
       }
     >
-      <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <Input
-          placeholder="Search description…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          className="max-w-xs"
-        />
-        <Select
-          value={userType}
-          onValueChange={(value) => {
-            setUserType(value);
-            setPage(0);
-          }}
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="User type" />
-          </SelectTrigger>
-          <SelectContent>
-            {USER_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Input
-          placeholder="Module"
-          value={moduleFilter}
-          onChange={(e) => {
-            setModuleFilter(e.target.value);
-            setPage(0);
-          }}
-          className="w-40"
-          aria-label="Module"
-        />
-        <Input
-          placeholder="Action"
-          value={actionFilter}
-          onChange={(e) => {
-            setActionFilter(e.target.value);
-            setPage(0);
-          }}
-          className="w-40"
-          aria-label="Action"
-        />
-        <Input
-          placeholder="User ID"
-          value={userId}
-          onChange={(e) => {
-            setUserId(e.target.value);
-            setPage(0);
-          }}
-          className="w-36"
-          aria-label="User ID"
-        />
-        <Input
-          type="date"
-          value={fromDate}
-          onChange={(e) => {
-            setFromDate(e.target.value);
-            setPage(0);
-          }}
-          className="w-44"
-          aria-label="From date"
-        />
-        <Input
-          type="date"
-          value={toDate}
-          onChange={(e) => {
-            setToDate(e.target.value);
-            setPage(0);
-          }}
-          className="w-44"
-          aria-label="To date"
-        />
+      <div className="mb-4 rounded-xl border border-[#fdb813]/25 bg-gradient-to-r from-[#fce001]/10 via-[var(--brand-light)] to-transparent p-3 sm:p-3.5">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+          <Input
+            placeholder="Search description…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            className="max-w-xs bg-background/90"
+          />
+          <Select
+            value={userType}
+            onValueChange={(value) => {
+              setUserType(value);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-44 bg-background/90">
+              <SelectValue placeholder="User type" />
+            </SelectTrigger>
+            <SelectContent>
+              {USER_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            placeholder="Module"
+            value={moduleFilter}
+            onChange={(e) => {
+              setModuleFilter(e.target.value);
+              setPage(0);
+            }}
+            className="w-40 bg-background/90"
+            aria-label="Module"
+          />
+          <Input
+            placeholder="Action"
+            value={actionFilter}
+            onChange={(e) => {
+              setActionFilter(e.target.value);
+              setPage(0);
+            }}
+            className="w-40 bg-background/90"
+            aria-label="Action"
+          />
+          <Input
+            placeholder="User ID"
+            value={userId}
+            onChange={(e) => {
+              setUserId(e.target.value);
+              setPage(0);
+            }}
+            className="w-36 bg-background/90"
+            aria-label="User ID"
+          />
+          <Input
+            type="date"
+            value={fromDate}
+            onChange={(e) => {
+              setFromDate(e.target.value);
+              setPage(0);
+            }}
+            className="w-44 bg-background/90"
+            aria-label="From date"
+          />
+          <Input
+            type="date"
+            value={toDate}
+            onChange={(e) => {
+              setToDate(e.target.value);
+              setPage(0);
+            }}
+            className="w-44 bg-background/90"
+            aria-label="To date"
+          />
+        </div>
       </div>
       {error ? <p className="pb-3 text-sm text-destructive">{error.message}</p> : null}
       {showSkeleton ? (
@@ -232,15 +262,26 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
           description="Try another search, user type, module, action, user ID, or date range."
         />
       ) : (
-        <div className={isFetching ? "opacity-70 transition-opacity" : undefined}>
+        <div
+          ref={tableWrapRef}
+          className={cn(isFetching && "opacity-70 transition-opacity")}
+        >
           <DataTable
             columns={columns}
             data={rows}
             getRowId={(row, index) => String(row.id ?? index)}
+            getRowClassName={(row) => {
+              if (!highlightId || String(row.id) !== highlightId) return undefined;
+              return cn(
+                "transition-colors duration-700",
+                highlightVisible &&
+                  "bg-gradient-to-r from-[#fce001]/55 to-[#fdb813]/40 shadow-[inset_3px_0_0_0_#fdb813] hover:bg-transparent hover:from-[#fce001]/55 hover:to-[#fdb813]/40"
+              );
+            }}
           />
         </div>
       )}
-      <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-2 flex flex-col gap-3 rounded-lg border border-border/40 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Show</span>
           <Select

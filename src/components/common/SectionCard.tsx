@@ -7,6 +7,7 @@ interface SectionCardProps {
   children: React.ReactNode;
   className?: string;
   headerAction?: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 export function SectionCard({
@@ -14,16 +15,20 @@ export function SectionCard({
   description,
   children,
   className,
-  headerAction
+  headerAction,
+  icon
 }: SectionCardProps) {
   return (
     <Card className={cn("overflow-hidden", className)}>
       <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-border/50 pb-3 sm:pb-3.5">
-        <div className="min-w-0 flex-1">
-          <CardTitle>{title}</CardTitle>
-          {description && (
-            <CardDescription className="mt-0.5">{description}</CardDescription>
-          )}
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          {icon ? <div className="shrink-0">{icon}</div> : null}
+          <div className="min-w-0 flex-1">
+            <CardTitle>{title}</CardTitle>
+            {description && (
+              <CardDescription className="mt-0.5">{description}</CardDescription>
+            )}
+          </div>
         </div>
         {headerAction && <div className="shrink-0">{headerAction}</div>}
       </CardHeader>
