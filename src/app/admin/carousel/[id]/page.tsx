@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { CoverImageUploadPanel } from "@/components/common/CoverImageUploadPanel";
+import TPLoader from "@/components/TPLoader";
 import { useAppSelector } from "@/store/hooks";
 import {
   extractBannerFromResponse,
@@ -123,7 +124,9 @@ export default function AdminCarouselEditPage() {
     return (
       <AppShell title="Edit Banner">
         <PageContainer>
-          <div className="py-10 text-center text-sm text-muted-foreground">Loading banner...</div>
+          <div className="flex justify-center py-10">
+            <TPLoader variant="inline" size={120} label="Loading…" />
+          </div>
         </PageContainer>
       </AppShell>
     );

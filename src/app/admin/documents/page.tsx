@@ -39,6 +39,7 @@ import {
 } from "@/services/documents";
 import type { DriverRow, PartnerRow } from "@/services/users";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import TPLoader from "@/components/TPLoader";
 
 type DecisionType = "APPROVE" | "REJECT";
 type DocumentKind = "cnic" | "license" | "vehicle";
@@ -672,7 +673,9 @@ export default function DocumentsQueuePage() {
               </DialogTitle>
             </DialogHeader>
             {previewLoading ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">Loading documents...</div>
+              <div className="flex justify-center py-8">
+                <TPLoader variant="inline" size={120} label="Loading documents…" />
+              </div>
             ) : (
               <div className="grid gap-3 text-xs lg:grid-cols-[320px,1fr]">
                 <div className="space-y-2">

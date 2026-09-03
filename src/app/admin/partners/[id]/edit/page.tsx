@@ -19,6 +19,7 @@ import {
   toProfileUpdateBody,
   type ProfileEditValues
 } from "@/components/admin/users/ProfileEditForm";
+import TPLoader from "@/components/TPLoader";
 
 export default function AdminEditPartnerPage() {
   const params = useParams<{ id: string }>();
@@ -79,7 +80,9 @@ export default function AdminEditPartnerPage() {
         </div>
         <SectionCard title="Edit partner profile" description="Saves via PUT /users/partners/update/{id}. Send only changed fields.">
           {isLoading || !defaultValues ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <div className="flex justify-center py-10">
+              <TPLoader variant="inline" size={120} label="Loading…" />
+            </div>
           ) : (
             <ProfileEditForm
               key={partner?.id}

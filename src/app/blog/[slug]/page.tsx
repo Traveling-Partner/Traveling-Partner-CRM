@@ -7,6 +7,7 @@ import type { BlogApiRecord } from "@/services/blog";
 import { useAppSelector } from "@/store/hooks";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 import "@/components/blog/blog-content.css";
+import TPLoader from "@/components/TPLoader";
 
 function formatPreviewDate(value: string | null | undefined): string {
   if (!value?.trim()) return "";
@@ -51,7 +52,9 @@ export default function BlogPreviewPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-background px-4 py-10 text-foreground">
-        <p className="mx-auto max-w-3xl text-sm text-muted-foreground">Loading…</p>
+        <div className="flex min-h-screen items-center justify-center">
+          <TPLoader variant="inline" size={120} label="Loading…" />
+        </div>
       </main>
     );
   }

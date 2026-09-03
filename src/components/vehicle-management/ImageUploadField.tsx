@@ -1,7 +1,8 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
-import { Loader2, UploadCloud } from "lucide-react";
+import { UploadCloud } from "lucide-react";
+import TPLoader from "@/components/TPLoader";
 import { Input } from "@/components/ui/input";
 
 interface ImageUploadFieldProps {
@@ -69,7 +70,7 @@ export function ImageUploadField({ id, value, onChange, token }: ImageUploadFiel
       >
         {uploading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <TPLoader variant="inline" size={120} />
             Uploading…
           </>
         ) : (
