@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { Card } from "@/components/ui/card";
@@ -572,7 +572,9 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ── Audit logs (GET /audit-logs/getAll — same filters as the ticket) ── */}
-        <AuditLogsSection variant="dashboard" />
+        <Suspense fallback={null}>
+          <AuditLogsSection variant="dashboard" />
+        </Suspense>
       </PageContainer>
     </AppShell>
   );
