@@ -219,6 +219,13 @@ nav[aria-label="Breadcrumb"] ol {
   animation: slide-up 0.35s ease-out both;
 }
 
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  accent-color: #fdb813;
+  color-scheme: light;
+}
+
 .stagger-1 { animation-delay: 0.05s; }
 .stagger-2 { animation-delay: 0.1s; }
 .stagger-3 { animation-delay: 0.15s; }
