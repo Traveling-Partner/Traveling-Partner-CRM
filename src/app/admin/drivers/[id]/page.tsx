@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Download, Eye, FileText, UserCircle } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText, Pencil, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -13,16 +13,24 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useApiMutation } from "@/hooks/api";
 import { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";
+import { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 import { queryKeys } from "@/lib/api/query-keys";
+import { normalizeApiDocStatus, type ApiDocStatus } from "@/lib/documents-utils";
 import { updateUserStatus } from "@/services/users";
+import {
+  updateDriverDocumentStatus,
+  type DocumentStatusPayload,
+  type PreviewDocument
+} from "@/services/documents";
 
-type DriverStatus = "PENDING" | "APPROVED" | "ACTIVE" | "REJECTED" | "BLOCKED" | "RESTRICTED";
+type DocDecision = "APPROVE" | "REJECT";
 
 interface DriverDocument {
-  id: string;
+  id: PreviewDocument["id"];
   type: string;
   fileName: string;
   frontUrl: string;
@@ -37,6 +45,12 @@ const fallbackByType: Record<string, string> = {
   ID_DOCUMENT: "/mock-images/id-document.svg"
 };
 
+const PENDING_DOC_STATUSES: DocumentStatusPayload = {
+  cnicStatus: "PENDING",
+  licenseStatus: "PENDING",
+  vehicleStatus: "PENDING"
+};
+
 function prettyDate(value?: string | null) {
   if (!value) return "—";
   const d = new Date(value);
@@ -44,14 +58,11 @@ function prettyDate(value?: string | null) {
   return d.toLocaleDateString();
 }
 
-const statusPayloadMap: Record<DriverStatus, "PENDING" | "APPROVED" | "ACTIVE" | "RESTRICTED" | "BLOCKED" | "REJECTED"> = {
-  PENDING: "PENDING",
-  APPROVED: "APPROVED",
-  ACTIVE: "ACTIVE",
-  RESTRICTED: "RESTRICTED",
-  BLOCKED: "BLOCKED",
-  REJECTED: "REJECTED"
-};
+function previewDocLabel(id: PreviewDocument["id"]): string {
+  if (id === "driver-license") return "license";
+  if (id === "vehicle-registration") return "vehicle";
+  return "CNIC";
+}
 
 export default function AdminDriverDetailPage() {
   const params = useParams<{ id: string }>();
@@ -60,16 +71,26 @@ export default function AdminDriverDetailPage() {
 
   const { data, isLoading, isError } = useDriverDetailQuery(params.id);
   const driver = data?.driver ?? null;
-  const docStatuses = data?.docStatuses ?? { cnic: "PENDING", license: "PENDING", vehicle: "PENDING" };
+  const docsQuery = useDriverDocumentsQuery(driver?.id, Boolean(driver?.id));
   const loading = isLoading;
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<DriverStatus | null>(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string>("driver-license");
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<PreviewDocument["id"]>("id-document");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
   const [profileImageError, setProfileImageError] = useState(false);
+  const [docDecision, setDocDecision] = useState<DocDecision | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+
+  const displayStatus = optimisticStatus ?? driver?.status ?? "PENDING";
+  const isBlocked = String(displayStatus).trim().toUpperCase() === "BLOCKED";
+  const rawStatuses = docsQuery.rawStatuses ?? PENDING_DOC_STATUSES;
+  const allDocsApproved =
+    normalizeApiDocStatus(rawStatuses.cnicStatus) === "APPROVED" &&
+    normalizeApiDocStatus(rawStatuses.licenseStatus) === "APPROVED" &&
+    normalizeApiDocStatus(rawStatuses.vehicleStatus) === "APPROVED";
+  const nextAccountStatus = isBlocked ? (allDocsApproved ? "APPROVED" : "ACTIVE") : "BLOCKED";
 
   const statusMutation = useApiMutation<void, { userId: number; status: string }>({
     mutationFn: ({ token, variables }) =>
@@ -77,8 +98,8 @@ export default function AdminDriverDetailPage() {
     invalidateKeys: [queryKeys.users.driverDetail(params.id)],
     onSuccess: (_data, variables) => {
       setOptimisticStatus(variables.status);
-      success(`Driver status updated to ${variables.status}.`);
-      setDialogOpen(false);
+      success(variables.status === "BLOCKED" ? "Driver blocked." : "Driver unblocked.");
+      setStatusConfirmOpen(false);
     },
     onError: (err) => {
       error(err.message);
@@ -87,44 +108,71 @@ export default function AdminDriverDetailPage() {
 
   const updatingStatus = statusMutation.isPending;
 
+  const docMutation = useApiMutation<void, DocumentStatusPayload>({
+    mutationFn: ({ token, variables }) =>
+      updateDriverDocumentStatus(driver!.id, variables, { token }),
+    invalidateKeys: [
+      queryKeys.users.driverDetail(params.id),
+      queryKeys.users.driverDocuments(params.id),
+      ["users", "documents", "queue"]
+    ],
+    onSuccess: (_data, payload) => {
+      const label = previewDocLabel(selectedDocumentId);
+      const approved =
+        selectedDocumentId === "driver-license"
+          ? payload.licenseStatus === "APPROVED"
+          : selectedDocumentId === "vehicle-registration"
+            ? payload.vehicleStatus === "APPROVED"
+            : payload.cnicStatus === "APPROVED";
+      success(approved ? `${label} approved.` : `${label} rejected.`);
+      setDocDecision(null);
+      setRejectReason("");
+    },
+    onError: (err) => error(err.message)
+  });
+
   const documents = useMemo<DriverDocument[]>(() => {
     if (!driver) return [];
+    const byId = Object.fromEntries(
+      docsQuery.previewDocuments.map((doc) => [doc.id, doc])
+    );
+
+    const license = byId["driver-license"];
+    const vehicle = byId["vehicle-registration"];
+    const cnic = byId["id-document"];
 
     return [
+      {
+        id: "id-document",
+        type: "ID_DOCUMENT",
+        fileName: "id-document.jpg",
+        frontUrl: cnic?.frontUrl || driver.basicInformation?.cnicFront || fallbackByType.ID_DOCUMENT,
+        backUrl: cnic?.backUrl || driver.basicInformation?.cnicBack || fallbackByType.ID_DOCUMENT,
+        status: cnic?.status || normalizeApiDocStatus(rawStatuses.cnicStatus)
+      },
       {
         id: "driver-license",
         type: "DRIVER_LICENSE",
         fileName: "driver-license.jpg",
-        frontUrl: driver.license?.licenseFront || fallbackByType.DRIVER_LICENSE,
-        backUrl: driver.license?.licenseBack || fallbackByType.DRIVER_LICENSE,
-        status: docStatuses.license
+        frontUrl: license?.frontUrl || driver.license?.licenseFront || fallbackByType.DRIVER_LICENSE,
+        backUrl: license?.backUrl || driver.license?.licenseBack || fallbackByType.DRIVER_LICENSE,
+        status: license?.status || normalizeApiDocStatus(rawStatuses.licenseStatus)
       },
       {
         id: "vehicle-registration",
         type: "VEHICLE_REGISTRATION",
         fileName: "vehicle-registration.jpg",
-        frontUrl: driver.vehicle?.registrationFront || fallbackByType.VEHICLE_REGISTRATION,
-        backUrl: driver.vehicle?.registrationBack || fallbackByType.VEHICLE_REGISTRATION,
-        status: docStatuses.vehicle
-      },
-      {
-        id: "id-document",
-        type: "ID_DOCUMENT",
-        fileName: "id-document.jpg",
-        frontUrl: driver.basicInformation?.cnicFront || fallbackByType.ID_DOCUMENT,
-        backUrl: driver.basicInformation?.cnicBack || fallbackByType.ID_DOCUMENT,
-        status: docStatuses.cnic
+        frontUrl: vehicle?.frontUrl || driver.vehicle?.registrationFront || fallbackByType.VEHICLE_REGISTRATION,
+        backUrl: vehicle?.backUrl || driver.vehicle?.registrationBack || fallbackByType.VEHICLE_REGISTRATION,
+        status: vehicle?.status || normalizeApiDocStatus(rawStatuses.vehicleStatus)
       }
     ];
-  }, [driver, docStatuses]);
+  }, [driver, docsQuery.previewDocuments, rawStatuses]);
 
   const selectedDocument = documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
+  const selectedDocStatus = normalizeApiDocStatus(selectedDocument?.status);
   const displayName = driver?.username || driver?.basicInformation?.firstName || "Driver";
   const profilePicture = driver?.basicInformation?.profilePicture?.trim() || null;
-  const displayStatus = optimisticStatus ?? driver?.status ?? "PENDING";
-  const currentStatus = String(displayStatus).trim().toUpperCase();
-  const showApproveAction = currentStatus === "PENDING" || currentStatus === "REJECTED" || currentStatus === "BLOCKED" ;
-  const showRestrictAction = currentStatus === "APPROVED" || currentStatus === "ACTIVE" || currentStatus === "RESTRICTED";
 
   useEffect(() => {
     setProfileImageError(false);
@@ -151,29 +199,37 @@ export default function AdminDriverDetailPage() {
     );
   }
 
-  const handleStatusChange = (status: DriverStatus) => {
-    setPendingAction(status);
-    setDialogOpen(true);
+  const handleStatusConfirm = () => {
+    if (!driver?.id) return;
+    statusMutation.mutate({ userId: driver.id, status: nextAccountStatus });
   };
 
-  const confirmStatusChange = () => {
-    if (!pendingAction || !driver?.id) return;
-    statusMutation.mutate({
-      userId: driver.id,
-      status: statusPayloadMap[pendingAction]
-    });
+  const buildSelectedDocPayload = (status: ApiDocStatus, reason?: string): DocumentStatusPayload => {
+    const payload: DocumentStatusPayload = { ...rawStatuses };
+    if (selectedDocumentId === "driver-license") payload.licenseStatus = status;
+    else if (selectedDocumentId === "vehicle-registration") payload.vehicleStatus = status;
+    else payload.cnicStatus = status;
+    if (status === "REJECTED" && reason) payload.rejectionReason = reason;
+    return payload;
   };
-console.log(documents , "documents");
   return (
     <AppShell title={`Driver • ${displayName}`}>
       <PageContainer>
-        <div className="mb-3 flex items-center gap-3">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin/drivers" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to drivers
             </Link>
           </Button>
+          {driver ? (
+            <Button size="sm" asChild>
+              <Link href={`/admin/drivers/${params.id}/edit`} className="gap-1.5">
+                <Pencil className="h-4 w-4" />
+                Edit driver
+              </Link>
+            </Button>
+          ) : null}
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -237,6 +293,10 @@ console.log(documents , "documents");
                   <p className="mt-0.5 text-sm font-medium text-foreground">{driver?.basicInformation?.city || "—"}</p>
                 </div>
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CNIC number</p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground tabular-nums">{driver?.basicInformation?.cnicNumber || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</p>
                   <div className="mt-0.5">
                     <StatusBadge status={displayStatus} />
@@ -247,31 +307,20 @@ console.log(documents , "documents");
             )}
           </SectionCard>
 
-          <SectionCard title="Approval controls">
+          <SectionCard title="Account controls">
             <div className="space-y-3 text-sm">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Block or approve this driver. Changes are saved on the server.
+                Block or unblock this driver. Document approval is separate and drives verification.
               </p>
               <div className="flex flex-wrap gap-2">
-                {showApproveAction ? (
-                  <Button
-                    size="sm"
-                    disabled={updatingStatus}
-                    onClick={() => handleStatusChange("APPROVED")}
-                  >
-                    Approved
-                  </Button>
-                ) : null}
-                {showRestrictAction ? (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={updatingStatus}
-                    onClick={() => handleStatusChange("BLOCKED")}
-                  >
-                    Blocked
-                  </Button>
-                ) : null}
+                <Button
+                  size="sm"
+                  variant={isBlocked ? "default" : "destructive"}
+                  disabled={updatingStatus}
+                  onClick={() => setStatusConfirmOpen(true)}
+                >
+                  {isBlocked ? "Unblock" : "Block"}
+                </Button>
               </div>
             </div>
           </SectionCard>
@@ -280,7 +329,7 @@ console.log(documents , "documents");
         <div className="grid gap-4 lg:grid-cols-3">
           <SectionCard
             title="Documents"
-            description="Driver identity and vehicle documents."
+            description="Separate CNIC, License, and Vehicle entries. Approve or reject each one for verification."
             className="lg:col-span-3"
           >
             <div className="grid gap-3 text-xs lg:grid-cols-[360px,1fr]">
@@ -319,9 +368,7 @@ console.log(documents , "documents");
                       </div>
                     </div>
                     <div className="ml-2 mt-1">
-                      <span className="rounded-md bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
-                        {doc.status}
-                      </span>
+                      <StatusBadge status={doc.status} />
                     </div>
                   </button>
                 ))}
@@ -336,6 +383,29 @@ console.log(documents , "documents");
                     <p className="text-[0.68rem] text-muted-foreground">
                       {(selectedDocument?.type || "DOCUMENT").replaceAll("_", " ")}
                     </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      size="sm"
+                      disabled={docMutation.isPending || selectedDocStatus === "APPROVED"}
+                      onClick={() => {
+                        setRejectReason("");
+                        setDocDecision("APPROVE");
+                      }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={docMutation.isPending || selectedDocStatus === "REJECTED"}
+                      onClick={() => {
+                        setRejectReason("");
+                        setDocDecision("REJECT");
+                      }}
+                    >
+                      Reject
+                    </Button>
                   </div>
                 </div>
 
@@ -505,19 +575,61 @@ console.log(documents , "documents");
         </div>
 
         <ConfirmDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          onConfirm={confirmStatusChange}
-          title="Confirm status change"
+          open={statusConfirmOpen}
+          onOpenChange={setStatusConfirmOpen}
+          onConfirm={handleStatusConfirm}
+          title={isBlocked ? "Unblock driver?" : "Block driver?"}
           description={
-            pendingAction
-              ? `This will mark the driver as ${statusPayloadMap[pendingAction]}.`
-              : undefined
+            isBlocked
+              ? "Unblock this driver? Account status will be restored."
+              : "Block this driver? They will not be able to use the app."
           }
-          confirmLabel={updatingStatus ? "Updating..." : "Confirm"}
+          confirmLabel={updatingStatus ? "Updating..." : isBlocked ? "Unblock" : "Block"}
           cancelLabel="Cancel"
-          destructive={pendingAction === "BLOCKED"}
+          destructive={!isBlocked}
         />
+        <ConfirmDialog
+          open={docDecision !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDocDecision(null);
+              setRejectReason("");
+            }
+          }}
+          onConfirm={() => {
+            if (!docDecision) return;
+            if (docDecision === "REJECT" && !rejectReason.trim()) {
+              error("Please add rejection reason.");
+              return;
+            }
+            docMutation.mutate(
+              buildSelectedDocPayload(
+                docDecision === "APPROVE" ? "APPROVED" : "REJECTED",
+                docDecision === "REJECT" ? rejectReason.trim() : undefined
+              )
+            );
+          }}
+          title={
+            docDecision === "APPROVE"
+              ? `Approve ${previewDocLabel(selectedDocumentId)}?`
+              : `Reject ${previewDocLabel(selectedDocumentId)}?`
+          }
+          description={
+            docDecision === "APPROVE"
+              ? "Only this document is updated. A Driver account promotes to APPROVED after CNIC, License, and Vehicle are all approved."
+              : "Only this document is rejected. The other two stay as they are."
+          }
+          confirmLabel={docMutation.isPending ? "Saving…" : docDecision === "APPROVE" ? "Approve" : "Reject"}
+          destructive={docDecision === "REJECT"}
+        >
+          {docDecision === "REJECT" ? (
+            <Input
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Rejection reason"
+            />
+          ) : null}
+        </ConfirmDialog>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
