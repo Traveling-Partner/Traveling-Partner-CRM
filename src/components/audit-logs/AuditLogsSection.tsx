@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
 import { ArrowUpRight } from "lucide-react";
@@ -48,7 +49,9 @@ interface AuditLogsSectionProps {
 
 export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const isDashboard = variant === "dashboard";
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") ?? "";
+  const [search, setSearch] = useState(urlSearch);
   const [userType, setUserType] = useState("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -57,6 +60,12 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(isDashboard ? 10 : 20);
+
+  useEffect(() => {
+    if (!urlSearch) return;
+    setSearch(urlSearch);
+    setPage(0);
+  }, [urlSearch]);
 
   const { data, isLoading, isFetching, error } = useAuditLogsQuery({
     page,
