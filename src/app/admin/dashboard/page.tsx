@@ -9,13 +9,13 @@ import { AuditLogsSection } from "@/components/audit-logs/AuditLogsSection";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { TrendArea } from "@/components/dashboard/TrendArea";
-import { RadialRings } from "@/components/dashboard/viz";
 import {
   RideFunnel,
   OutcomeTrend,
   FareTrend,
   CityDemand,
   DocumentsPending,
+  DriverStatusMix,
   RideStatusBoard,
   CommissionBoard,
   TopAgentsBoard
@@ -185,7 +185,7 @@ export default function AdminDashboardPage() {
           description="Gross fare, last 14 days"
           loading={isLoading}
           empty={!isLoading && fareTrend.length === 0}
-          heightClass="h-56 sm:h-72"
+          heightClass="h-auto"
           badge={opsDemo.fareTrend ? demoBadge : undefined}
         >
           <FareTrend data={fareTrend} />
@@ -227,16 +227,14 @@ export default function AdminDashboardPage() {
           />
         </ChartCard>
 
-        <ChartCard title="Drivers" description="Status mix" heightClass="h-auto" loading={false}>
-          {isLoading ? (
-            <Skeleton className="h-52 w-full rounded-3xl" />
-          ) : (
-            <RadialRings
-              items={statusRows}
-              centerLabel="Drivers"
-              centerValue={driverStatusTotal}
-            />
-          )}
+        <ChartCard
+          title="Drivers"
+          description="Status mix"
+          heightClass="h-auto"
+          loading={isLoading}
+          empty={!isLoading && driverStatusTotal === 0}
+        >
+          <DriverStatusMix items={statusRows} />
         </ChartCard>
 
         <ChartCard
@@ -244,6 +242,7 @@ export default function AdminDashboardPage() {
           description="Requested through completed"
           heightClass="h-auto"
           loading={isLoading}
+          empty={!isLoading && rideChartData.every((row) => row.value === 0)}
         >
           <RideStatusBoard items={rideChartData} />
         </ChartCard>
