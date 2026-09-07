@@ -7,7 +7,9 @@ import {
   DEMO_FARE_TREND,
   DEMO_OUTCOME_TREND,
   DEMO_RIDES_BY_CITY,
-  DEMO_RIDE_FUNNEL
+  DEMO_RIDE_FUNNEL,
+  DEMO_COMMISSION,
+  DEMO_TOP_AGENTS
 } from "@/mock-data/dashboard-ops";
 import { fetchAuditLogs } from "@/services/audit-logs";
 
@@ -78,6 +80,18 @@ export interface DashboardDocumentsPending {
   partnerCnic: number;
 }
 
+export interface DashboardCommission {
+  pending: number;
+  released: number;
+  remaining: number;
+}
+
+export interface DashboardTopAgent {
+  name: string;
+  drivers: number;
+  partners: number;
+}
+
 export interface AdminDashboardData {
   counts: DashboardCounts;
   driverStatusCounts: DashboardDriverStatusCounts;
@@ -89,12 +103,16 @@ export interface AdminDashboardData {
   ridesByCity: DashboardCityCount[];
   fareTrend: DashboardFarePoint[];
   documentsPending: DashboardDocumentsPending;
+  commission: DashboardCommission;
+  topAgents: DashboardTopAgent[];
   opsApi: {
     rideFunnel: boolean;
     outcomeTrend: boolean;
     ridesByCity: boolean;
     fareTrend: boolean;
     documentsPending: boolean;
+    commission: boolean;
+    topAgents: boolean;
   };
   opsDemo: {
     rideFunnel: boolean;
@@ -102,6 +120,8 @@ export interface AdminDashboardData {
     ridesByCity: boolean;
     fareTrend: boolean;
     documentsPending: boolean;
+    commission: boolean;
+    topAgents: boolean;
   };
 }
 
@@ -174,6 +194,12 @@ const EMPTY_DOCUMENTS: DashboardDocumentsPending = {
   partnerCnic: 0
 };
 
+const EMPTY_COMMISSION: DashboardCommission = {
+  pending: 0,
+  released: 0,
+  remaining: 0
+};
+
 export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
   counts: EMPTY_COUNTS,
   driverStatusCounts: EMPTY_DRIVER_STATUS,
@@ -185,19 +211,25 @@ export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
   ridesByCity: [],
   fareTrend: [],
   documentsPending: EMPTY_DOCUMENTS,
+  commission: EMPTY_COMMISSION,
+  topAgents: [],
   opsApi: {
     rideFunnel: false,
     outcomeTrend: false,
     ridesByCity: false,
     fareTrend: false,
-    documentsPending: false
+    documentsPending: false,
+    commission: false,
+    topAgents: false
   },
   opsDemo: {
     rideFunnel: false,
     outcomeTrend: false,
     ridesByCity: false,
     fareTrend: false,
-    documentsPending: false
+    documentsPending: false,
+    commission: false,
+    topAgents: false
   }
 };
 
@@ -341,6 +373,49 @@ function mapDocumentsPending(payload: unknown): DashboardDocumentsPending {
   };
 }
 
+function mapCommission(payload: unknown): DashboardCommission {
+  if (!payload) return EMPTY_COMMISSION;
+  const data = asRecord(unwrapEnvelope(payload));
+  const pending = num(data.pending ?? data.pendingAmount);
+  const released = num(data.released ?? data.paid ?? data.releasedAmount);
+  const total = num(data.total);
+  const remainingRaw = data.remaining ?? data.remainingAmount;
+  const remaining =
+    remainingRaw != null && remainingRaw !== ""
+      ? num(remainingRaw)
+      : total > 0
+        ? Math.max(total - pending - released, 0)
+        : 0;
+  return {
+    pending,
+    released,
+    remaining
+  };
+}
+
+function mapTopAgents(payload: unknown): DashboardTopAgent[] {
+  if (!payload) return [];
+  const data = unwrapEnvelope(payload);
+  const rows = Array.isArray(asRecord(data).agents)
+    ? (asRecord(data).agents as unknown[])
+    : Array.isArray(data)
+      ? (data as unknown[])
+      : [];
+  return rows
+    .map((item) => {
+      const row = asRecord(item);
+      const name = String(row.name ?? row.agentName ?? "").trim();
+      return {
+        name,
+        drivers: num(row.drivers ?? row.driverCount),
+        partners: num(row.partners ?? row.partnerCount ?? row.passengerCount)
+      };
+    })
+    .filter((row) => row.name)
+    .sort((a, b) => b.drivers + b.partners - (a.drivers + a.partners))
+    .slice(0, 6);
+}
+
 function mapDashboardResponse(
   countsRes: unknown,
   driverStatusRes: unknown,
@@ -354,6 +429,8 @@ function mapDashboardResponse(
     city: unknown | null;
     fare: unknown | null;
     documents: unknown | null;
+    commission: unknown | null;
+    topAgents: unknown | null;
   }
 ): AdminDashboardData {
   const counts = unwrapEnvelope<CountsResponse>(countsRes);
@@ -370,6 +447,8 @@ function mapDashboardResponse(
   const fareTrend = ops.fare != null ? mapFareTrend(ops.fare) : DEMO_FARE_TREND;
   const documentsPending =
     ops.documents != null ? mapDocumentsPending(ops.documents) : DEMO_DOCUMENTS_PENDING;
+  const commission = ops.commission != null ? mapCommission(ops.commission) : DEMO_COMMISSION;
+  const topAgents = ops.topAgents != null ? mapTopAgents(ops.topAgents) : DEMO_TOP_AGENTS;
 
   return {
     counts,
@@ -391,19 +470,25 @@ function mapDashboardResponse(
     ridesByCity,
     fareTrend,
     documentsPending,
+    commission,
+    topAgents,
     opsApi: {
       rideFunnel: ops.funnel != null,
       outcomeTrend: ops.outcome != null,
       ridesByCity: ops.city != null,
       fareTrend: ops.fare != null,
-      documentsPending: ops.documents != null
+      documentsPending: ops.documents != null,
+      commission: ops.commission != null,
+      topAgents: ops.topAgents != null
     },
     opsDemo: {
       rideFunnel: ops.funnel == null,
       outcomeTrend: ops.outcome == null,
       ridesByCity: ops.city == null,
       fareTrend: ops.fare == null,
-      documentsPending: ops.documents == null
+      documentsPending: ops.documents == null,
+      commission: ops.commission == null,
+      topAgents: ops.topAgents == null
     }
   };
 }
@@ -431,7 +516,9 @@ export async function fetchAdminDashboardData(
     outcomeRes,
     cityRes,
     fareRes,
-    documentsRes
+    documentsRes,
+    commissionRes,
+    topAgentsRes
   ] = await Promise.all([
     fetcher<unknown>(buildApiUrl("/users/counts"), requestInit),
     fetcher<unknown>(buildApiUrl("/users/driver-status-counts"), requestInit),
@@ -459,7 +546,9 @@ export async function fetchAdminDashboardData(
     ),
     fetchOptionalJson("/users/rides-by-city", { ...requestInit, debugLabel: `${label}:city` }),
     fetchOptionalJson("/users/graph/fare-last-14-days", { ...requestInit, debugLabel: `${label}:fare` }),
-    fetchOptionalJson("/users/documents/pending-counts", { ...requestInit, debugLabel: `${label}:docs` })
+    fetchOptionalJson("/users/documents/pending-counts", { ...requestInit, debugLabel: `${label}:docs` }),
+    fetchOptionalJson("/users/commission-summary", { ...requestInit, debugLabel: `${label}:commission` }),
+    fetchOptionalJson("/users/top-agents", { ...requestInit, debugLabel: `${label}:top-agents` })
   ]);
 
   return mapDashboardResponse(
@@ -474,7 +563,9 @@ export async function fetchAdminDashboardData(
       outcome: outcomeRes,
       city: cityRes,
       fare: fareRes,
-      documents: documentsRes
+      documents: documentsRes,
+      commission: commissionRes,
+      topAgents: topAgentsRes
     }
   );
 }

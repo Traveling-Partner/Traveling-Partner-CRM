@@ -62,3 +62,18 @@ export const DEMO_DOCUMENTS_PENDING: DashboardDocumentsPending = {
   vehicle: 9,
   partnerCnic: 7
 };
+
+export const DEMO_COMMISSION = {
+  pending: 420000,
+  released: 610000,
+  remaining: 210000
+};
+
+export const DEMO_TOP_AGENTS = [
+  { name: "Ayesha Khan", drivers: 24, partners: 18 },
+  { name: "Omar Farooq", drivers: 19, partners: 14 },
+  { name: "Sara Malik", drivers: 16, partners: 15 },
+  { name: "Bilal Ahmed", drivers: 14, partners: 11 },
+  { name: "Hina Raza", drivers: 12, partners: 9 },
+  { name: "Usman Ali", drivers: 10, partners: 8 }
+];

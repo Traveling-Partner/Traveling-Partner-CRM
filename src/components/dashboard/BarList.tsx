@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { CHART, PALETTE } from "@/components/dashboard/chart-theme";
 
 export type BarListItem = {
   label: string;
@@ -30,7 +31,7 @@ export function BarList({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {ranked.map((item) => {
+      {ranked.map((item, index) => {
         const width = Math.max((item.value / max) * 100, item.value > 0 ? 4 : 0);
         return (
           <div key={item.label}>
@@ -42,8 +43,11 @@ export function BarList({
             </div>
             <div className={cn("h-2 overflow-hidden rounded-full", TRACK)}>
               <div
-                className="bar-fill h-full rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813]"
-                style={{ width: `${width}%` }}
+                className="bar-fill h-full rounded-full"
+                style={{
+                  width: `${width}%`,
+                  background: item.color ?? PALETTE[index % PALETTE.length]
+                }}
               />
             </div>
           </div>
@@ -61,7 +65,6 @@ export function ShareTrack({
   className?: string;
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
-  const palette = ["#fdb813", "#64748b", "#94a3b8", "#cbd5e1", "#fce001"];
 
   return (
     <div className={className}>
@@ -76,7 +79,7 @@ export function ShareTrack({
               title={`${item.label} ${Math.round(pct)}%`}
               style={{
                 width: `${pct}%`,
-                background: item.color ?? palette[index % palette.length],
+                background: item.color ?? PALETTE[index % PALETTE.length],
                 animationDelay: `${index * 60}ms`
               }}
             />
@@ -90,7 +93,7 @@ export function ShareTrack({
             <div key={item.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ background: item.color ?? palette[index % palette.length] }}
+                style={{ background: item.color ?? PALETTE[index % PALETTE.length] }}
               />
               <span>{item.label}</span>
               <span className="tabular-nums text-foreground">{pct}%</span>
@@ -115,11 +118,11 @@ export function StackedBarList({
     <div className={cn("space-y-5", className)}>
       <div className="flex gap-4 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813]" />
+          <span className="h-2 w-2 rounded-full" style={{ background: CHART.brand }} />
           Drivers
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-slate-900 dark:bg-white" />
+          <span className="h-2 w-2 rounded-full" style={{ background: CHART.teal }} />
           Partners
         </span>
       </div>
@@ -140,15 +143,19 @@ export function StackedBarList({
               <div className="flex h-full overflow-hidden rounded-full" style={{ width: `${rowWidth}%` }}>
                 {driverShare > 0 ? (
                   <div
-                    className="bar-fill h-full bg-gradient-to-r from-[#fce001] to-[#fdb813]"
-                    style={{ width: `${driverShare}%` }}
+                    className="bar-fill h-full"
+                    style={{ width: `${driverShare}%`, background: CHART.brand }}
                     title={`Drivers ${item.drivers}`}
                   />
                 ) : null}
                 {partnerShare > 0 ? (
                   <div
-                    className="bar-fill h-full bg-slate-900 dark:bg-white"
-                    style={{ width: `${partnerShare}%`, animationDelay: "80ms" }}
+                    className="bar-fill h-full"
+                    style={{
+                      width: `${partnerShare}%`,
+                      animationDelay: "80ms",
+                      background: CHART.teal
+                    }}
                     title={`Partners ${item.partners}`}
                   />
                 ) : null}
