@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
     ridesByCity,
     fareTrend,
     documentsPending,
-    opsApi
+    opsDemo
   } = data;
 
   const statusRows = useMemo(
@@ -157,9 +157,9 @@ export default function AdminDashboardPage() {
     documentsPending.driverLicense +
     documentsPending.vehicle +
     documentsPending.partnerCnic;
-  const waitingBadge = (
+  const demoBadge = (
     <span className="rounded-full bg-slate-900/6 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground dark:bg-white/10">
-      Waiting on API
+      Demo data
     </span>
   );
 
@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
           loading={isLoading}
           empty={!isLoading && !funnelHasData}
           heightClass="h-auto"
-          badge={opsApi.rideFunnel || funnelHasData ? undefined : waitingBadge}
+          badge={opsDemo.rideFunnel ? demoBadge : undefined}
         >
           <RideFunnel data={rideFunnel} />
         </ChartCard>
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
             loading={isLoading}
             empty={!isLoading && outcomeTrend.length === 0}
             heightClass="h-56 sm:h-72"
-            badge={opsApi.outcomeTrend ? undefined : waitingBadge}
+            badge={opsDemo.outcomeTrend ? demoBadge : undefined}
           >
             <OutcomeTrend data={outcomeTrend} />
           </ChartCard>
@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
             loading={isLoading}
             empty={!isLoading && documentsTotal === 0}
             heightClass="h-auto"
-            badge={opsApi.documentsPending ? undefined : waitingBadge}
+            badge={opsDemo.documentsPending ? demoBadge : undefined}
           >
             <DocumentsPending data={documentsPending} />
           </ChartCard>
@@ -254,7 +254,7 @@ export default function AdminDashboardPage() {
             loading={isLoading}
             empty={!isLoading && fareTrend.length === 0}
             heightClass="h-56 sm:h-72"
-            badge={opsApi.fareTrend ? undefined : waitingBadge}
+            badge={opsDemo.fareTrend ? demoBadge : undefined}
           >
             <FareTrend data={fareTrend} />
           </ChartCard>
@@ -264,7 +264,7 @@ export default function AdminDashboardPage() {
             loading={isLoading}
             empty={!isLoading && ridesByCity.length === 0}
             heightClass="h-auto"
-            badge={opsApi.ridesByCity ? undefined : waitingBadge}
+            badge={opsDemo.ridesByCity ? demoBadge : undefined}
           >
             <CityDemand data={ridesByCity} />
           </ChartCard>

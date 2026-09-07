@@ -2,6 +2,13 @@ import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import { fetcher } from "@/lib/fetcher";
+import {
+  DEMO_DOCUMENTS_PENDING,
+  DEMO_FARE_TREND,
+  DEMO_OUTCOME_TREND,
+  DEMO_RIDES_BY_CITY,
+  DEMO_RIDE_FUNNEL
+} from "@/mock-data/dashboard-ops";
 import { fetchAuditLogs } from "@/services/audit-logs";
 
 export interface DashboardCounts {
@@ -83,6 +90,13 @@ export interface AdminDashboardData {
   fareTrend: DashboardFarePoint[];
   documentsPending: DashboardDocumentsPending;
   opsApi: {
+    rideFunnel: boolean;
+    outcomeTrend: boolean;
+    ridesByCity: boolean;
+    fareTrend: boolean;
+    documentsPending: boolean;
+  };
+  opsDemo: {
     rideFunnel: boolean;
     outcomeTrend: boolean;
     ridesByCity: boolean;
@@ -172,6 +186,13 @@ export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
   fareTrend: [],
   documentsPending: EMPTY_DOCUMENTS,
   opsApi: {
+    rideFunnel: false,
+    outcomeTrend: false,
+    ridesByCity: false,
+    fareTrend: false,
+    documentsPending: false
+  },
+  opsDemo: {
     rideFunnel: false,
     outcomeTrend: false,
     ridesByCity: false,
@@ -343,6 +364,12 @@ function mapDashboardResponse(
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, recentActivityLimit);
   const fallbackFunnel = funnelFromRideStatus(rideStatus);
+  const rideFunnel = ops.funnel != null ? mapRideFunnel(ops.funnel, fallbackFunnel) : DEMO_RIDE_FUNNEL;
+  const outcomeTrend = ops.outcome != null ? mapOutcomeTrend(ops.outcome) : DEMO_OUTCOME_TREND;
+  const ridesByCity = ops.city != null ? mapRidesByCity(ops.city) : DEMO_RIDES_BY_CITY;
+  const fareTrend = ops.fare != null ? mapFareTrend(ops.fare) : DEMO_FARE_TREND;
+  const documentsPending =
+    ops.documents != null ? mapDocumentsPending(ops.documents) : DEMO_DOCUMENTS_PENDING;
 
   return {
     counts,
@@ -359,17 +386,24 @@ function mapDashboardResponse(
       { status: "COMPLETED", count: rideStatus.completed ?? 0 }
     ],
     recentActivity: activity,
-    rideFunnel: mapRideFunnel(ops.funnel, fallbackFunnel),
-    outcomeTrend: mapOutcomeTrend(ops.outcome),
-    ridesByCity: mapRidesByCity(ops.city),
-    fareTrend: mapFareTrend(ops.fare),
-    documentsPending: mapDocumentsPending(ops.documents),
+    rideFunnel,
+    outcomeTrend,
+    ridesByCity,
+    fareTrend,
+    documentsPending,
     opsApi: {
       rideFunnel: ops.funnel != null,
       outcomeTrend: ops.outcome != null,
       ridesByCity: ops.city != null,
       fareTrend: ops.fare != null,
       documentsPending: ops.documents != null
+    },
+    opsDemo: {
+      rideFunnel: ops.funnel == null,
+      outcomeTrend: ops.outcome == null,
+      ridesByCity: ops.city == null,
+      fareTrend: ops.fare == null,
+      documentsPending: ops.documents == null
     }
   };
 }
