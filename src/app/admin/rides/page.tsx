@@ -3,13 +3,17 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
+import { Search } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
+import { EmptyState } from "@/components/common/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectTrigger,
@@ -17,105 +21,105 @@ import {
   SelectContent,
   SelectItem
 } from "@/components/ui/select";
-import { rides } from "@/mock-data/rides";
-import type { Ride } from "@/types/domain";
+import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
+import { RIDE_STATUSES, type RideRow } from "@/services/rides";
 
-const PAGE_SIZE = 10;
-const cities = Array.from(new Set(rides.map((r) => r.city)));
+const DEFAULT_PAGE_SIZE = 10;
 
-const currency = (n: number) =>
-  new Intl.NumberFormat("en-US", {
+const currency = (n: number | null) => {
+  if (n === null || Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat("en-PK", {
     style: "currency",
-    currency: "USD",
+    currency: "PKR",
     maximumFractionDigits: 0
   }).format(n);
+};
 
-function statusBadgeVariant(
-  s: Ride["status"]
-): "success" | "warning" | "danger" {
-  if (s === "COMPLETED") return "success";
-  if (s === "IN_PROGRESS") return "warning";
-  return "danger";
+function formatDateTime(value: string | null) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
 export default function AdminRidesPage() {
-  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [bookingReference, setBookingReference] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const resetPage = () => setPage(0);
 
-  const filtered = useMemo(
-    () =>
-      rides.filter((r) => cityFilter === "all" || r.city === cityFilter),
-    [cityFilter]
+  const { data, isLoading, isFetching, error } = useRidesListQuery({
+    page,
+    pageSize,
+    status: statusFilter,
+    city: cityFilter,
+    search,
+    bookingReference
+  });
+
+  const rides = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const total = data?.totalElements ?? 0;
+  const loading = isLoading || isFetching;
+
+  const columns: ColumnDef<RideRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: "bookingReference",
+        header: "Booking",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs font-medium">
+            {row.original.bookingReference || "—"}
+          </span>
+        )
+      },
+      {
+        accessorKey: "city",
+        header: "City",
+        cell: ({ row }) => row.original.city || "—"
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <StatusBadge status={row.original.status} />
+      },
+      {
+        accessorKey: "distanceKm",
+        header: "Distance",
+        cell: ({ row }) =>
+          row.original.distanceKm == null ? "—" : `${row.original.distanceKm} km`
+      },
+      {
+        accessorKey: "fare",
+        header: "Fare",
+        cell: ({ row }) => currency(row.original.fare)
+      },
+      {
+        accessorKey: "startedAt",
+        header: "Started",
+        cell: ({ row }) => formatDateTime(row.original.startedAt)
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/admin/rides/${row.original.id}`}>View detail</Link>
+          </Button>
+        )
+      }
+    ],
+    []
   );
-  const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  const total = filtered.length;
-  const completed = filtered.filter((r) => r.status === "COMPLETED").length;
-  const cancelled = filtered.filter((r) => r.status === "CANCELLED").length;
-  const inProgress = filtered.filter((r) => r.status === "IN_PROGRESS").length;
-  const totalFare = filtered
-    .filter((r) => r.status === "COMPLETED")
-    .reduce((a, r) => a + r.fare, 0);
-
-  const columns: ColumnDef<Ride>[] = [
-    {
-      accessorKey: "bookingReference",
-      header: "Booking",
-      cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">
-          {row.original.bookingReference}
-        </span>
-      )
-    },
-    {
-      accessorKey: "city",
-      header: "City"
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <Badge variant={statusBadgeVariant(row.original.status)}>
-          {row.original.status.replace("_", " ")}
-        </Badge>
-      )
-    },
-    {
-      accessorKey: "distanceKm",
-      header: "Distance",
-      cell: ({ row }) => `${row.original.distanceKm} km`
-    },
-    {
-      accessorKey: "fare",
-      header: "Fare",
-      cell: ({ row }) => currency(row.original.fare)
-    },
-    {
-      accessorKey: "startedAt",
-      header: "Started",
-      cell: ({ row }) =>
-        new Date(row.original.startedAt).toLocaleString(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-    },
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <Button size="sm" variant="outline" asChild>
-          <Link href={`/admin/rides/${row.original.id}`}>View detail</Link>
-        </Button>
-      )
-    }
-  ];
 
   return (
     <AppShell title="Rides">
@@ -126,36 +130,11 @@ export default function AdminRidesPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Total rides
               </p>
-              <p className="text-2xl font-heading font-semibold">{total}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/80 bg-gradient-to-b from-card to-muted/30 shadow-sm">
-            <CardContent className="pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Completed
-              </p>
-              <p className="text-2xl font-heading font-semibold">{completed}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/80 bg-gradient-to-b from-card to-muted/30 shadow-sm">
-            <CardContent className="pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Cancelled
-              </p>
-              <p className="text-2xl font-heading font-semibold">{cancelled}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/80 bg-gradient-to-b from-card to-muted/30 shadow-sm">
-            <CardContent className="pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Revenue (filtered)
-              </p>
-              <p className="text-2xl font-heading font-semibold">
-                {currency(totalFare)}
-              </p>
-              <p className="text-[0.65rem] text-muted-foreground">
-                {inProgress} in progress
-              </p>
+              {loading && !data ? (
+                <Skeleton className="mt-1 h-8 w-16" />
+              ) : (
+                <p className="text-2xl font-heading font-semibold">{total}</p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -164,61 +143,99 @@ export default function AdminRidesPage() {
           description="Open any row for full trip detail, route map, and settlement."
           className="mt-4"
         >
-          <div className="pb-4">
-            <Select
+          {error ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error.message}
+            </p>
+          ) : null}
+          <div className="grid gap-2.5 pb-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+              <Input
+                placeholder="Search address, name, phone"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  resetPage();
+                }}
+                className="pl-9"
+              />
+            </div>
+            <Input
+              placeholder="Booking ref (TP-000036)"
+              value={bookingReference}
+              onChange={(e) => {
+                setBookingReference(e.target.value);
+                resetPage();
+              }}
+            />
+            <Input
+              placeholder="City"
               value={cityFilter}
-              onValueChange={(v) => {
-                setCityFilter(v);
-                setPage(0);
+              onChange={(e) => {
+                setCityFilter(e.target.value);
+                resetPage();
+              }}
+            />
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                resetPage();
               }}
             >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="City" />
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All cities</SelectItem>
-                {cities.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+                <SelectItem value="all">All status</SelectItem>
+                {RIDE_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status.replaceAll("_", " ")}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <DataTable columns={columns} data={paginated} />
-          <div className="mt-3 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Showing{" "}
-              <span className="font-medium text-foreground">
-                {paginated.length ? page * PAGE_SIZE + 1 : 0}
-              </span>
-              {" – "}
-              <span className="font-medium text-foreground">
-                {page * PAGE_SIZE + paginated.length}
-              </span>{" "}
-              of <span className="font-medium text-foreground">{filtered.length}</span>
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span className="px-2">
-                Page {page + 1} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
+          {loading ? (
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md" />
+              ))}
             </div>
+          ) : rides.length === 0 ? (
+            <EmptyState
+              title="No rides found"
+              description="Try changing filters to see more trips."
+            />
+          ) : (
+            <DataTable columns={columns} data={rides} getRowId={(row) => String(row.id)} />
+          )}
+          <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <PaginationControls
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage - 1)}
+            />
           </div>
         </SectionCard>
       </PageContainer>

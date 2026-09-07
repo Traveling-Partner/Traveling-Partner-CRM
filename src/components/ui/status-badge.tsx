@@ -152,6 +152,60 @@ const statusConfig: Record<string, { label: string; dot: string; bg: string; tex
     dot: "bg-slate-400",
     bg: "bg-muted",
     text: "text-muted-foreground"
+  },
+  CANCELED: {
+    label: "Canceled",
+    dot: "bg-slate-400",
+    bg: "bg-muted",
+    text: "text-muted-foreground"
+  },
+  REQUESTED: {
+    label: "Requested",
+    dot: "bg-amber-500",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+    text: "text-amber-700 dark:text-amber-400"
+  },
+  COUNTER_OFFERED: {
+    label: "Counter offered",
+    dot: "bg-sky-500",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-700 dark:text-sky-400"
+  },
+  ACCEPTED: {
+    label: "Accepted",
+    dot: "bg-sky-500",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-700 dark:text-sky-400"
+  },
+  DRIVER_ON_THE_WAY: {
+    label: "Driver on the way",
+    dot: "bg-sky-500",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-700 dark:text-sky-400"
+  },
+  DRIVER_ARRIVED: {
+    label: "Driver arrived",
+    dot: "bg-sky-500",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-700 dark:text-sky-400"
+  },
+  PARTNER_COMING: {
+    label: "Partner coming",
+    dot: "bg-sky-500",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-700 dark:text-sky-400"
+  },
+  RIDE_STARTED: {
+    label: "Ride started",
+    dot: "bg-amber-500",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+    text: "text-amber-700 dark:text-amber-400"
+  },
+  EXPIRED: {
+    label: "Expired",
+    dot: "bg-slate-400",
+    bg: "bg-muted",
+    text: "text-muted-foreground"
   }
 };
 

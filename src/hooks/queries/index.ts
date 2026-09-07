@@ -17,6 +17,8 @@ export { useNewsletterListQuery } from "@/hooks/queries/use-newsletter-list-quer
 export { useNewsletterDetailQuery } from "@/hooks/queries/use-newsletter-detail-query";
 export { useNewsletterSubscribersListQuery } from "@/hooks/queries/use-newsletter-subscribers-list-query";
 export { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newsletter-subscriber-detail-query";
+export { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
+export { useRideDetailQuery } from "@/hooks/queries/use-ride-detail-query";
 export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
