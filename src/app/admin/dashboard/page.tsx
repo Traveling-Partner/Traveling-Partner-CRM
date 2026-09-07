@@ -14,6 +14,13 @@ import {
   getAgentCommissions
 } from "@/lib/agent-onboarding";
 import {
+  RideFunnel,
+  OutcomeTrend,
+  FareTrend,
+  CityDemand,
+  DocumentsPending
+} from "@/components/dashboard/ops-charts";
+import {
   Users,
   Briefcase,
   UserCircle2,
@@ -91,7 +98,13 @@ export default function AdminDashboardPage() {
     driverStatusCounts,
     ridesTrend,
     rideStatusBreakdown,
-    recentActivity
+    recentActivity,
+    rideFunnel,
+    outcomeTrend,
+    ridesByCity,
+    fareTrend,
+    documentsPending,
+    opsApi
   } = data;
 
   const statusRows = useMemo(
@@ -186,6 +199,14 @@ export default function AdminDashboardPage() {
     }
   ];
 
+  const funnelHasData =
+    rideFunnel.stages.some((stage) => stage.count > 0) || rideFunnel.canceled > 0;
+  const documentsTotal =
+    documentsPending.driverCnic +
+    documentsPending.driverLicense +
+    documentsPending.vehicle +
+    documentsPending.partnerCnic;
+
   return (
     <AppShell title="Admin Dashboard">
       <PageContainer>
@@ -217,6 +238,131 @@ export default function AdminDashboardPage() {
               </div>
             </Card>
           ))}
+        </div>
+
+        <Card>
+          <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Ride funnel</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Requested through completed</p>
+            </div>
+            {!opsApi.rideFunnel && !funnelHasData ? (
+              <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                Waiting on API
+              </span>
+            ) : null}
+          </div>
+          <div className="p-4 sm:p-5">
+            {isLoading ? (
+              <Skeleton className="h-48 w-full rounded-lg" />
+            ) : !funnelHasData ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">No funnel data yet.</p>
+            ) : (
+              <RideFunnel data={rideFunnel} />
+            )}
+          </div>
+        </Card>
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Card>
+            <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Completed vs canceled</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Daily outcomes, last 14 days</p>
+              </div>
+              {!opsApi.outcomeTrend ? (
+                <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                  Waiting on API
+                </span>
+              ) : null}
+            </div>
+            <div className="p-2 sm:p-4">
+              <div className="h-60 sm:h-72">
+                {isLoading ? (
+                  <Skeleton className="h-full w-full rounded-lg" />
+                ) : outcomeTrend.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    No outcome data yet.
+                  </div>
+                ) : (
+                  <OutcomeTrend data={outcomeTrend} />
+                )}
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Documents pending</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">CNIC, license and vehicle review</p>
+              </div>
+              {!opsApi.documentsPending ? (
+                <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                  Waiting on API
+                </span>
+              ) : null}
+            </div>
+            <div className="p-4 sm:p-5">
+              {isLoading ? (
+                <Skeleton className="h-48 w-full rounded-lg" />
+              ) : documentsTotal === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">No pending documents yet.</p>
+              ) : (
+                <DocumentsPending data={documentsPending} />
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Card>
+            <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Fare trend</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Gross fare, last 14 days</p>
+              </div>
+              {!opsApi.fareTrend ? (
+                <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                  Waiting on API
+                </span>
+              ) : null}
+            </div>
+            <div className="p-2 sm:p-4">
+              <div className="h-60 sm:h-72">
+                {isLoading ? (
+                  <Skeleton className="h-full w-full rounded-lg" />
+                ) : fareTrend.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    No fare data yet.
+                  </div>
+                ) : (
+                  <FareTrend data={fareTrend} />
+                )}
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="flex items-center justify-between px-4 py-3 sm:px-5 border-b border-border/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Rides by city</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Demand ranked by volume</p>
+              </div>
+              {!opsApi.ridesByCity ? (
+                <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                  Waiting on API
+                </span>
+              ) : null}
+            </div>
+            <div className="p-4 sm:p-5">
+              {isLoading ? (
+                <Skeleton className="h-48 w-full rounded-lg" />
+              ) : ridesByCity.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">No city data yet.</p>
+              ) : (
+                <CityDemand data={ridesByCity} />
+              )}
+            </div>
+          </Card>
         </div>
 
         {/* ── Driver Status Overview ── */}
