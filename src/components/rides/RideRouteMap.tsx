@@ -4,10 +4,10 @@ import { useMemo } from "react";
 import { MapPin, Navigation } from "lucide-react";
 
 export interface RideRouteMapProps {
-  startLat: number;
-  startLng: number;
-  endLat: number;
-  endLng: number;
+  startLat: number | null;
+  startLng: number | null;
+  endLat: number | null;
+  endLng: number | null;
   pickupLabel: string;
   dropoffLabel: string;
   className?: string;
@@ -22,7 +22,18 @@ export function RideRouteMap({
   dropoffLabel,
   className = ""
 }: RideRouteMapProps) {
+  const hasCoords =
+    startLat != null && startLng != null && endLat != null && endLng != null;
+
   const { mapUrl } = useMemo(() => {
+    if (
+      startLat == null ||
+      startLng == null ||
+      endLat == null ||
+      endLng == null
+    ) {
+      return { mapUrl: null as string | null };
+    }
     const padLat = 0.03;
     const padLng = 0.04;
     const minLat = Math.min(startLat, endLat) - padLat;
@@ -47,23 +58,35 @@ export function RideRouteMap({
           Live map preview
         </div>
         <a
-          href={`https://www.google.com/maps/dir/?api=1&origin=${startLat},${startLng}&destination=${endLat},${endLng}&travelmode=driving`}
+          href={
+            hasCoords
+              ? `https://www.google.com/maps/dir/?api=1&origin=${startLat},${startLng}&destination=${endLat},${endLng}&travelmode=driving`
+              : undefined
+          }
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[0.7rem] font-medium text-amber-300/90 underline-offset-4 hover:text-amber-200 hover:underline"
+          className={`text-[0.7rem] font-medium text-amber-300/90 underline-offset-4 hover:text-amber-200 hover:underline ${
+            hasCoords ? "" : "pointer-events-none opacity-40"
+          }`}
         >
           Open in Google Maps
         </a>
       </div>
 
       <div className="relative z-[1] h-[340px] w-full overflow-hidden">
-        <iframe
-          title="Ride map"
-          src={mapUrl}
-          className="h-full w-full"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
+        {mapUrl ? (
+          <iframe
+            title="Ride map"
+            src={mapUrl}
+            className="h-full w-full"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-slate-400">
+            Map coordinates are not available for this ride.
+          </div>
+        )}
       </div>
 
       <div className="relative z-[1] grid gap-3 border-t border-white/5 bg-slate-950/60 px-4 py-4 sm:grid-cols-2">
@@ -77,7 +100,9 @@ export function RideRouteMap({
             </p>
             <p className="text-sm font-medium leading-snug text-slate-100">{pickupLabel}</p>
             <p className="mt-0.5 font-mono text-[0.65rem] text-slate-500">
-              {startLat.toFixed(5)}, {startLng.toFixed(5)}
+              {startLat != null && startLng != null
+                ? `${startLat.toFixed(5)}, ${startLng.toFixed(5)}`
+                : "—"}
             </p>
           </div>
         </div>
@@ -91,7 +116,9 @@ export function RideRouteMap({
             </p>
             <p className="text-sm font-medium leading-snug text-slate-100">{dropoffLabel}</p>
             <p className="mt-0.5 font-mono text-[0.65rem] text-slate-500">
-              {endLat.toFixed(5)}, {endLng.toFixed(5)}
+              {endLat != null && endLng != null
+                ? `${endLat.toFixed(5)}, ${endLng.toFixed(5)}`
+                : "—"}
             </p>
           </div>
         </div>

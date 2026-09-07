@@ -30,6 +30,11 @@ export const queryKeys = {
     documentsQueue: (filters: DocumentsQueueFilters) =>
       ["users", "documents", "queue", filters] as const
   },
+  rides: {
+    all: ["rides"] as const,
+    list: (filters: RidesListFilters) => ["rides", "list", filters] as const,
+    detail: (id: string | number) => ["rides", "detail", String(id)] as const
+  },
   vehicle: {
     all: ["vehicle"] as const,
     types: (filters: VehicleTypesListFilters) => ["vehicle", "types", filters] as const,
@@ -114,6 +119,15 @@ export interface AgentsListFilters {
   mobileNumber: string;
   city: string;
   gender: string;
+}
+
+export interface RidesListFilters {
+  page: number;
+  pageSize: number;
+  status: string;
+  city: string;
+  search: string;
+  bookingReference: string;
 }
 
 export interface DocumentsQueueFilters {
