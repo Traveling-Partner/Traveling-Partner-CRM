@@ -79,7 +79,7 @@ function cancelScheduledAbort(entry: InFlightGet) {
   entry.abortTimer = null;
 }
 
-function subscribeToInFlightGet(entry: InFlightGet, signal?: AbortSignal) {
+function subscribeToInFlightGet(entry: InFlightGet, signal?: AbortSignal | null) {
   entry.subscribers += 1;
   cancelScheduledAbort(entry);
 
