@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { AnalyticsTooltip } from "@/components/dashboard/AnalyticsTooltip";
 import { axisTick, CHART } from "@/components/dashboard/chart-theme";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 
 export function TrendArea({
   data,
@@ -23,6 +24,7 @@ export function TrendArea({
   yKey: string;
   name: string;
 }) {
+  const mounted = useHasMounted();
   const { peak, last } = useMemo(() => {
     if (data.length === 0) return { peak: null, last: null };
     let peakPoint = data[0];
@@ -31,6 +33,8 @@ export function TrendArea({
     }
     return { peak: peakPoint, last: data[data.length - 1] };
   }, [data, yKey]);
+
+  if (!mounted) return <div className="h-full w-full" />;
 
   return (
     <ResponsiveContainer width="100%" height="100%">

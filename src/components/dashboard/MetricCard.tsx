@@ -2,7 +2,6 @@
 
 import type { ComponentType, ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkline, SparkBars } from "@/components/dashboard/Sparkline";
 import { cn } from "@/lib/utils";
 
 type MetricTone = "brand" | "neutral" | "success" | "warning" | "info" | "danger";
@@ -21,9 +20,7 @@ export function MetricCard({
   value,
   hint,
   delta,
-  sparkline,
-  sparklineKey = "count",
-  bars,
+  chart,
   tone = "neutral",
   icon: Icon,
   loading,
@@ -33,9 +30,7 @@ export function MetricCard({
   value: string | number;
   hint?: string;
   delta?: { label: string; up?: boolean } | null;
-  sparkline?: Array<Record<string, string | number>>;
-  sparklineKey?: string;
-  bars?: number[];
+  chart?: ReactNode;
   tone?: MetricTone;
   icon?: ComponentType<{ className?: string }>;
   loading?: boolean;
@@ -76,19 +71,7 @@ export function MetricCard({
             <p className={cn("mt-0.5 text-[11px]", muted)}>{hint}</p>
           ) : null}
         </div>
-        {bars && bars.length > 0 ? (
-          <div className="mb-0.5 w-[42%] max-w-[7.5rem] shrink-0">
-            <SparkBars values={bars} variant={tone === "brand" ? "onBrand" : "default"} />
-          </div>
-        ) : sparkline && sparkline.length > 0 ? (
-          <div className="mb-0.5 w-[42%] max-w-[7.5rem] shrink-0">
-            <Sparkline
-              data={sparkline}
-              dataKey={sparklineKey}
-              variant={tone === "brand" ? "onBrand" : "default"}
-            />
-          </div>
-        ) : null}
+        {chart ? <div className="mb-0.5 w-[42%] max-w-[7.5rem] shrink-0">{chart}</div> : null}
       </div>
       {footer}
     </div>

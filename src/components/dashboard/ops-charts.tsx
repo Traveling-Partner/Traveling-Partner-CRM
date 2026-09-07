@@ -30,6 +30,7 @@ import {
   FUNNEL_COLORS,
   onChartColor
 } from "@/components/dashboard/chart-theme";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 import { cn } from "@/lib/utils";
 import type {
   DashboardCityCount,
@@ -185,6 +186,7 @@ export function RideFunnel({ data }: { data: DashboardRideFunnel }) {
 }
 
 export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
+  const mounted = useHasMounted();
   const completedId = useId().replace(/:/g, "");
   const canceledId = useId().replace(/:/g, "");
   const completedTotal = data.reduce((sum, point) => sum + point.completed, 0);
@@ -203,6 +205,7 @@ export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
         </span>
       </div>
       <div className="min-h-0 flex-1">
+        {mounted ? (
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
             <defs>
@@ -249,6 +252,7 @@ export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
             />
           </AreaChart>
         </ResponsiveContainer>
+        ) : null}
       </div>
     </div>
   );
