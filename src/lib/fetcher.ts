@@ -1,15 +1,46 @@
 interface FetcherOptions extends RequestInit {
   token?: string | null;
-  /** Reuse the same in-flight GET for identical URLs (default: true for GET). Ignored when `signal` is set. */
+  /**
+   * Share in-flight identical GETs. Default: true for GET.
+   * Signal-aware: React Query abort+remount reuses the same HTTP request
+   * instead of showing (canceled) then a second 200.
+   */
   dedupe?: boolean;
   /** Log request lifecycle in development when `NEXT_PUBLIC_DEBUG_API=true`. */
   debugLabel?: string;
+  /**
+   * When true, 4xx/5xx and failed envelopes resolve to `null` instead of throwing.
+   * Use for optional endpoints so Next.js does not treat expected misses as runtime errors.
+   */
+  ignoreHttpError?: boolean;
 }
 
 const FALLBACK_ERROR = "Request failed. Please try again.";
 const NETWORK_ERROR = "Unable to reach the server. Please try again.";
 
-const inFlightGetRequests = new Map<string, Promise<unknown>>();
+/**
+ * Wait one task so React Strict Mode remount (subscribe → unsubscribe → subscribe)
+ * can reattach before we abort the real HTTP request.
+ */
+const GET_ABORT_GRACE_MS = 32;
+
+type InFlightGet = {
+  promise: Promise<unknown>;
+  controller: AbortController;
+  subscribers: number;
+  abortTimer: ReturnType<typeof setTimeout> | null;
+};
+
+const inFlightGetRequests = new Map<string, InFlightGet>();
+
+export function isAbortError(error: unknown): boolean {
+  return (
+    (typeof DOMException !== "undefined" &&
+      error instanceof DOMException &&
+      error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
 
 function shouldDebugApi(): boolean {
   return (
@@ -42,21 +73,69 @@ function isFailedEnvelope(data: unknown): boolean {
   );
 }
 
+function cancelScheduledAbort(entry: InFlightGet) {
+  if (entry.abortTimer == null) return;
+  clearTimeout(entry.abortTimer);
+  entry.abortTimer = null;
+}
+
+function subscribeToInFlightGet(entry: InFlightGet, signal?: AbortSignal) {
+  entry.subscribers += 1;
+  cancelScheduledAbort(entry);
+
+  if (!signal) return;
+
+  const onAbort = () => {
+    entry.subscribers = Math.max(0, entry.subscribers - 1);
+    if (entry.subscribers > 0) return;
+    cancelScheduledAbort(entry);
+    entry.abortTimer = setTimeout(() => {
+      entry.abortTimer = null;
+      if (entry.subscribers > 0 || entry.controller.signal.aborted) return;
+      entry.controller.abort();
+    }, GET_ABORT_GRACE_MS);
+  };
+
+  if (signal.aborted) {
+    onAbort();
+    return;
+  }
+
+  signal.addEventListener("abort", onAbort, { once: true });
+}
+
 export async function fetcher<T = unknown>(
   endpoint: string,
   options: FetcherOptions = {}
 ): Promise<T> {
-  const { token, headers, dedupe, debugLabel, signal, ...rest } = options;
+  const { token, headers, dedupe: _dedupe, debugLabel, signal, ignoreHttpError, ...rest } =
+    options;
   const method = (rest.method ?? "GET").toUpperCase();
-  const useDedupe = dedupe ?? method === "GET";
+  const key = getDedupeKey(method, endpoint);
+  /**
+   * Share in-flight GETs even when callers pass `dedupe: false` + AbortSignal.
+   * Services historically disabled fetcher dedupe because React Query supplies a
+   * signal; that skipped sharing and produced (canceled) then 200.
+   */
+  const useDedupe = method === "GET";
 
-  if (useDedupe && !signal && inFlightGetRequests.has(getDedupeKey(method, endpoint))) {
-    const existing = inFlightGetRequests.get(getDedupeKey(method, endpoint))!;
-    if (shouldDebugApi()) {
-      console.debug("[fetcher] deduped", { label: debugLabel, method, endpoint });
-    }
-    return existing as Promise<T>;
+  if (signal?.aborted) {
+    throw new DOMException("The operation was aborted.", "AbortError");
   }
+
+  if (useDedupe) {
+    const existing = inFlightGetRequests.get(key);
+    if (existing && !existing.controller.signal.aborted) {
+      subscribeToInFlightGet(existing, signal);
+      if (shouldDebugApi()) {
+        console.debug("[fetcher] deduped", { label: debugLabel, method, endpoint });
+      }
+      return existing.promise as Promise<T>;
+    }
+  }
+
+  const controller = useDedupe ? new AbortController() : null;
+  const fetchSignal = controller?.signal ?? signal;
 
   const run = async (): Promise<T> => {
     const storageToken =
@@ -68,7 +147,7 @@ export async function fetcher<T = unknown>(
         label: debugLabel,
         method,
         endpoint,
-        aborted: signal?.aborted ?? false
+        aborted: fetchSignal?.aborted ?? false
       });
     }
 
@@ -77,7 +156,7 @@ export async function fetcher<T = unknown>(
       response = await fetch(endpoint, {
         ...rest,
         method,
-        signal,
+        signal: fetchSignal,
         headers: {
           "Content-Type": "application/json",
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -85,7 +164,7 @@ export async function fetcher<T = unknown>(
         }
       });
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if (isAbortError(error)) {
         throw error;
       }
       throw new Error(NETWORK_ERROR);
@@ -94,6 +173,9 @@ export async function fetcher<T = unknown>(
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok || isFailedEnvelope(data)) {
+      if (ignoreHttpError) {
+        return null as T;
+      }
       throw new Error(readApiErrorMessage(data));
     }
 
@@ -105,19 +187,25 @@ export async function fetcher<T = unknown>(
   };
 
   const promise = run().catch((error: unknown) => {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      if (shouldDebugApi()) {
-        console.debug("[fetcher] aborted", { label: debugLabel, method, endpoint });
-      }
+    if (isAbortError(error) && shouldDebugApi()) {
+      console.debug("[fetcher] aborted", { label: debugLabel, method, endpoint });
     }
     throw error;
   });
 
-  if (useDedupe && !signal) {
-    const key = getDedupeKey(method, endpoint);
-    inFlightGetRequests.set(key, promise);
+  if (useDedupe && controller) {
+    const entry: InFlightGet = {
+      promise,
+      controller,
+      subscribers: 0,
+      abortTimer: null
+    };
+    inFlightGetRequests.set(key, entry);
+    subscribeToInFlightGet(entry, signal);
     promise.finally(() => {
-      if (inFlightGetRequests.get(key) === promise) {
+      const current = inFlightGetRequests.get(key);
+      if (current === entry) {
+        cancelScheduledAbort(entry);
         inFlightGetRequests.delete(key);
       }
     });
