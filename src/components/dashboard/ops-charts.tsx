@@ -30,6 +30,7 @@ import {
   FUNNEL_COLORS,
   onChartColor
 } from "@/components/dashboard/chart-theme";
+import { MixTrack } from "@/components/dashboard/RevealScope";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 import { cn } from "@/lib/utils";
 import type {
@@ -161,11 +162,12 @@ export function RideFunnel({ data }: { data: DashboardRideFunnel }) {
                 </p>
                 <div className="flex h-44 w-full items-end overflow-hidden rounded-[1.25rem] bg-slate-100 dark:bg-white/10">
                   <div
-                    className="bar-fill w-full rounded-[1.25rem]"
+                    className="bar-fill-y w-full rounded-[1.25rem]"
                     style={{
                       height: `${Math.max(share, stage.count > 0 ? 8 : 0)}%`,
                       background: color,
-                      animationDelay: `${index * 60}ms`
+                      animationDelay: `${index * 40}ms`,
+                      ["--bar-clip" as string]: "1.25rem"
                     }}
                     title={`${prettyStatus(stage.status)}: ${stage.count.toLocaleString()}`}
                   />
@@ -357,7 +359,8 @@ export function FareTrend({ data }: { data: DashboardFarePoint[] }) {
                       background: isPeak
                         ? `linear-gradient(180deg, ${CHART.brandFrom}, ${CHART.brandTo})`
                         : CHART.sand,
-                      animationDelay: `${index * 40}ms`
+                      animationDelay: `${index * 28}ms`,
+                      ["--bar-clip" as string]: "1.1rem"
                     }}
                     title={`${point.day}: ${pkr(point.amount)}`}
                   />
@@ -519,7 +522,7 @@ export function DriverStatusMix({
         </p>
       </div>
 
-      <div className="mb-5 flex h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+      <MixTrack className="mb-5">
         {items.map((item) => {
           const width = total > 0 ? (item.value / total) * 100 : 0;
           if (width <= 0) return null;
@@ -532,7 +535,7 @@ export function DriverStatusMix({
             />
           );
         })}
-      </div>
+      </MixTrack>
 
       <div className="space-y-2">
         {items.map((item, index) => {
@@ -624,7 +627,7 @@ export function RideStatusBoard({
         <p className="text-xs tabular-nums text-muted-foreground">{completedRate}% completed</p>
       </div>
 
-      <div className="mb-5 flex h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+      <MixTrack className="mb-5">
         {items.map((item) => {
           const width = total > 0 ? (item.value / total) * 100 : 0;
           if (width <= 0) return null;
@@ -638,7 +641,7 @@ export function RideStatusBoard({
             />
           );
         })}
-      </div>
+      </MixTrack>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
         {items.map((item, index) => {
@@ -726,7 +729,7 @@ export function CommissionBoard({ data }: { data: DashboardCommission }) {
         })}
       </div>
 
-      <div className="mt-5 flex h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+      <MixTrack className="mt-5">
         {rows.map((row) => {
           const width = total > 0 ? (row.value / total) * 100 : 0;
           if (width <= 0) return null;
@@ -739,7 +742,7 @@ export function CommissionBoard({ data }: { data: DashboardCommission }) {
             />
           );
         })}
-      </div>
+      </MixTrack>
     </div>
   );
 }
@@ -807,7 +810,10 @@ export function TopAgentsBoard({ data }: { data: DashboardTopAgent[] }) {
                     </span>
                   </div>
                   <div className="h-2.5 overflow-hidden rounded-full bg-white dark:bg-white/10">
-                    <div className="flex h-full overflow-hidden rounded-full" style={{ width: `${Math.max(rowWidth, 8)}%` }}>
+                    <div
+                      className="mix-fill flex h-full overflow-hidden rounded-full"
+                      style={{ width: `${Math.max(rowWidth, 8)}%`, animationDelay: `${index * 70}ms` }}
+                    >
                       {driverShare > 0 ? (
                         <div
                           className="h-full"

@@ -240,23 +240,77 @@ nav[aria-label="Breadcrumb"] ol {
 }
 
 @keyframes bar-fill {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-.bar-fill {
-  transform-origin: left center;
-  animation: bar-fill 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  0% {
+    clip-path: inset(0 100% 0 0 round 999px);
+    opacity: 0.2;
+  }
+  100% {
+    clip-path: inset(0 0 0 0 round 999px);
+    opacity: 1;
+  }
 }
 
 @keyframes bar-fill-y {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
+  0% {
+    clip-path: inset(100% 0 0 0 round var(--bar-clip, 16px));
+    opacity: 0.2;
+  }
+  100% {
+    clip-path: inset(0 0 0 0 round var(--bar-clip, 16px));
+    opacity: 1;
+  }
+}
+
+@keyframes tile-in {
+  0% {
+    transform: scale(0.55);
+    filter: saturate(0.7);
+  }
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+}
+
+@keyframes mix-reveal {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.bar-fill {
+  animation: bar-fill 0.8s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .bar-fill-y {
-  transform-origin: center bottom;
-  animation: bar-fill-y 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: bar-fill-y 0.72s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.mix-fill {
+  animation: mix-reveal 0.9s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.tile-in {
+  transform-origin: center;
+  animation: tile-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill,
+  .bar-fill-y,
+  .mix-fill,
+  .tile-in {
+    animation: none !important;
+    clip-path: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
 }
 
 input[type="date"],
@@ -270,13 +324,3 @@ input[type="time"] {
 .stagger-2 { animation-delay: 0.1s; }
 .stagger-3 { animation-delay: 0.15s; }
 .stagger-4 { animation-delay: 0.2s; }
-
-@keyframes bar-fill {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-.bar-fill {
-  transform-origin: left center;
-  animation: bar-fill 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
