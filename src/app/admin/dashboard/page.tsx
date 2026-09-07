@@ -5,16 +5,25 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminDashboardQuery } from "@/hooks/queries/use-admin-dashboard-query";
-import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
-import {
-  buildAgentPerformanceRow,
-  getAgentCommissions
-} from "@/lib/agent-onboarding";
 import { AuditLogsSection } from "@/components/audit-logs/AuditLogsSection";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { TrendArea } from "@/components/dashboard/TrendArea";
-import { RadialRings, Lollipop, Butterfly, DonutMix } from "@/components/dashboard/viz";
+import { RadialRings } from "@/components/dashboard/viz";
+import {
+  RideFunnel,
+  OutcomeTrend,
+  FareTrend,
+  CityDemand,
+  DocumentsPending,
+  RideStatusBoard,
+  CommissionBoard,
+  TopAgentsBoard
+} from "@/components/dashboard/ops-charts";
+import {
+  DRIVER_STATUS_COLORS,
+  RIDE_STATUS_COLORS
+} from "@/components/dashboard/chart-theme";
 import {
   Users,
   Briefcase,
@@ -46,32 +55,27 @@ function periodDelta(values: number[]) {
 export default function AdminDashboardPage() {
   const { data, loading: isLoading, error } = useAdminDashboardQuery();
   const {
-    data: agentsData,
-    isLoading: agentsLoading,
-    isFetching: agentsFetching
-  } = useAgentsListQuery({
-    page: 0,
-    pageSize: 100,
-    status: "all",
-    name: "",
-    mobileNumber: "",
-    city: "",
-    gender: "all"
-  });
-  const {
     counts,
     driverStatusCounts,
     ridesTrend,
-    rideStatusBreakdown
+    rideStatusBreakdown,
+    rideFunnel,
+    outcomeTrend,
+    ridesByCity,
+    fareTrend,
+    documentsPending,
+    commission,
+    topAgents,
+    opsDemo
   } = data;
 
   const statusRows = useMemo(
     () => [
-      { label: "Active", value: driverStatusCounts.active, color: "#fdb813" },
-      { label: "Approved", value: driverStatusCounts.approved, color: "#64748b" },
-      { label: "Inactive", value: driverStatusCounts.inactive, color: "#94a3b8" },
-      { label: "Blocked", value: driverStatusCounts.blocked, color: "#cbd5e1" },
-      { label: "Pending", value: driverStatusCounts.pending, color: "#fce001" }
+      { label: "Active", value: driverStatusCounts.active, color: DRIVER_STATUS_COLORS[0] },
+      { label: "Approved", value: driverStatusCounts.approved, color: DRIVER_STATUS_COLORS[1] },
+      { label: "Inactive", value: driverStatusCounts.inactive, color: DRIVER_STATUS_COLORS[2] },
+      { label: "Blocked", value: driverStatusCounts.blocked, color: DRIVER_STATUS_COLORS[3] },
+      { label: "Pending", value: driverStatusCounts.pending, color: DRIVER_STATUS_COLORS[4] }
     ],
     [driverStatusCounts]
   );
@@ -81,61 +85,26 @@ export default function AdminDashboardPage() {
       rideStatusBreakdown.map((row, idx) => ({
         label: prettyStatus(row.status),
         value: row.count,
-        color: ["#64748b", "#fdb813", "#fce001", "#94a3b8", "#cbd5e1"][idx]
+        color: RIDE_STATUS_COLORS[idx]
       })),
     [rideStatusBreakdown]
-  );
-  const isAgentPerfLoading = agentsLoading || agentsFetching;
-  const agentRows = useMemo(
-    () => (agentsData?.content ?? []).map(buildAgentPerformanceRow),
-    [agentsData?.content]
-  );
-  const registeredByAgents = useMemo(
-    () => ({
-      drivers: agentRows.reduce((sum, row) => sum + row.driverCount, 0),
-      partners: agentRows.reduce((sum, row) => sum + row.passengerCount, 0)
-    }),
-    [agentRows]
-  );
-  const topAgentRegistrations = useMemo(
-    () =>
-      [...agentRows]
-        .map((row) => ({
-          name: row.name?.trim() || `Agent ${row.id}`,
-          drivers: row.driverCount,
-          partners: row.passengerCount
-        }))
-        .sort((a, b) => b.drivers + b.partners - (a.drivers + a.partners))
-        .slice(0, 6),
-    [agentRows]
-  );
-  const commissionTotals = useMemo(() => {
-    let pending = 0;
-    let total = 0;
-    let released = 0;
-    for (const row of agentRows) {
-      total += row.totalCommission;
-      released += row.paidAmount;
-      const commissions = getAgentCommissions(row.id);
-      pending += commissions
-        .filter((item) => item.status === "PENDING")
-        .reduce((sum, item) => sum + item.amount, 0);
-    }
-    const remaining = Math.max(total - released, 0);
-    return { pending, released, remaining, total };
-  }, [agentRows]);
-  const commissionRows = useMemo(
-    () => [
-      { label: "Pending", value: commissionTotals.pending, color: "#fdb813" },
-      { label: "Released", value: commissionTotals.released, color: "#64748b" },
-      { label: "Remaining", value: commissionTotals.remaining, color: "#94a3b8" }
-    ],
-    [commissionTotals]
   );
   const ridesTrendTotal = ridesTrend.reduce((sum, point) => sum + point.count, 0);
   const ridesDelta = useMemo(
     () => periodDelta(ridesTrend.map((point) => point.count)),
     [ridesTrend]
+  );
+  const funnelHasData =
+    rideFunnel.stages.some((stage) => stage.count > 0) || rideFunnel.canceled > 0;
+  const documentsTotal =
+    documentsPending.driverCnic +
+    documentsPending.driverLicense +
+    documentsPending.vehicle +
+    documentsPending.partnerCnic;
+  const demoBadge = (
+    <span className="rounded-full bg-slate-900/6 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground dark:bg-white/10">
+      Demo data
+    </span>
   );
 
   return (
@@ -168,25 +137,69 @@ export default function AdminDashboardPage() {
             label="Total partners"
             value={counts.totalPartners}
             icon={Briefcase}
-            loading={isLoading || isAgentPerfLoading}
-            sparkline={
-              agentRows.length > 0
-                ? agentRows.slice(0, 12).map((row) => ({ count: row.passengerCount }))
-                : [{ count: counts.totalPartners }]
-            }
+            loading={isLoading}
+            sparkline={[{ count: counts.totalPartners }]}
           />
           <MetricCard
             label="Total agents"
             value={counts.totalSalesAgents}
             icon={UserCircle2}
-            loading={isLoading || isAgentPerfLoading}
-            bars={
-              agentRows.length > 0
-                ? agentRows.slice(0, 12).map((row) => row.driverCount + row.passengerCount)
-                : [counts.totalSalesAgents]
-            }
+            loading={isLoading}
+            bars={[counts.totalSalesAgents]}
           />
         </div>
+
+        <ChartCard
+          title="Ride funnel"
+          description="Requested through completed"
+          loading={isLoading}
+          empty={!isLoading && !funnelHasData}
+          heightClass="h-auto"
+          badge={opsDemo.rideFunnel ? demoBadge : undefined}
+        >
+          <RideFunnel data={rideFunnel} />
+        </ChartCard>
+
+        <ChartCard
+          title="Completed vs canceled"
+          description="Daily outcomes, last 14 days"
+          loading={isLoading}
+          empty={!isLoading && outcomeTrend.length === 0}
+          heightClass="h-56 sm:h-72"
+          badge={opsDemo.outcomeTrend ? demoBadge : undefined}
+        >
+          <OutcomeTrend data={outcomeTrend} />
+        </ChartCard>
+        <ChartCard
+          title="Documents pending"
+          description="CNIC, license and vehicle review"
+          loading={isLoading}
+          empty={!isLoading && documentsTotal === 0}
+          heightClass="h-auto"
+          badge={opsDemo.documentsPending ? demoBadge : undefined}
+        >
+          <DocumentsPending data={documentsPending} />
+        </ChartCard>
+        <ChartCard
+          title="Fare trend"
+          description="Gross fare, last 14 days"
+          loading={isLoading}
+          empty={!isLoading && fareTrend.length === 0}
+          heightClass="h-56 sm:h-72"
+          badge={opsDemo.fareTrend ? demoBadge : undefined}
+        >
+          <FareTrend data={fareTrend} />
+        </ChartCard>
+        <ChartCard
+          title="Rides by city"
+          description="Demand ranked by volume"
+          loading={isLoading}
+          empty={!isLoading && ridesByCity.length === 0}
+          heightClass="h-auto"
+          badge={opsDemo.ridesByCity ? demoBadge : undefined}
+        >
+          <CityDemand data={ridesByCity} />
+        </ChartCard>
 
         <ChartCard
           title="Rides"
@@ -226,61 +239,34 @@ export default function AdminDashboardPage() {
           )}
         </ChartCard>
 
-        <ChartCard title="Rides by status" description="Ranked by volume" heightClass="h-auto" loading={isLoading}>
-          <Lollipop items={rideChartData} />
+        <ChartCard
+          title="Rides by status"
+          description="Requested through completed"
+          heightClass="h-auto"
+          loading={isLoading}
+        >
+          <RideStatusBoard items={rideChartData} />
         </ChartCard>
 
         <ChartCard
           title="Top agents"
-          description="Drivers vs partners"
+          description="Drivers vs partners onboarded"
           heightClass="h-auto"
-          loading={false}
+          loading={isLoading}
+          empty={!isLoading && topAgents.length === 0}
+          badge={opsDemo.topAgents ? demoBadge : undefined}
         >
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:max-w-md">
-            <div className="rounded-[1.5rem] bg-gradient-to-br from-[#fce001] to-[#fdb813] px-4 py-4 text-slate-900">
-              <p className="text-sm text-slate-900/70">New drivers</p>
-              {isAgentPerfLoading ? (
-                <Skeleton className="mt-2 h-7 w-16" />
-              ) : (
-                <p className="mt-1 font-heading text-2xl font-semibold tabular-nums">
-                  {registeredByAgents.drivers.toLocaleString()}
-                </p>
-              )}
-            </div>
-            <div className="rounded-[1.5rem] bg-slate-900 px-4 py-4 text-white dark:bg-slate-800">
-              <p className="text-sm text-white/70">New partners</p>
-              {isAgentPerfLoading ? (
-                <Skeleton className="mt-2 h-7 w-16" />
-              ) : (
-                <p className="mt-1 font-heading text-2xl font-semibold tabular-nums">
-                  {registeredByAgents.partners.toLocaleString()}
-                </p>
-              )}
-            </div>
-          </div>
-          {isAgentPerfLoading ? (
-            <Skeleton className="h-48 w-full rounded-3xl" />
-          ) : topAgentRegistrations.length === 0 ? (
-            <div className="flex h-40 items-center justify-center rounded-3xl bg-[#f3f4f6] text-sm text-muted-foreground dark:bg-white/5">
-              No agent registrations yet
-            </div>
-          ) : (
-            <Butterfly items={topAgentRegistrations} />
-          )}
+          <TopAgentsBoard data={topAgents} />
         </ChartCard>
 
         <ChartCard
           title="Commission"
           description="Pending, released and remaining"
-          badge={<BadgeDollarSign className="h-4 w-4 text-[#fdb813]" />}
           heightClass="h-auto"
-          loading={isAgentPerfLoading}
+          loading={isLoading}
+          badge={opsDemo.commission ? demoBadge : <BadgeDollarSign className="h-4 w-4 text-[#fdb813]" />}
         >
-          <DonutMix
-            items={commissionRows}
-            centerLabel="Total"
-            centerValue={commissionTotals.total}
-          />
+          <CommissionBoard data={commission} />
         </ChartCard>
 
         <Suspense fallback={<Skeleton className="h-64 w-full rounded-[1.75rem]" />}>

@@ -260,3 +260,13 @@ input[type="time"] {
 .stagger-2 { animation-delay: 0.1s; }
 .stagger-3 { animation-delay: 0.15s; }
 .stagger-4 { animation-delay: 0.2s; }
+
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.bar-fill {
+  transform-origin: left center;
+  animation: bar-fill 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

@@ -4,12 +4,14 @@ export function AnalyticsTooltip({
   active,
   payload,
   label,
-  valuePrefix = ""
+  valuePrefix = "",
+  formatValue
 }: {
   active?: boolean;
   payload?: Array<{ value?: number | string; name?: string; color?: string; payload?: { fill?: string } }>;
   label?: string;
   valuePrefix?: string;
+  formatValue?: (value: number) => string;
 }) {
   if (!active || !payload?.length) return null;
 
@@ -23,7 +25,11 @@ export function AnalyticsTooltip({
           const color = item.color || item.payload?.fill || "#fdb813";
           const raw = item.value;
           const display =
-            typeof raw === "number" ? `${valuePrefix}${raw.toLocaleString()}` : String(raw ?? "—");
+            typeof raw === "number"
+              ? formatValue
+                ? formatValue(raw)
+                : `${valuePrefix}${raw.toLocaleString()}`
+              : String(raw ?? "—");
           return (
             <div key={`${item.name}-${index}`} className="flex items-center justify-between gap-4">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">

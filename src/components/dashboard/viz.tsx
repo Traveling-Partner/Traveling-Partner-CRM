@@ -2,6 +2,7 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { PieTooltip } from "@/components/dashboard/AnalyticsTooltip";
+import { CHART, PALETTE } from "@/components/dashboard/chart-theme";
 import { cn } from "@/lib/utils";
 
 export type VizItem = {
@@ -11,7 +12,6 @@ export type VizItem = {
 };
 
 const TRACK = "stroke-slate-100 dark:stroke-white/10";
-const PALETTE = ["#fdb813", "#64748b", "#94a3b8", "#cbd5e1", "#fce001"];
 
 function colorAt(item: VizItem, index: number) {
   return item.color ?? PALETTE[index % PALETTE.length];
@@ -91,20 +91,24 @@ export function Lollipop({ items, className }: { items: VizItem[]; className?: s
 
   return (
     <div className={cn("space-y-5", className)}>
-      {ranked.map((item) => {
+      {ranked.map((item, index) => {
         const pct = Math.max((item.value / max) * 100, item.value > 0 ? 6 : 0);
+        const color = colorAt(item, index);
         return (
           <div key={item.label} className="grid grid-cols-[6.5rem_1fr_3.25rem] items-center gap-3 sm:grid-cols-[8rem_1fr_3.5rem]">
             <span className="truncate text-sm text-foreground">{item.label}</span>
             <div className="relative h-4">
               <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-slate-100 dark:bg-white/10" />
               <div
-                className="absolute left-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-[#fce001] to-[#fdb813]"
-                style={{ width: `calc(${pct}% - 7px)` }}
+                className="absolute left-0 top-1/2 h-px -translate-y-1/2"
+                style={{ width: `calc(${pct}% - 7px)`, background: color }}
               />
               <div
-                className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-[#fce001] to-[#fdb813] shadow-[0_0_0_3px_rgba(253,184,19,0.18)]"
-                style={{ left: `calc(${pct}% - 7px)` }}
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full shadow-[0_0_0_3px_rgba(15,23,42,0.06)]"
+                style={{
+                  left: `calc(${pct}% - 7px)`,
+                  background: color
+                }}
               />
             </div>
             <span className="text-right font-heading text-sm font-semibold tabular-nums">
@@ -149,8 +153,11 @@ export function Butterfly({
             </span>
             <div className="flex h-2.5 w-full justify-end overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
               <div
-                className="h-full rounded-full bg-gradient-to-l from-[#fce001] to-[#fdb813]"
-                style={{ width: `${(item.drivers / max) * 100}%` }}
+                className="h-full rounded-full"
+                style={{
+                  width: `${(item.drivers / max) * 100}%`,
+                  background: `linear-gradient(to left, ${CHART.brandFrom}, ${CHART.brandTo})`
+                }}
               />
             </div>
           </div>
@@ -158,8 +165,11 @@ export function Butterfly({
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
               <div
-                className="h-full rounded-full bg-slate-900 dark:bg-white"
-                style={{ width: `${(item.partners / max) * 100}%` }}
+                className="h-full rounded-full"
+                style={{
+                  width: `${(item.partners / max) * 100}%`,
+                  background: CHART.teal
+                }}
               />
             </div>
             <span className="hidden text-xs tabular-nums text-muted-foreground sm:inline">
