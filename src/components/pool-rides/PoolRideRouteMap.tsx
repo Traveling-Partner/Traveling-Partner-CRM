@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
 import {
   ExternalLink,
   MapPin,
@@ -17,91 +16,6 @@ interface PoolRideRouteMapProps {
   fullWidth?: boolean;
 }
 
-interface MapBounds {
-  minLat: number;
-  maxLat: number;
-  minLng: number;
-  maxLng: number;
-}
-
-function getBounds(ride: PoolRide): MapBounds {
-  const padLat = 0.028;
-  const padLng = 0.035;
-  return {
-    minLat: Math.min(ride.startLat, ride.endLat, ride.driverLat ?? ride.startLat) - padLat,
-    maxLat: Math.max(ride.startLat, ride.endLat, ride.driverLat ?? ride.endLat) + padLat,
-    minLng: Math.min(ride.startLng, ride.endLng, ride.driverLng ?? ride.startLng) - padLng,
-    maxLng: Math.max(ride.startLng, ride.endLng, ride.driverLng ?? ride.endLng) + padLng
-  };
-}
-
-function latLngToPercent(lat: number, lng: number, bounds: MapBounds) {
-  const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100;
-  const y = (1 - (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100;
-  return {
-    x: Math.min(96, Math.max(4, x)),
-    y: Math.min(92, Math.max(8, y))
-  };
-}
-
-function MapMarker({
-  label,
-  sublabel,
-  style,
-  tone
-}: {
-  label: string;
-  sublabel?: string;
-  style: CSSProperties;
-  tone: "pickup" | "dropoff" | "driver";
-}) {
-  const toneStyles = {
-    pickup: {
-      pin: "bg-emerald-500 shadow-emerald-500/40",
-      ring: "ring-emerald-400/50",
-      label: "text-emerald-700 dark:text-emerald-300"
-    },
-    dropoff: {
-      pin: "bg-rose-500 shadow-rose-500/40",
-      ring: "ring-rose-400/50",
-      label: "text-rose-700 dark:text-rose-300"
-    },
-    driver: {
-      pin: "bg-amber-400 shadow-amber-400/50 animate-pulse",
-      ring: "ring-amber-300/60",
-      label: "text-amber-700 dark:text-amber-300"
-    }
-  }[tone];
-
-  return (
-    <div className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full" style={style}>
-      <div className="flex flex-col items-center">
-        <div
-          className={cn(
-            "mb-1 max-w-[120px] truncate rounded-lg border border-white/20 bg-slate-950/85 px-2 py-1 text-center text-[10px] font-semibold text-white shadow-lg backdrop-blur-md sm:max-w-[160px] sm:text-[11px]",
-            tone === "driver" && "border-amber-400/40"
-          )}
-        >
-          {label}
-          {sublabel ? (
-            <span className={cn("mt-0.5 block text-[9px] font-normal", toneStyles.label)}>
-              {sublabel}
-            </span>
-          ) : null}
-        </div>
-        <div
-          className={cn(
-            "h-4 w-4 rounded-full border-2 border-white shadow-lg ring-4",
-            toneStyles.pin,
-            toneStyles.ring
-          )}
-        />
-        <div className="mt-0.5 h-2 w-0.5 rounded-full bg-white/80" />
-      </div>
-    </div>
-  );
-}
-
 export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMapProps) {
   const isCompleted = ride.rideStatus === "COMPLETED";
   const isLive =
@@ -109,28 +23,11 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
     ride.rideStatus === "STARTED" ||
     ride.rideStatus === "DRIVER_ARRIVED";
 
-  const bounds = useMemo(() => getBounds(ride), [ride]);
-
-  const pickupPos = useMemo(
-    () => latLngToPercent(ride.startLat, ride.startLng, bounds),
-    [ride.startLat, ride.startLng, bounds]
-  );
-  const dropoffPos = useMemo(
-    () => latLngToPercent(ride.endLat, ride.endLng, bounds),
-    [ride.endLat, ride.endLng, bounds]
-  );
-  const driverPos = useMemo(() => {
-    if (ride.driverLat == null || ride.driverLng == null) return null;
-    return latLngToPercent(ride.driverLat, ride.driverLng, bounds);
-  }, [ride.driverLat, ride.driverLng, bounds]);
-
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${ride.startLat},${ride.startLng}&destination=${ride.endLat},${ride.endLng}&travelmode=driving`;
 
   const googleMapsEmbedSimple = `https://maps.google.com/maps?saddr=${ride.startLat},${ride.startLng}&daddr=${ride.endLat},${ride.endLng}&hl=en&z=14&output=embed`;
   const actualDistance = ride.actualDistanceKm != null ? `${ride.actualDistanceKm} km` : "—";
   const actualTime = ride.actualTimeMinutes != null ? `${ride.actualTimeMinutes} min` : "—";
-
-  const routePath = `M ${pickupPos.x} ${pickupPos.y} Q ${(pickupPos.x + dropoffPos.x) / 2} ${Math.min(pickupPos.y, dropoffPos.y) - 12} ${dropoffPos.x} ${dropoffPos.y}`;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -240,78 +137,8 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
               allowFullScreen
             />
 
-            {/* Vignette — lighter for portal feel */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/10" />
-
-            {/* SVG route arc */}
-            <svg
-              className="pointer-events-none absolute inset-0 z-10 h-full w-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#22c55e" stopOpacity="0.9" />
-                  <stop offset="50%" stopColor="#fdb813" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.9" />
-                </linearGradient>
-              </defs>
-              <path
-                d={routePath}
-                fill="none"
-                stroke="url(#routeGradient)"
-                strokeWidth={isCompleted ? "0.55" : "0.4"}
-                strokeDasharray={isCompleted ? "0" : "2 1.5"}
-                strokeLinecap="round"
-                className="drop-shadow-[0_0_6px_rgba(253,184,19,0.6)]"
-              />
-            </svg>
-
-            <MapMarker
-              label="Pickup"
-              sublabel="Start"
-              tone="pickup"
-              style={{ left: `${pickupPos.x}%`, top: `${pickupPos.y}%` }}
-            />
-            {driverPos ? (
-              <MapMarker
-                label="Driver"
-                sublabel="Live"
-                tone="driver"
-                style={{ left: `${driverPos.x}%`, top: `${driverPos.y}%` }}
-              />
-            ) : null}
-            <MapMarker
-              label="Drop-off"
-              sublabel="End"
-              tone="dropoff"
-              style={{ left: `${dropoffPos.x}%`, top: `${dropoffPos.y}%` }}
-            />
-
-            <div className="absolute bottom-3 right-3 z-20 hidden rounded-xl border border-border/60 bg-card/95 p-2.5 shadow-lg backdrop-blur-md sm:block">
-              <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Legend
-              </p>
-              <div className="space-y-1">
-                {[
-                  { color: "bg-emerald-500", label: "Pickup" },
-                  { color: "bg-amber-400", label: "Driver" },
-                  { color: "bg-rose-500", label: "Drop-off" },
-                  {
-                    color: isCompleted ? "bg-gradient-to-r from-emerald-500 to-rose-500" : "bg-amber-400/60",
-                    label: isCompleted ? "Completed path" : "Est. path"
-                  }
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    <span className={cn("h-2 w-2 rounded-full", item.color)} />
-                    <span className="text-[10px] text-muted-foreground">{item.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {isLive ? (
-              <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 shadow-md backdrop-blur-md">
+              <div className="pointer-events-none absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 shadow-md backdrop-blur-md">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
