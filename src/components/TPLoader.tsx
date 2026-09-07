@@ -1,3 +1,5 @@
+"use client";
+
 const RING_SRC = "/images/loader/tp-loader-ring.svg";
 const LOGO_SRC = "/images/loader/tp-loader-logo.svg";
 
@@ -48,6 +50,7 @@ export default function TPLoader({
   if (variant === "fullscreen") {
     return (
       <div
+        suppressHydrationWarning
         className={`fixed inset-0 z-[9999] flex items-center justify-center bg-background ${className}`}
         role="status"
         aria-live="polite"
