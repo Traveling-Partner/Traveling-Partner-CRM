@@ -46,7 +46,10 @@ export function Sparkline({
             strokeWidth={2}
             fill={`url(#${fillId})`}
             dot={false}
-            isAnimationActive={false}
+            isAnimationActive
+            animationBegin={40}
+            animationDuration={720}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -73,8 +76,12 @@ export function SparkBars({
       {values.map((value, index) => (
         <div
           key={index}
-          className={cn("min-h-[4px] flex-1 rounded-[3px]", barClass)}
-          style={{ height: `${Math.max((value / max) * 100, 12)}%` }}
+          className={cn("bar-fill-y min-h-[4px] flex-1 rounded-[3px]", barClass)}
+          style={{
+            height: `${Math.max((value / max) * 100, 12)}%`,
+            animationDelay: `${index * 45}ms`,
+            ["--bar-clip" as string]: "3px"
+          }}
         />
       ))}
     </div>
@@ -98,8 +105,11 @@ export function SparkRows({
       {rows.map((value, index) => (
         <div key={index} className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813]"
-            style={{ width: `${Math.max((value / max) * 100, 10)}%` }}
+            className="bar-fill h-full rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813]"
+            style={{
+              width: `${Math.max((value / max) * 100, 10)}%`,
+              animationDelay: `${index * 50}ms`
+            }}
           />
         </div>
       ))}
@@ -130,10 +140,11 @@ export function SparkHeat({
             title={String(value)}
           >
             <div
-              className="h-full w-full rounded-[5px]"
+              className="tile-in h-full w-full rounded-[5px]"
               style={{
                 background: `linear-gradient(180deg, ${CHART.brandFrom}, ${CHART.brandTo})`,
-                opacity: 0.22 + t * 0.78
+                opacity: 0.22 + t * 0.78,
+                animationDelay: `${index * 45}ms`
               }}
             />
           </div>

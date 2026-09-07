@@ -69,22 +69,23 @@ export function ShareTrack({
   return (
     <div className={className}>
       <div className={cn("flex h-3 overflow-hidden rounded-full", TRACK)}>
-        {items.map((item, index) => {
-          const pct = (item.value / total) * 100;
-          if (pct <= 0) return null;
-          return (
-            <div
-              key={item.label}
-              className="bar-fill h-full first:rounded-l-full last:rounded-r-full"
-              title={`${item.label} ${Math.round(pct)}%`}
-              style={{
-                width: `${pct}%`,
-                background: item.color ?? PALETTE[index % PALETTE.length],
-                animationDelay: `${index * 60}ms`
-              }}
-            />
-          );
-        })}
+        <div className="mix-fill flex h-full w-full">
+          {items.map((item, index) => {
+            const pct = (item.value / total) * 100;
+            if (pct <= 0) return null;
+            return (
+              <div
+                key={item.label}
+                className="h-full first:rounded-l-full last:rounded-r-full"
+                title={`${item.label} ${Math.round(pct)}%`}
+                style={{
+                  width: `${pct}%`,
+                  background: item.color ?? PALETTE[index % PALETTE.length]
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
         {items.map((item, index) => {
@@ -140,20 +141,19 @@ export function StackedBarList({
               </span>
             </div>
             <div className={cn("h-2.5 overflow-hidden rounded-full", TRACK)}>
-              <div className="flex h-full overflow-hidden rounded-full" style={{ width: `${rowWidth}%` }}>
+              <div className="mix-fill flex h-full overflow-hidden rounded-full" style={{ width: `${rowWidth}%` }}>
                 {driverShare > 0 ? (
                   <div
-                    className="bar-fill h-full"
+                    className="h-full"
                     style={{ width: `${driverShare}%`, background: CHART.brand }}
                     title={`Drivers ${item.drivers}`}
                   />
                 ) : null}
                 {partnerShare > 0 ? (
                   <div
-                    className="bar-fill h-full"
+                    className="h-full"
                     style={{
                       width: `${partnerShare}%`,
-                      animationDelay: "80ms",
                       background: CHART.teal
                     }}
                     title={`Partners ${item.partners}`}

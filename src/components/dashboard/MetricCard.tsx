@@ -2,6 +2,7 @@
 
 import type { ComponentType, ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RevealScope } from "@/components/dashboard/RevealScope";
 import { cn } from "@/lib/utils";
 
 type MetricTone = "brand" | "neutral" | "success" | "warning" | "info" | "danger";
@@ -71,7 +72,9 @@ export function MetricCard({
             <p className={cn("mt-0.5 text-[11px]", muted)}>{hint}</p>
           ) : null}
         </div>
-        {chart ? <div className="mb-0.5 w-[42%] max-w-[7.5rem] shrink-0">{chart}</div> : null}
+        {chart ? (
+          <RevealScope className="mb-0.5 w-[42%] max-w-[7.5rem] shrink-0">{chart}</RevealScope>
+        ) : null}
       </div>
       {footer}
     </div>
