@@ -29,7 +29,8 @@ import { useToast } from "@/components/ui/toast";
 import { usePercentageManagementMock } from "@/hooks/percentage-management/usePercentageManagementMock";
 import type {
   PercentageManagementFormValues,
-  PercentageManagementItem
+  PercentageManagementItem,
+  PercentageManagementStatus
 } from "@/types/percentage-management";
 
 const STATUS_OPTIONS = ["ACTIVE", "INACTIVE"] as const;
@@ -113,6 +114,7 @@ export function PercentageManagementView({
   const [editingItem, setEditingItem] = useState<PercentageManagementItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PercentageManagementItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -159,6 +161,33 @@ export function PercentageManagementView({
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (
+    item: PercentageManagementItem,
+    status: PercentageManagementStatus
+  ) => {
+    if (item.status === status || statusUpdatingId || isSubmitting) return;
+
+    setStatusUpdatingId(item.id);
+    try {
+      await updateItem(item.id, {
+        name: item.name,
+        percentage: item.percentage,
+        status
+      });
+      success(
+        status === "ACTIVE"
+          ? `${entityLabel} activated successfully.`
+          : `${entityLabel} deactivated successfully.`
+      );
+    } catch (e) {
+      showError(
+        e instanceof Error ? e.message : `Failed to update ${entityLabel.toLowerCase()} status.`
+      );
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -247,27 +276,60 @@ export function PercentageManagementView({
                 {
                   key: "actions",
                   header: "Actions",
-                  className: "w-[120px]",
-                  render: (item: PercentageManagementItem) => (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => openEditModal(item)}
-                        aria-label={`Edit ${item.name}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setDeleteTarget(item)}
-                        aria-label={`Delete ${item.name}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  )
+                  className: "w-[280px]",
+                  render: (item: PercentageManagementItem) => {
+                    const statusBusy = statusUpdatingId === item.id;
+                    return (
+                      <div className="flex items-center gap-1">
+                        <div
+                          className="inline-flex rounded-md border border-border/60 bg-muted/20 p-0.5"
+                          role="radiogroup"
+                          aria-label={`${item.name} status`}
+                        >
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={item.status === "ACTIVE" ? "default" : "ghost"}
+                            className="h-7 px-2.5 text-xs"
+                            disabled={isSubmitting || Boolean(statusUpdatingId)}
+                            onClick={() => void handleStatusChange(item, "ACTIVE")}
+                            role="radio"
+                            aria-checked={item.status === "ACTIVE"}
+                          >
+                            {statusBusy && item.status !== "ACTIVE" ? "…" : "Active"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={item.status === "INACTIVE" ? "default" : "ghost"}
+                            className="h-7 px-2.5 text-xs"
+                            disabled={isSubmitting || Boolean(statusUpdatingId)}
+                            onClick={() => void handleStatusChange(item, "INACTIVE")}
+                            role="radio"
+                            aria-checked={item.status === "INACTIVE"}
+                          >
+                            {statusBusy && item.status !== "INACTIVE" ? "…" : "Inactive"}
+                          </Button>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => openEditModal(item)}
+                          aria-label={`Edit ${item.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setDeleteTarget(item)}
+                          aria-label={`Delete ${item.name}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    );
+                  }
                 }
               ]}
             />

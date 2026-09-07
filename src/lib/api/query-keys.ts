@@ -30,12 +30,20 @@ export const queryKeys = {
     documentsQueue: (filters: DocumentsQueueFilters) =>
       ["users", "documents", "queue", filters] as const
   },
+  rides: {
+    all: ["rides"] as const,
+    list: (filters: RidesListFilters) => ["rides", "list", filters] as const,
+    detail: (id: string | number) => ["rides", "detail", String(id)] as const
+  },
   vehicle: {
     all: ["vehicle"] as const,
     types: (filters: VehicleTypesListFilters) => ["vehicle", "types", filters] as const,
+    typeOptions: () => ["vehicle", "types", "options"] as const,
     models: (filters: VehicleModelsListFilters) => ["vehicle", "models", filters] as const,
+    modelOptions: () => ["vehicle", "models", "options"] as const,
     colors: (filters: VehicleColorsListFilters) => ["vehicle", "colors", filters] as const,
-    brands: (filters: VehicleBrandsListFilters) => ["vehicle", "brands", filters] as const
+    brands: (filters: VehicleBrandsListFilters) => ["vehicle", "brands", filters] as const,
+    brandOptions: () => ["vehicle", "brands", "options"] as const
   },
   blog: {
     all: ["blog"] as const,
@@ -58,7 +66,8 @@ export const queryKeys = {
     detail: (id: number) => ["carousel", "detail", id] as const
   },
   audit: {
-    logs: (page: number, size: number) => ["audit", "logs", { page, size }] as const
+    all: ["audit"] as const,
+    logs: (filters: AuditLogsFilters) => ["audit", "logs", filters] as const
   },
   tax: {
     all: ["tax"] as const,
@@ -67,6 +76,18 @@ export const queryKeys = {
   sos: {
     all: ["sos"] as const,
     list: (filters: SosListFilters) => ["sos", "list", filters] as const
+  },
+  platformFee: {
+    all: ["platformFee"] as const,
+    list: (filters: PlatformFeeListFilters) => ["platformFee", "list", filters] as const
+  },
+  commission: {
+    all: ["commission"] as const,
+    list: (filters: CommissionListFilters) => ["commission", "list", filters] as const
+  },
+  insurance: {
+    all: ["insurance"] as const,
+    list: (filters: InsuranceListFilters) => ["insurance", "list", filters] as const
   }
 } as const;
 
@@ -98,6 +119,15 @@ export interface AgentsListFilters {
   mobileNumber: string;
   city: string;
   gender: string;
+}
+
+export interface RidesListFilters {
+  page: number;
+  pageSize: number;
+  status: string;
+  city: string;
+  search: string;
+  bookingReference: string;
 }
 
 export interface DocumentsQueueFilters {
@@ -148,6 +178,36 @@ export interface SosListFilters {
   page: number;
   pageSize: number;
   search: string;
+}
+
+export interface PlatformFeeListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface CommissionListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface InsuranceListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface AuditLogsFilters {
+  page: number;
+  pageSize: number;
+  userType: string;
+  search: string;
+  fromDate: string;
+  toDate: string;
+  module: string;
+  action: string;
+  userId: string;
 }
 
 export type VehicleTypesListFilters = VehicleListFiltersBase;

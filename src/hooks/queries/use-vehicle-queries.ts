@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useDebouncedValue, usePaginatedQuery } from "@/hooks/api";
+import { useApiQuery, useDebouncedValue, usePaginatedQuery } from "@/hooks/api";
 import {
   queryKeys,
   type VehicleBrandsListFilters,
@@ -10,6 +10,9 @@ import {
   type VehicleTypesListFilters
 } from "@/lib/api/query-keys";
 import {
+  fetchAllVehicleBrands,
+  fetchAllVehicleModels,
+  fetchAllVehicleTypes,
   fetchVehicleBrands,
   fetchVehicleColors,
   fetchVehicleModels,
@@ -74,5 +77,29 @@ export function useVehicleBrandsQuery(page: number, pageSize: number, search: st
     queryKey: queryKeys.vehicle.brands(filters),
     filters,
     fetchPage: ({ token, signal, filters: f }) => fetchVehicleBrands(f, { token, signal })
+  });
+}
+
+/** Every vehicle type across API pages — for Add/Edit dropdowns. */
+export function useVehicleTypeOptionsQuery() {
+  return useApiQuery({
+    queryKey: queryKeys.vehicle.typeOptions(),
+    queryFn: ({ token, signal }) => fetchAllVehicleTypes({ token, signal })
+  });
+}
+
+/** Every brand across API pages — for Add/Edit dropdowns. */
+export function useVehicleBrandOptionsQuery() {
+  return useApiQuery({
+    queryKey: queryKeys.vehicle.brandOptions(),
+    queryFn: ({ token, signal }) => fetchAllVehicleBrands({ token, signal })
+  });
+}
+
+/** Every model across API pages — for Add/Edit dropdowns. */
+export function useVehicleModelOptionsQuery() {
+  return useApiQuery({
+    queryKey: queryKeys.vehicle.modelOptions(),
+    queryFn: ({ token, signal }) => fetchAllVehicleModels({ token, signal })
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,8 @@ import { LazyBlogRichEditor } from "@/components/blog/LazyBlogRichEditor";
 import { BlogEditorWorkspace } from "@/components/blog/BlogEditorWorkspace";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
-import { createBlog, getAllBlogCategories, type BlogCategory } from "@/services/blog";
+import { createBlog } from "@/services/blog";
+import { BLOG_CATEGORIES, toggleCategoryName } from "@/lib/blog-categories";
 import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
@@ -35,13 +36,13 @@ export default function AdminBlogCreatePage() {
   const [imagePreview, setImagePreview] = useState<string>("/mock-images/blog-cover.svg");
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors }
   } = useForm<BlogEditorFormValues>({
     resolver: zodResolver(blogEditorSchema),
@@ -52,34 +53,20 @@ export default function AdminBlogCreatePage() {
       description2: "",
       date: new Date().toISOString().slice(0, 10),
       author: authUser?.name || "Admin",
-      categoryId: 1,
+      categoryNames: [],
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
-      status: "DRAFT"
+      isFeatured: false,
+      status: "DRAFT",
+      faqs: []
     }
   });
 
   const mainTitle = watch("mainTitle");
   const description1 = watch("description1") ?? "";
-  const categoryId = watch("categoryId");
+  const categoryNames = watch("categoryNames") ?? [];
   const date = watch("date");
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadCategories = async () => {
-      try {
-        const list = await getAllBlogCategories(token);
-        if (!cancelled) setCategories(list);
-      } catch {
-        if (!cancelled) setCategories([]);
-      }
-    };
-    void loadCategories();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
 
   const submitWithStatus = async (
     values: BlogEditorFormValues,
@@ -151,13 +138,13 @@ export default function AdminBlogCreatePage() {
           submitting={submitting}
           coverUploading={coverUploading}
           imagePreview={imagePreview}
-          categories={categories}
+          categories={BLOG_CATEGORIES}
           mainTitle={mainTitle}
           description1={description1}
           author={watch("author")}
           tagsText={watch("tagsText") ?? ""}
           date={date}
-          categoryId={categoryId}
+          categoryNames={categoryNames}
           errors={errors}
           register={{
             coverImage: register("coverImage"),
@@ -169,12 +156,16 @@ export default function AdminBlogCreatePage() {
             seoTitle: register("seoTitle"),
             seoDescription: register("seoDescription")
           }}
-          onCategoryChange={(id) =>
-            setValue("categoryId", id, { shouldValidate: true })
+          onCategoryToggle={(name) =>
+            setValue("categoryNames", toggleCategoryName(categoryNames, name), {
+              shouldValidate: true,
+              shouldDirty: true
+            })
           }
           onImageChange={onImageChange}
           onSaveDraft={() => void saveDraft()}
           onPublish={() => void publish()}
+          control={control}
           editor={
             <LazyBlogRichEditor
               value={description2}

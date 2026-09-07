@@ -69,7 +69,7 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
 
   return (
     <ProtectedRoute allowedRoles={routeRoles}>
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/80 to-slate-100 dark:from-slate-950 dark:via-slate-950/95 dark:to-slate-950">
+      <div className="app-mesh-bg min-h-screen">
         <aside
           className={cn(
             "fixed inset-y-0 left-0 z-40 hidden h-screen overflow-hidden transition-[width] duration-200 ease-out md:block",
@@ -117,7 +117,7 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
             onToggleSidebarMobile={() => setMobileOpen((prev) => !prev)}
           />
 
-          <main className="min-w-0 flex-1 px-3 py-4 md:px-6 md:py-6">
+          <main className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-8">
             <div
               className={cn(
                 "mx-auto flex h-full flex-col gap-4",

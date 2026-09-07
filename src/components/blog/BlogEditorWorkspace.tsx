@@ -2,28 +2,28 @@
 
 import { useId, type ChangeEventHandler, type ReactNode } from "react";
 import Link from "next/link";
+import { Controller, useFieldArray, type Control, type FieldErrors } from "react-hook-form";
 import {
   ArrowLeft,
   CalendarDays,
+  ChevronDown,
+  HelpCircle,
   ImagePlus,
-  Loader2,
+  Plus,
+  Star,
   Tag,
+  Trash2,
   UserRound
 } from "lucide-react";
+import TPLoader from "@/components/TPLoader";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 import type { BlogCategory } from "@/services/blog";
-import type { FieldError } from "react-hook-form";
+import type { BlogEditorFormValues } from "@/app/admin/blog/_blog-form-shared";
 
 export interface BlogEditorWorkspaceProps {
   mode: "create" | "edit";
@@ -37,16 +37,8 @@ export interface BlogEditorWorkspaceProps {
   author: string;
   tagsText: string;
   date: string;
-  categoryId: number;
-  errors: {
-    mainTitle?: FieldError;
-    description1?: FieldError;
-    author?: FieldError;
-    categoryId?: FieldError;
-    description2?: FieldError;
-    seoTitle?: FieldError;
-    seoDescription?: FieldError;
-  };
+  categoryNames: string[];
+  errors: FieldErrors<BlogEditorFormValues>;
   register: {
     coverImage: object;
     mainTitle: object;
@@ -57,11 +49,12 @@ export interface BlogEditorWorkspaceProps {
     seoTitle: object;
     seoDescription: object;
   };
-  onCategoryChange: (id: number) => void;
+  onCategoryToggle: (name: string) => void;
   onImageChange: ChangeEventHandler<HTMLInputElement>;
   onSaveDraft: () => void;
   onPublish: () => void;
   editor: ReactNode;
+  control: Control<BlogEditorFormValues>;
 }
 
 export function BlogEditorWorkspace({
@@ -74,16 +67,18 @@ export function BlogEditorWorkspace({
   mainTitle,
   description1,
   date,
-  categoryId,
+  categoryNames,
   errors,
   register,
-  onCategoryChange,
+  onCategoryToggle,
   onImageChange,
   onSaveDraft,
   onPublish,
-  editor
+  editor,
+  control
 }: BlogEditorWorkspaceProps) {
   const coverInputId = useId();
+  const { fields, append, remove } = useFieldArray({ control, name: "faqs" });
   const relative = formatRelativePostTime(date);
   const heading =
     mode === "create"
@@ -162,7 +157,7 @@ export function BlogEditorWorkspace({
                 )}
               >
                 {coverUploading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <TPLoader variant="inline" size={120} />
                 ) : (
                   <ImagePlus className="h-3.5 w-3.5" />
                 )}
@@ -283,31 +278,69 @@ export function BlogEditorWorkspace({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
               <label className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground">
                 <Tag className="h-3 w-3" />
-                Category
+                Categories
               </label>
-              <Select
-                value={String(categoryId)}
-                onValueChange={(value) => onCategoryChange(Number(value))}
-              >
-                <SelectTrigger className="h-9 rounded-lg">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={String(category.id)}>
+              <div className="flex flex-wrap gap-2 rounded-lg border border-border/70 bg-background p-2">
+                {categories.map((category) => {
+                  const selected = categoryNames.includes(category.name);
+                  return (
+                    <button
+                      key={category.name}
+                      type="button"
+                      onClick={() => onCategoryToggle(category.name)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-medium transition",
+                        selected
+                          ? "border-[#fdb813]/60 bg-[var(--brand-light)] text-foreground shadow-sm"
+                          : "border-border/70 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                      )}
+                    >
                       {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.categoryId?.message ? (
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-2xs text-muted-foreground">Select one or more. Saved as names, no IDs.</p>
+              {errors.categoryNames?.message ? (
                 <p className="text-2xs font-medium text-red-500">
-                  {errors.categoryId.message}
+                  {errors.categoryNames.message}
                 </p>
               ) : null}
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
+              <label className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground">
+                <Star className="h-3 w-3" />
+                Website homepage
+              </label>
+              <Controller
+                name="isFeatured"
+                control={control}
+                render={({ field }) => (
+                  <label
+                    htmlFor="isFeatured"
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2.5"
+                  >
+                    <Checkbox
+                      id="isFeatured"
+                      className="mt-0.5"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-foreground">
+                        Feature this blog
+                      </span>
+                      <span className="mt-0.5 block text-2xs text-muted-foreground">
+                        Shown on the website homepage featured list when published.
+                      </span>
+                    </span>
+                  </label>
+                )}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -392,6 +425,99 @@ export function BlogEditorWorkspace({
           <div className="rounded-xl border border-border/60 shadow-premium-md">
             {editor}
           </div>
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-premium-xs sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-light)] text-foreground">
+                  <HelpCircle className="h-4 w-4" />
+                </span>
+                <div>
+                  <h2 className="font-heading text-sm font-semibold text-foreground">
+                    Explore Common Questions
+                  </h2>
+                  <p className="text-2xs text-muted-foreground">
+                    Optional. Add FAQs for this post. Incomplete rows are skipped.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => append({ question: "", answer: "" })}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add question
+            </Button>
+          </div>
+
+          {fields.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => append({ question: "", answer: "" })}
+              className="flex w-full items-center justify-between rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-3.5 text-left shadow-sm transition hover:border-[#fdb813]/50 hover:bg-[var(--brand-light)]/40"
+            >
+              <span className="text-sm font-medium text-muted-foreground">
+                No FAQs yet. Click to add the first question.
+              </span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ) : (
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-3 border-b border-border/50 bg-muted/20 px-4 py-2.5">
+                    <p className="text-sm font-semibold text-foreground">
+                      Question {index + 1}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Remove question ${index + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Question
+                      </label>
+                      <Input
+                        placeholder="How can I get started?"
+                        className="h-10 rounded-lg font-medium"
+                        {...control.register(`faqs.${index}.question`)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Answer
+                      </label>
+                      <Textarea
+                        rows={3}
+                        placeholder="Write a short, clear answer…"
+                        className="rounded-lg"
+                        {...control.register(`faqs.${index}.answer`)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="text-center text-2xs text-muted-foreground">
+            Still have questions? Contact our support
+          </p>
         </div>
       </div>
 

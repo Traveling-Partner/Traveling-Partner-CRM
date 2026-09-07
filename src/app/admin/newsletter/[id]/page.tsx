@@ -18,6 +18,7 @@ import { updateNewsletter } from "@/services/newsletter";
 import { useNewsletterDetailQuery } from "@/hooks/queries/use-newsletter-detail-query";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useQueryClient } from "@tanstack/react-query";
+import TPLoader from "@/components/TPLoader";
 import {
   newsletterEditorSchema,
   type NewsletterEditorFormValues,
@@ -119,7 +120,9 @@ export default function AdminNewsletterEditPage() {
     return (
       <AppShell title="Edit Newsletter">
         <PageContainer>
-          <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+          <div className="flex justify-center py-12">
+            <TPLoader variant="inline" size={120} label="Loading…" />
+          </div>
         </PageContainer>
       </AppShell>
     );

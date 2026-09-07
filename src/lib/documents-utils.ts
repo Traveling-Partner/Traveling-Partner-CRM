@@ -1,6 +1,8 @@
 export type ApiDocStatus = "APPROVED" | "REJECTED" | "REJECT" | "PENDING";
 
 export interface DriverDocumentsPayload {
+  id?: number;
+  roles?: string[] | null;
   cnicStatus?: string | null;
   licenseStatus?: string | null;
   vehicleStatus?: string | null;
@@ -12,6 +14,10 @@ export interface DriverDocumentsPayload {
   licenseBack?: string | null;
   registrationFront?: string | null;
   registrationBack?: string | null;
+}
+
+export function isPartnerDocumentsPayload(payload: DriverDocumentsPayload): boolean {
+  return (payload.roles ?? []).some((role) => String(role).toUpperCase() === "PARTNER");
 }
 
 export function pickVehicleStatus(payload: Record<string, unknown>): unknown {

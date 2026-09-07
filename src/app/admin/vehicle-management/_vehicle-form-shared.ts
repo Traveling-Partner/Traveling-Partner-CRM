@@ -2,9 +2,9 @@ import { z } from "zod";
 
 export const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"] as const;
 
-export const DEFAULT_VEHICLE_PAGE_SIZE = 6;
+export const DEFAULT_VEHICLE_PAGE_SIZE = 10;
 
-export const PAGE_SIZE_OPTIONS = ["6", "10", "20", "50"] as const;
+export const PAGE_SIZE_OPTIONS = ["10", "20", "50"] as const;
 
 export const vehicleTypeSchema = z.object({
   name: z.string().trim().min(1, "Vehicle type name is required."),

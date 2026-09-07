@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { format, parseISO } from "date-fns";
+import { useMemo, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +10,7 @@ import {
   buildAgentPerformanceRow,
   getAgentCommissions
 } from "@/lib/agent-onboarding";
+import { AuditLogsSection } from "@/components/audit-logs/AuditLogsSection";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { TrendArea } from "@/components/dashboard/TrendArea";
@@ -70,7 +70,6 @@ export default function AdminDashboardPage() {
     driverStatusCounts,
     ridesTrend,
     rideStatusBreakdown,
-    recentActivity,
     rideFunnel,
     outcomeTrend,
     ridesByCity,
@@ -366,38 +365,9 @@ export default function AdminDashboardPage() {
           />
         </ChartCard>
 
-        <ChartCard title="Recent activity" description="Latest audit events" heightClass="h-auto" loading={isLoading}>
-          {recentActivity.length === 0 ? (
-            <div className="flex h-40 items-center justify-center rounded-3xl bg-[#f3f4f6] text-sm text-muted-foreground dark:bg-white/5">
-              No recent activity found.
-            </div>
-          ) : (
-            <div className="relative">
-              <div className="absolute bottom-3 left-[7px] top-3 w-px bg-border/40" />
-              {recentActivity.map((log) => (
-                <div key={log.id} className="group relative flex gap-4 py-2.5">
-                  <div className="relative z-10 mt-1.5 flex h-[15px] w-[15px] shrink-0 items-center justify-center">
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground/30 transition-colors group-hover:bg-[#fdb813]" />
-                  </div>
-                  <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-foreground">{log.description?.trim() || "—"}</p>
-                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                        {log.userType ? (
-                          <span className="rounded bg-muted/60 px-1.5 py-0.5 font-medium">{log.userType}</span>
-                        ) : null}
-                        {log.mobileNumber ? <span>{log.mobileNumber}</span> : null}
-                      </div>
-                    </div>
-                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground/60">
-                      {format(parseISO(log.createdAt), "MMM d, HH:mm")}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ChartCard>
+        <Suspense fallback={<Skeleton className="h-64 w-full rounded-[1.75rem]" />}>
+          <AuditLogsSection variant="dashboard" />
+        </Suspense>
       </PageContainer>
     </AppShell>
   );

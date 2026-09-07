@@ -1,7 +1,8 @@
 "use client";
 
 import { ChangeEvent, useId, useState } from "react";
-import { Loader2, UploadCloud } from "lucide-react";
+import { UploadCloud } from "lucide-react";
+import TPLoader from "@/components/TPLoader";
 import { SectionCard } from "@/components/common/SectionCard";
 import { cn } from "@/lib/utils";
 import { uploadCarouselImage } from "@/lib/upload-carousel-image";
@@ -65,7 +66,7 @@ export function CoverImageUploadPanel({
         >
           {uploading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <TPLoader variant="inline" size={120} />
               Uploading cover image…
             </>
           ) : (

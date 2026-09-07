@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AttachmentPreview } from "@/components/content/AttachmentPreview";
 import { useNewsletterDetailQuery } from "@/hooks/queries/use-newsletter-detail-query";
+import TPLoader from "@/components/TPLoader";
 
 export default function AdminNewsletterPreviewPage() {
   const params = useParams<{ id: string }>();
@@ -23,7 +24,9 @@ export default function AdminNewsletterPreviewPage() {
     return (
       <AppShell title="Newsletter preview">
         <PageContainer>
-          <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+          <div className="flex justify-center py-12">
+            <TPLoader variant="inline" size={120} label="Loading…" />
+          </div>
         </PageContainer>
       </AppShell>
     );

@@ -30,10 +30,21 @@ import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 const DEFAULT_PAGE_SIZE = 6;
 
-function formatBlogDate(value: string | null | undefined): string {
-  if (!value || !String(value).trim()) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
+function asText(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    return value.map((item) => asText(item)).filter(Boolean).join(", ");
+  }
+  return "";
+}
+
+function formatBlogDate(value: unknown): string {
+  const text = asText(value).trim();
+  if (!text) return "—";
+  const d = new Date(text);
+  if (Number.isNaN(d.getTime())) return text;
   return d.toLocaleDateString();
 }
 
@@ -123,10 +134,10 @@ export default function AdminBlogPage() {
         accessorKey: "mainTitle",
         header: "Title",
         cell: ({ row }) => {
-          const title = row.original.mainTitle?.trim() || "—";
+          const title = asText(row.original.mainTitle).trim() || "—";
           const desc =
-            row.original.description1?.trim() ||
-            row.original.description2?.trim() ||
+            asText(row.original.description1).trim() ||
+            asText(row.original.description2).trim() ||
             "—";
           return (
             <div className="space-y-0.5">
@@ -140,12 +151,12 @@ export default function AdminBlogPage() {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => {
-          const s = row.original.status?.toUpperCase() ?? "";
+          const s = asText(row.original.status).toUpperCase();
           let variant: "success" | "secondary" | "outline" = "outline";
           if (s === "PUBLISHED" || s === "ACTIVE") variant = "success";
           else if (s === "DRAFT") variant = "secondary";
           return (
-            <Badge variant={variant}>{row.original.status?.trim() || "—"}</Badge>
+            <Badge variant={variant}>{asText(row.original.status).trim() || "—"}</Badge>
           );
         }
       },
@@ -154,7 +165,7 @@ export default function AdminBlogPage() {
         header: "Category",
         cell: ({ row }) => (
           <span className="text-xs font-medium text-muted-foreground">
-            {row.original.categoryName?.trim() || "—"}
+            {asText(row.original.categoryName).trim() || "—"}
           </span>
         )
       },
@@ -163,7 +174,7 @@ export default function AdminBlogPage() {
         header: "Author",
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">
-            {row.original.author?.trim() || "—"}
+            {asText(row.original.author).trim() || "—"}
           </span>
         )
       },
@@ -173,7 +184,7 @@ export default function AdminBlogPage() {
         header: "Posted",
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground" title={formatBlogDate(row.original.date)}>
-            {formatRelativePostTime(row.original.date)}
+            {formatRelativePostTime(asText(row.original.date) || null)}
           </span>
         )
       },
@@ -330,7 +341,7 @@ export default function AdminBlogPage() {
           title="Delete blog post?"
           description={
             deleteTarget?.mainTitle
-              ? `This will permanently delete "${deleteTarget.mainTitle.trim()}".`
+              ? `This will permanently delete "${asText(deleteTarget.mainTitle).trim()}".`
               : "This will permanently delete this post."
           }
           confirmLabel={deleteLoading ? "Deleting…" : "Delete"}

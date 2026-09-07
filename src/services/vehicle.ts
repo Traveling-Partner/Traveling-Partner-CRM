@@ -100,6 +100,39 @@ export function fetchVehicleBrands(
   return fetchEnvelopePage<VehicleBrand>("/brands/getAll", filters, opts, "vehicle:brands");
 }
 
+/** Walks every GET page so Add/Edit dropdowns are not stuck on the first page. */
+async function fetchAllEnvelopePages<T>(
+  path: string,
+  opts: RequestOpts,
+  label: string
+): Promise<T[]> {
+  const all: T[] = [];
+  let page = 0;
+  const pageSize = 10;
+
+  for (let i = 0; i < 40; i += 1) {
+    const res = await fetchEnvelopePage<T>(path, { page, pageSize, search: "" }, opts, label);
+    all.push(...(res.content ?? []));
+    const totalPages = Math.max(1, res.totalPages ?? 1);
+    if (!res.content?.length || page + 1 >= totalPages) break;
+    page += 1;
+  }
+
+  return all;
+}
+
+export function fetchAllVehicleTypes(opts: RequestOpts) {
+  return fetchAllEnvelopePages<VehicleEntity>("/vehicleTypes/getAll", opts, "vehicle:types-all");
+}
+
+export function fetchAllVehicleBrands(opts: RequestOpts) {
+  return fetchAllEnvelopePages<VehicleBrand>("/brands/getAll", opts, "vehicle:brands-all");
+}
+
+export function fetchAllVehicleModels(opts: RequestOpts) {
+  return fetchAllEnvelopePages<VehicleModel>("/modelYears/getAll", opts, "vehicle:models-all");
+}
+
 export interface VehicleTypePayload {
   name: string;
   status: string;

@@ -1,17 +1,19 @@
 "use client";
 
 import { PercentageManagementView } from "@/components/percentage-management/PercentageManagementView";
-import { commissionManagementItems } from "@/mock-data/commission-management";
+import { useCommissionManagement } from "@/hooks/percentage-management/useCommissionManagement";
 
 export default function CommissionManagementPage() {
+  const controller = useCommissionManagement();
+
   return (
     <PercentageManagementView
       pageTitle="Commission Management"
       sectionTitle="Commission Management"
-      sectionDescription="Configure commission percentages for agents and partners. Data is mock until API integration."
+      sectionDescription="Configure commission percentages for agents and partners."
       entityLabel="Commission"
       searchPlaceholder="Search commissions..."
-      initialData={commissionManagementItems}
+      controller={controller}
     />
   );
 }

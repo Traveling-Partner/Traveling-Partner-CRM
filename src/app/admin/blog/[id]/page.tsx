@@ -11,19 +11,21 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { Button } from "@/components/ui/button";
 import { LazyBlogRichEditor } from "@/components/blog/LazyBlogRichEditor";
 import { BlogEditorWorkspace } from "@/components/blog/BlogEditorWorkspace";
+import TPLoader from "@/components/TPLoader";
 import { useToast } from "@/components/ui/toast";
 import { useAppSelector } from "@/store/hooks";
 import {
   getBlogById,
   updateBlog,
-  getAllBlogCategories,
-  type BlogCategory
+  type BlogApiRecord
 } from "@/services/blog";
+import { BLOG_CATEGORIES, parseCategoryNames, toggleCategoryName } from "@/lib/blog-categories";
 import { apiUrl } from "@/lib/api-base";
 import {
   blogEditorSchema,
   type BlogEditorFormValues,
   buildBlogUpsertPayload,
+  faqsFromApi,
   normalizeBlogStatusForForm
 } from "@/app/admin/blog/_blog-form-shared";
 
@@ -47,7 +49,7 @@ export default function AdminBlogEditPage() {
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [existingRecord, setExistingRecord] = useState<BlogApiRecord | null>(null);
 
   const {
     register,
@@ -55,6 +57,7 @@ export default function AdminBlogEditPage() {
     setValue,
     watch,
     reset,
+    control,
     formState: { errors }
   } = useForm<BlogEditorFormValues>({
     resolver: zodResolver(blogEditorSchema),
@@ -65,34 +68,20 @@ export default function AdminBlogEditPage() {
       description2: "",
       date: new Date().toISOString().slice(0, 10),
       author: "Admin",
-      categoryId: 1,
+      categoryNames: [],
       tagsText: "",
       seoTitle: "",
       seoDescription: "",
-      status: "DRAFT"
+      isFeatured: false,
+      status: "DRAFT",
+      faqs: []
     }
   });
 
   const mainTitle = watch("mainTitle");
   const description1 = watch("description1") ?? "";
-  const categoryId = watch("categoryId");
+  const categoryNames = watch("categoryNames") ?? [];
   const date = watch("date");
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadCategories = async () => {
-      try {
-        const list = await getAllBlogCategories(token);
-        if (!cancelled) setCategories(list);
-      } catch {
-        if (!cancelled) setCategories([]);
-      }
-    };
-    void loadCategories();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
 
   useEffect(() => {
     if (!Number.isFinite(idNum)) {
@@ -111,6 +100,7 @@ export default function AdminBlogEditPage() {
           return;
         }
 
+        setExistingRecord(row);
         const desc2 = row.description2 ?? "";
         const dateStr =
           typeof row.date === "string" && row.date.trim()
@@ -124,11 +114,13 @@ export default function AdminBlogEditPage() {
           description2: desc2,
           date: dateStr,
           author: row.author ?? "Admin",
-          categoryId: row.categoryId ?? 1,
+          categoryNames: parseCategoryNames(row.categoryName),
           tagsText: (row.tags ?? []).join(", "),
           seoTitle: row.seoTitle ?? "",
           seoDescription: row.seoDescription ?? "",
-          status: normalizeBlogStatusForForm(row.status)
+          isFeatured: row.isFeatured === true,
+          status: normalizeBlogStatusForForm(row.status),
+          faqs: faqsFromApi(row.faqs)
         });
         setDescription2(desc2);
         setImagePreview(row.coverImage?.trim() || "/mock-images/blog-cover.svg");
@@ -150,7 +142,7 @@ export default function AdminBlogEditPage() {
   ) => {
     setSubmitting(true);
     try {
-      const payload = buildBlogUpsertPayload(values, nextStatus);
+      const payload = buildBlogUpsertPayload(values, nextStatus, existingRecord);
       await updateBlog(idNum, payload, token);
       success(`Blog "${values.mainTitle.trim()}" updated.`);
       router.push("/admin/blog");
@@ -210,7 +202,9 @@ export default function AdminBlogEditPage() {
     return (
       <AppShell title="Edit Post">
         <PageContainer>
-          <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+          <div className="flex justify-center py-12">
+            <TPLoader variant="inline" size={120} label="Loading…" />
+          </div>
         </PageContainer>
       </AppShell>
     );
@@ -242,13 +236,13 @@ export default function AdminBlogEditPage() {
           submitting={submitting}
           coverUploading={coverUploading}
           imagePreview={imagePreview}
-          categories={categories}
+          categories={BLOG_CATEGORIES}
           mainTitle={mainTitle}
           description1={description1}
           author={watch("author")}
           tagsText={watch("tagsText") ?? ""}
           date={date}
-          categoryId={categoryId}
+          categoryNames={categoryNames}
           errors={errors}
           register={{
             coverImage: register("coverImage"),
@@ -260,12 +254,16 @@ export default function AdminBlogEditPage() {
             seoTitle: register("seoTitle"),
             seoDescription: register("seoDescription")
           }}
-          onCategoryChange={(id) =>
-            setValue("categoryId", id, { shouldValidate: true })
+          onCategoryToggle={(name) =>
+            setValue("categoryNames", toggleCategoryName(categoryNames, name), {
+              shouldValidate: true,
+              shouldDirty: true
+            })
           }
           onImageChange={onImageChange}
           onSaveDraft={() => void saveDraft()}
           onPublish={() => void publish()}
+          control={control}
           editor={
             <LazyBlogRichEditor
               key={idNum}

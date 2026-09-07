@@ -1,11 +1,25 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { DatePickerInput } from "@/components/ui/date-picker";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
+    if (type === "date" || type === "datetime-local") {
+      return (
+        <DatePickerInput
+          ref={ref}
+          type={type}
+          className={className}
+          {...props}
+        />
+      );
+    }
+
     return (
       <input
         type={type}

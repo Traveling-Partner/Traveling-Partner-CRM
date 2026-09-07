@@ -6,6 +6,9 @@ interface FetcherOptions extends RequestInit {
   debugLabel?: string;
 }
 
+const FALLBACK_ERROR = "Request failed. Please try again.";
+const NETWORK_ERROR = "Unable to reach the server. Please try again.";
+
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
 
 function shouldDebugApi(): boolean {
@@ -17,6 +20,26 @@ function shouldDebugApi(): boolean {
 
 function getDedupeKey(method: string, endpoint: string): string {
   return `${method.toUpperCase()}:${endpoint}`;
+}
+
+function readApiErrorMessage(data: unknown): string {
+  if (!data || typeof data !== "object") return FALLBACK_ERROR;
+  const record = data as Record<string, unknown>;
+  const message = record.message;
+  if (typeof message === "string" && message.trim()) return message.trim();
+  if (Array.isArray(message) && typeof message[0] === "string" && message[0].trim()) {
+    return message[0].trim();
+  }
+  if (typeof record.error === "string" && record.error.trim()) return record.error.trim();
+  return FALLBACK_ERROR;
+}
+
+function isFailedEnvelope(data: unknown): boolean {
+  return (
+    !!data &&
+    typeof data === "object" &&
+    (data as { success?: boolean }).success === false
+  );
 }
 
 export async function fetcher<T = unknown>(
@@ -49,23 +72,29 @@ export async function fetcher<T = unknown>(
       });
     }
 
-    const response = await fetch(endpoint, {
-      ...rest,
-      method,
-      signal,
-      headers: {
-        "Content-Type": "application/json",
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        ...(headers ?? {})
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        ...rest,
+        method,
+        signal,
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          ...(headers ?? {})
+        }
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw error;
       }
-    });
+      throw new Error(NETWORK_ERROR);
+    }
 
     const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      const message =
-        (data as { message?: string })?.message ?? "Request failed. Please try again.";
-      throw new Error(message);
+    if (!response.ok || isFailedEnvelope(data)) {
+      throw new Error(readApiErrorMessage(data));
     }
 
     if (shouldDebugApi()) {

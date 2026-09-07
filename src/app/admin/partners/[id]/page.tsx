@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Eye, FileText, UserCircle } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText, Pencil, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
@@ -13,11 +13,15 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useApiMutation } from "@/hooks/api";
 import { usePartnerDetailQuery } from "@/hooks/queries/use-partner-detail-query";
+import { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 import { queryKeys } from "@/lib/api/query-keys";
 import { updateUserStatus } from "@/services/users";
+import { updatePartnerCnicStatus } from "@/services/documents";
+import { normalizeApiDocStatus, type ApiDocStatus } from "@/lib/documents-utils";
 
 interface PartnerDocument {
   id: "id-document";
@@ -38,6 +42,8 @@ export default function AdminPartnerDetailPage() {
   const { success, error: showError } = useToast();
 
   const { data: partner, isLoading, isError } = usePartnerDetailQuery(params.id);
+  const docsQuery = useDriverDocumentsQuery(partner?.id, Boolean(partner?.id));
+  const cnicStatus = normalizeApiDocStatus(docsQuery.rawStatuses?.cnicStatus);
   const loading = isLoading;
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("id-document");
@@ -45,6 +51,8 @@ export default function AdminPartnerDetailPage() {
   const [previewSrc, setPreviewSrc] = useState<string>(fallbackImage);
   const [previewDownloadName, setPreviewDownloadName] = useState<string>("document.jpg");
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [cnicDecision, setCnicDecision] = useState<"APPROVE" | "REJECT" | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
   const profilePicture = partner?.basicInformation?.profilePicture?.trim() || null;
 
@@ -54,7 +62,7 @@ export default function AdminPartnerDetailPage() {
     invalidateKeys: [queryKeys.users.partnerDetail(params.id)],
     onSuccess: (_data, variables) => {
       setOptimisticStatus(variables.status);
-      success(variables.status === "ACTIVE" ? "Partner marked active." : "Partner marked blocked.");
+      success(variables.status === "BLOCKED" ? "Partner blocked." : "Partner unblocked.");
       setStatusConfirmOpen(false);
     },
     onError: (err) => {
@@ -64,20 +72,44 @@ export default function AdminPartnerDetailPage() {
 
   const statusUpdating = statusMutation.isPending;
 
+  const cnicMutation = useApiMutation<
+    void,
+    { cnicStatus: ApiDocStatus; rejectionReason?: string }
+  >({
+    mutationFn: ({ token, variables }) =>
+      updatePartnerCnicStatus(partner!.id, variables, { token }),
+    invalidateKeys: [
+      queryKeys.users.partnerDetail(params.id),
+      queryKeys.users.driverDocuments(params.id),
+      ["users", "documents", "queue"]
+    ],
+    onSuccess: (_data, variables) => {
+      success(
+        variables.cnicStatus === "APPROVED"
+          ? "Partner CNIC approved. Account will promote to APPROVED if this was the only required document."
+          : "Partner CNIC rejected."
+      );
+      setCnicDecision(null);
+      setRejectReason("");
+    },
+    onError: (err) => showError(err.message)
+  });
+
   const documents = useMemo<PartnerDocument[]>(() => {
     if (!partner) return [];
+    const preview = docsQuery.previewDocuments[0];
     return [
       {
         id: "id-document",
         type: "ID_DOCUMENT",
         fileName: "id-document.jpg",
-        frontUrl: partner.basicInformation?.cnicFront || fallbackIdImage,
-        backUrl: partner.basicInformation?.cnicBack || fallbackIdImage,
+        frontUrl: preview?.frontUrl || partner.basicInformation?.cnicFront || fallbackIdImage,
+        backUrl: preview?.backUrl || partner.basicInformation?.cnicBack || fallbackIdImage,
         uploadedAt: partner.updatedAt || partner.createdAt,
-        status: "—"
+        status: preview?.status || cnicStatus
       }
     ];
-  }, [partner]);
+  }, [partner, docsQuery.previewDocuments, cnicStatus]);
 
   const selectedDocument =
     documents.find((doc) => doc.id === selectedDocumentId) ?? documents[0];
@@ -95,8 +127,12 @@ export default function AdminPartnerDetailPage() {
   const gender = partner?.basicInformation?.gender || "—";
   const email = partner?.basicInformation?.email || partner?.email || "—";
   const partnerStatus = optimisticStatus ?? partner?.status;
-  const isActiveStatus = partnerStatus === "ACTIVE" || partnerStatus === "APPROVED";
-  const nextStatus: "ACTIVE" | "BLOCKED" = isActiveStatus ? "BLOCKED" : "ACTIVE";
+  const isBlocked = String(partnerStatus || "").toUpperCase() === "BLOCKED";
+  const nextStatus: "APPROVED" | "ACTIVE" | "BLOCKED" = isBlocked
+    ? cnicStatus === "APPROVED"
+      ? "APPROVED"
+      : "ACTIVE"
+    : "BLOCKED";
 
   const handleStatusConfirm = () => {
     if (!partner) return;
@@ -121,13 +157,21 @@ export default function AdminPartnerDetailPage() {
   return (
     <AppShell title={`Partner • ${fullName}`}>
       <PageContainer>
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin/partners" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to partners
             </Link>
           </Button>
+          {partner ? (
+            <Button size="sm" asChild>
+              <Link href={`/admin/partners/${params.id}/edit`} className="gap-1.5">
+                <Pencil className="h-4 w-4" />
+                Edit partner
+              </Link>
+            </Button>
+          ) : null}
         </div>
         <div className="grid gap-4">
           <SectionCard
@@ -172,6 +216,14 @@ export default function AdminPartnerDetailPage() {
                   <p className="mt-0.5 font-heading font-medium break-all">{email}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">WhatsApp</p>
+                  <p className="mt-0.5 font-heading font-medium">{partner?.basicInformation?.whatsApp || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">CNIC number</p>
+                  <p className="mt-0.5 font-heading font-medium tabular-nums">{partner?.basicInformation?.cnicNumber || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
                   <div className="mt-0.5">
                     <StatusBadge status={partnerStatus || "PENDING"} />
@@ -181,15 +233,12 @@ export default function AdminPartnerDetailPage() {
             )}
             {!loading && partner ? (
               <div className="mt-4 flex justify-end">
-                {isActiveStatus ? (
-                  <Button variant="destructive" onClick={() => setStatusConfirmOpen(true)}>
-                    Blocked
-                  </Button>
-                ) : (
-                  <Button onClick={() => setStatusConfirmOpen(true)}>
-                    Approved
-                  </Button>
-                )}
+                <Button
+                  variant={isBlocked ? "default" : "destructive"}
+                  onClick={() => setStatusConfirmOpen(true)}
+                >
+                  {isBlocked ? "Unblock" : "Block"}
+                </Button>
               </div>
             ) : null}
           </SectionCard>
@@ -198,7 +247,7 @@ export default function AdminPartnerDetailPage() {
         <div className="mt-4">
           <SectionCard
             title="Uploaded documents"
-            description="Partner-level verification documents uploaded during onboarding."
+            description="Partner CNIC only. Approve here to promote the account to APPROVED (license/vehicle are not required)."
           >
             {documents.length === 0 ? (
               <EmptyState
@@ -246,9 +295,7 @@ export default function AdminPartnerDetailPage() {
                         </div>
                       </div>
                       <div className="ml-2 shrink-0">
-                        <span className="rounded-md bg-muted px-2 py-0.5 text-[0.65rem] font-medium">
-                          {doc.status}
-                        </span>
+                        <StatusBadge status={doc.status} />
                       </div>
                     </button>
                   ))}
@@ -265,7 +312,29 @@ export default function AdminPartnerDetailPage() {
                           {selectedDocument.type.replaceAll("_", " ")}
                         </p>
                       </div>
-                      <div />
+                      <div className="flex shrink-0 gap-2">
+                        <Button
+                          size="sm"
+                          disabled={cnicMutation.isPending || cnicStatus === "APPROVED"}
+                          onClick={() => {
+                            setRejectReason("");
+                            setCnicDecision("APPROVE");
+                          }}
+                        >
+                          Approve CNIC
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={cnicMutation.isPending || cnicStatus === "REJECTED"}
+                          onClick={() => {
+                            setRejectReason("");
+                            setCnicDecision("REJECT");
+                          }}
+                        >
+                          Reject CNIC
+                        </Button>
+                      </div>
                     </div>
                     <div className="grid gap-3 p-3 md:grid-cols-2">
                       <div>
@@ -413,18 +482,54 @@ export default function AdminPartnerDetailPage() {
           open={statusConfirmOpen}
           onOpenChange={setStatusConfirmOpen}
           onConfirm={handleStatusConfirm}
-          title={nextStatus === "ACTIVE" ? "Activate partner?" : "Set partner blocked?"}
+          title={isBlocked ? "Unblock partner?" : "Block partner?"}
           description={
             partner
-              ? nextStatus === "ACTIVE"
-                ? `Mark "${fullName}" as active?`
-                : `Mark "${fullName}" as blocked?`
+              ? isBlocked
+                ? `Unblock "${fullName}"? Account status will be restored.`
+                : `Block "${fullName}"? They will not be able to use the app.`
               : undefined
           }
-          confirmLabel={statusUpdating ? "Updating..." : nextStatus === "ACTIVE" ? "Activate" : "Set blocked"}
+          confirmLabel={statusUpdating ? "Updating..." : isBlocked ? "Unblock" : "Block"}
           cancelLabel="Cancel"
-          destructive={nextStatus === "BLOCKED"}
+          destructive={!isBlocked}
         />
+        <ConfirmDialog
+          open={cnicDecision !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCnicDecision(null);
+              setRejectReason("");
+            }
+          }}
+          onConfirm={() => {
+            if (!cnicDecision) return;
+            if (cnicDecision === "REJECT" && !rejectReason.trim()) {
+              showError("Please add rejection reason.");
+              return;
+            }
+            cnicMutation.mutate({
+              cnicStatus: cnicDecision === "APPROVE" ? "APPROVED" : "REJECTED",
+              rejectionReason: cnicDecision === "REJECT" ? rejectReason.trim() : undefined
+            });
+          }}
+          title={cnicDecision === "APPROVE" ? "Approve partner CNIC?" : "Reject partner CNIC?"}
+          description={
+            cnicDecision === "APPROVE"
+              ? "This updates verification in the app. A Partner account promotes to APPROVED from CNIC alone."
+              : "The partner account will not be approved until CNIC is approved."
+          }
+          confirmLabel={cnicMutation.isPending ? "Saving…" : cnicDecision === "APPROVE" ? "Approve" : "Reject"}
+          destructive={cnicDecision === "REJECT"}
+        >
+          {cnicDecision === "REJECT" ? (
+            <Input
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Rejection reason"
+            />
+          ) : null}
+        </ConfirmDialog>
       </PageContainer>
     </AppShell>
   );

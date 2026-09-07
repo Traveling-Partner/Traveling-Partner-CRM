@@ -9,7 +9,7 @@ export function PageContainer({ children, className }: PageContainerProps) {
   return (
     <section
       className={cn(
-        "flex flex-1 flex-col gap-4",
+        "flex flex-1 flex-col gap-6",
         className
       )}
     >

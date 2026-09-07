@@ -2,6 +2,7 @@ import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import { fetcher } from "@/lib/fetcher";
+import { fetchAuditLogs } from "@/services/audit-logs";
 
 export interface DashboardCounts {
   totalDrivers: number;
@@ -116,11 +117,6 @@ interface RideStatusCountResponse {
   started: number;
   canceled: number;
   completed: number;
-}
-
-interface AuditLogsResponse {
-  content: DashboardAuditLogItem[];
-  totalPages: number;
 }
 
 const EMPTY_COUNTS: DashboardCounts = {
@@ -329,7 +325,7 @@ function mapDashboardResponse(
   driverStatusRes: unknown,
   ridesTrendRes: unknown,
   rideStatusRes: unknown,
-  auditLogsRes: unknown,
+  recentActivity: DashboardAuditLogItem[],
   recentActivityLimit: number,
   ops: {
     funnel: unknown | null;
@@ -343,8 +339,7 @@ function mapDashboardResponse(
   const driverStatusCounts = unwrapEnvelope<DriverStatusCountsResponse>(driverStatusRes);
   const ridesTrendPayload = unwrapEnvelope<Last14DaysGraphResponse>(ridesTrendRes);
   const rideStatus = unwrapEnvelope<RideStatusCountResponse>(rideStatusRes);
-  const auditLogs = unwrapEnvelope<AuditLogsResponse>(auditLogsRes);
-  const recentActivity = [...(auditLogs.content ?? [])]
+  const activity = [...recentActivity]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, recentActivityLimit);
   const fallbackFunnel = funnelFromRideStatus(rideStatus);
@@ -363,7 +358,7 @@ function mapDashboardResponse(
       { status: "CANCELED", count: rideStatus.canceled ?? 0 },
       { status: "COMPLETED", count: rideStatus.completed ?? 0 }
     ],
-    recentActivity,
+    recentActivity: activity,
     rideFunnel: mapRideFunnel(ops.funnel, fallbackFunnel),
     outcomeTrend: mapOutcomeTrend(ops.outcome),
     ridesByCity: mapRidesByCity(ops.city),
@@ -397,7 +392,7 @@ export async function fetchAdminDashboardData(
     driverStatusRes,
     ridesTrendRes,
     rideStatusRes,
-    auditLogsRes,
+    auditLogsPage,
     funnelRes,
     outcomeRes,
     cityRes,
@@ -408,9 +403,19 @@ export async function fetchAdminDashboardData(
     fetcher<unknown>(buildApiUrl("/users/driver-status-counts"), requestInit),
     fetcher<unknown>(buildApiUrl("/users/graph/last-14-days"), requestInit),
     fetcher<unknown>(buildApiUrl("/users/ride-status-count"), requestInit),
-    fetcher<unknown>(
-      buildApiUrl("/audit-logs/getAll", { page: 0, size: recentActivityLimit }),
-      requestInit
+    fetchAuditLogs(
+      {
+        page: 0,
+        pageSize: recentActivityLimit,
+        userType: "all",
+        search: "",
+        fromDate: "",
+        toDate: "",
+        module: "",
+        action: "",
+        userId: ""
+      },
+      { token, signal }
     ),
     fetchOptionalJson("/users/ride-funnel", { ...requestInit, debugLabel: `${label}:funnel` }),
     fetchOptionalJson(
@@ -428,7 +433,7 @@ export async function fetchAdminDashboardData(
     driverStatusRes,
     ridesTrendRes,
     rideStatusRes,
-    auditLogsRes,
+    auditLogsPage.content ?? [],
     recentActivityLimit,
     {
       funnel: funnelRes,

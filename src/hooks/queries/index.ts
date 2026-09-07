@@ -12,13 +12,19 @@ export { useAgentDetailQuery } from "@/hooks/queries/use-agent-detail-query";
 export { useDocumentsQueueQuery } from "@/hooks/queries/use-documents-queue-query";
 export { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 export { useBlogListQuery } from "@/hooks/queries/use-blog-list-query";
+export { useAuditLogsQuery } from "@/hooks/queries/use-audit-logs-query";
 export { useNewsletterListQuery } from "@/hooks/queries/use-newsletter-list-query";
 export { useNewsletterDetailQuery } from "@/hooks/queries/use-newsletter-detail-query";
 export { useNewsletterSubscribersListQuery } from "@/hooks/queries/use-newsletter-subscribers-list-query";
 export { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newsletter-subscriber-detail-query";
+export { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
+export { useRideDetailQuery } from "@/hooks/queries/use-ride-detail-query";
 export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
   useVehicleColorsQuery,
-  useVehicleBrandsQuery
+  useVehicleBrandsQuery,
+  useVehicleTypeOptionsQuery,
+  useVehicleBrandOptionsQuery,
+  useVehicleModelOptionsQuery
 } from "@/hooks/queries/use-vehicle-queries";

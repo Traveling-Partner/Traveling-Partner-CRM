@@ -7,10 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useAuthToken } from "@/hooks/api/use-auth-token";
 import {
-  useVehicleBrandsQuery,
+  useVehicleBrandOptionsQuery,
   useVehicleColorsQuery,
-  useVehicleModelsQuery,
-  useVehicleTypesQuery
+  useVehicleModelOptionsQuery,
+  useVehicleTypeOptionsQuery
 } from "@/hooks/queries";
 import { createVehicleColor, deleteVehicleColor, updateVehicleColor } from "@/services/vehicle";
 import type { VehicleBrand, VehicleEntity, VehicleModel, VehicleModelVariant } from "@/services/vehicle";
@@ -54,14 +54,14 @@ export function VehicleModelVariantsSection() {
   const [deleting, setDeleting] = useState(false);
 
   const variantsQuery = useVehicleColorsQuery(page, pageSize, search);
-  const typesQuery = useVehicleTypesQuery(1, 100, "");
-  const brandsQuery = useVehicleBrandsQuery(1, 100, "");
-  const modelsQuery = useVehicleModelsQuery(1, 100, "");
+  const typesQuery = useVehicleTypeOptionsQuery();
+  const brandsQuery = useVehicleBrandOptionsQuery();
+  const modelsQuery = useVehicleModelOptionsQuery();
 
   const vehicleModelVariants = (variantsQuery.data?.content ?? []) as VehicleModelVariant[];
-  const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleEntity[];
-  const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
-  const vehicleModels = (modelsQuery.data?.content ?? []) as VehicleModel[];
+  const vehicleTypes = (typesQuery.data ?? []) as VehicleEntity[];
+  const vehicleBrands = (brandsQuery.data ?? []) as VehicleBrand[];
+  const vehicleModels = (modelsQuery.data ?? []) as VehicleModel[];
   const totalPages = variantsQuery.data?.totalPages ?? 1;
   const loading = variantsQuery.isLoading || variantsQuery.isFetching;
 
