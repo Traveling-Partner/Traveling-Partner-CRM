@@ -249,6 +249,16 @@ nav[aria-label="Breadcrumb"] ol {
   animation: bar-fill 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes bar-fill-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.bar-fill-y {
+  transform-origin: center bottom;
+  animation: bar-fill-y 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 input[type="date"],
 input[type="datetime-local"],
 input[type="time"] {
