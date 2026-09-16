@@ -238,6 +238,65 @@ export default function DocumentsQueuePage() {
     vehicleStatus: "PENDING" as ApiDocStatus
   };
 
+  // When preview loads full docs, sync status badges into the queue cache (no extra list fan-out).
+  useEffect(() => {
+    if (!previewOpen || !previewDriver?.id || !previewDocsQuery.rawStatuses) return;
+    const userId = previewDriver.id;
+    const statuses = previewDocsQuery.rawStatuses;
+    queryClient.setQueriesData(
+      { queryKey: ["users", "documents", "queue"] },
+      (old: unknown) => {
+        if (!old || typeof old !== "object") return old;
+        const page = old as {
+          documentStatusesByDriverId?: Record<number, DocumentStatusPayload>;
+          documentStatusesByPartnerId?: Record<number, { cnicStatus: ApiDocStatus }>;
+          documentStatusByDriverId?: Record<number, ApiDocStatus>;
+        };
+        if (previewRole === "PARTNER") {
+          return {
+            ...page,
+            documentStatusesByPartnerId: {
+              ...(page.documentStatusesByPartnerId ?? {}),
+              [userId]: { cnicStatus: normalizeApiDocStatus(statuses.cnicStatus) }
+            }
+          };
+        }
+        const next: DocumentStatusPayload = {
+          cnicStatus: normalizeApiDocStatus(statuses.cnicStatus),
+          licenseStatus: normalizeApiDocStatus(statuses.licenseStatus),
+          vehicleStatus: normalizeApiDocStatus(statuses.vehicleStatus)
+        };
+        const summary =
+          next.cnicStatus === "REJECTED" ||
+          next.licenseStatus === "REJECTED" ||
+          next.vehicleStatus === "REJECTED"
+            ? "REJECTED"
+            : next.cnicStatus === "APPROVED" &&
+                next.licenseStatus === "APPROVED" &&
+                next.vehicleStatus === "APPROVED"
+              ? "APPROVED"
+              : "PENDING";
+        return {
+          ...page,
+          documentStatusesByDriverId: {
+            ...(page.documentStatusesByDriverId ?? {}),
+            [userId]: next
+          },
+          documentStatusByDriverId: {
+            ...(page.documentStatusByDriverId ?? {}),
+            [userId]: summary
+          }
+        };
+      }
+    );
+  }, [
+    previewOpen,
+    previewDriver?.id,
+    previewRole,
+    previewDocsQuery.rawStatuses,
+    queryClient
+  ]);
+
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
   const [decisionType, setDecisionType] = useState<DecisionType | null>(null);
   const [decisionDriver, setDecisionDriver] = useState<DriverRow | null>(null);
@@ -263,10 +322,57 @@ export default function DocumentsQueuePage() {
       return updateDriverDocumentStatus(variables.userId, variables.payload, { token });
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ["users", "documents", "queue"] });
+      // Patch queue caches in place so we don't need a full list remount before UI updates.
+      queryClient.setQueriesData(
+        { queryKey: ["users", "documents", "queue"] },
+        (old: unknown) => {
+          if (!old || typeof old !== "object") return old;
+          const page = old as {
+            documentStatusesByDriverId?: Record<number, DocumentStatusPayload>;
+            documentStatusesByPartnerId?: Record<number, { cnicStatus: ApiDocStatus }>;
+            documentStatusByDriverId?: Record<number, ApiDocStatus>;
+          };
+          if (variables.role === "PARTNER") {
+            return {
+              ...page,
+              documentStatusesByPartnerId: {
+                ...(page.documentStatusesByPartnerId ?? {}),
+                [variables.userId]: { cnicStatus: variables.payload.cnicStatus }
+              }
+            };
+          }
+          return {
+            ...page,
+            documentStatusesByDriverId: {
+              ...(page.documentStatusesByDriverId ?? {}),
+              [variables.userId]: {
+                cnicStatus: variables.payload.cnicStatus,
+                licenseStatus: variables.payload.licenseStatus,
+                vehicleStatus: variables.payload.vehicleStatus
+              }
+            },
+            documentStatusByDriverId: {
+              ...(page.documentStatusByDriverId ?? {}),
+              [variables.userId]: normalizeApiDocStatus(
+                variables.payload.cnicStatus === "REJECTED" ||
+                  variables.payload.licenseStatus === "REJECTED" ||
+                  variables.payload.vehicleStatus === "REJECTED"
+                  ? "REJECTED"
+                  : variables.payload.cnicStatus === "APPROVED" &&
+                      variables.payload.licenseStatus === "APPROVED" &&
+                      variables.payload.vehicleStatus === "APPROVED"
+                    ? "APPROVED"
+                    : "PENDING"
+              )
+            }
+          };
+        }
+      );
       await queryClient.invalidateQueries({
         queryKey: queryKeys.users.driverDocuments(variables.userId)
       });
+      // Soft refetch lists only (no per-user docs fan-out when list embeds statuses).
+      await queryClient.invalidateQueries({ queryKey: ["users", "documents", "queue"] });
       if (variables.role === "PARTNER") {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.users.partnerDetail(variables.userId)
