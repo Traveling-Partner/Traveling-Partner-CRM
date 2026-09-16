@@ -1,13 +1,11 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import {
-  Area,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  ComposedChart,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -241,65 +239,42 @@ export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
 }
 
 export function FareTrend({ data }: { data: DashboardFarePoint[] }) {
-  const total = data.reduce((sum, point) => sum + point.amount, 0);
-  const fillId = useId().replace(/:/g, "");
-
   return (
-    <div className="flex h-full min-h-[14rem] flex-col sm:min-h-[16rem]">
-      <p className="mb-2 px-1 text-xs text-muted-foreground">
-        Period total{" "}
-        <span className="font-heading text-sm font-semibold text-foreground">{pkr(total)}</span>
-      </p>
-      <div className="min-h-0 flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={chartMargin}>
-            <defs>
-              <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={CHART.brand} stopOpacity={0.28} />
-                <stop offset="100%" stopColor={CHART.brand} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid {...gridProps} />
-            <XAxis
-              dataKey="day"
-              axisLine={false}
-              tickLine={false}
-              tickMargin={10}
-              tick={axisTick}
-              minTickGap={28}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tickMargin={8}
-              tick={axisTick}
-              width={44}
-              tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
-            />
-            <Tooltip
-              content={<AnalyticsTooltip formatValue={pkr} />}
-              cursor={{ stroke: CHART.grid, strokeWidth: 1, strokeDasharray: "4 4" }}
-            />
-            <Area
-              type="monotone"
-              dataKey="amount"
-              name="Fare"
-              stroke="none"
-              fill={`url(#${fillId})`}
-            />
-            <Line
-              type="monotone"
-              dataKey="amount"
-              name="Fare"
-              stroke={CHART.brand}
-              strokeWidth={2.5}
-              dot={{ r: 3.5, fill: CHART.brand, strokeWidth: 0 }}
-              activeDot={{ r: 5, fill: CHART.brand, stroke: "#fff", strokeWidth: 2 }}
-              legendType="none"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="h-56 sm:h-72">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={chartMargin}>
+          <CartesianGrid {...gridProps} />
+          <XAxis
+            dataKey="day"
+            axisLine={false}
+            tickLine={false}
+            tickMargin={10}
+            tick={axisTick}
+            minTickGap={28}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tickMargin={8}
+            tick={axisTick}
+            width={40}
+            tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+          />
+          <Tooltip
+            content={<AnalyticsTooltip formatValue={pkr} />}
+            cursor={{ stroke: CHART.grid, strokeWidth: 1, strokeDasharray: "4 4" }}
+          />
+          <Line
+            type="monotone"
+            dataKey="amount"
+            name="Fare"
+            stroke={CHART.brand}
+            strokeWidth={2.5}
+            dot={{ r: 4, fill: CHART.brand, stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 6, fill: CHART.brand, stroke: "#fff", strokeWidth: 2 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -557,9 +532,17 @@ function agentInitials(name: string) {
   return letters || "A";
 }
 
-export function TopAgentsBoard({ data }: { data: DashboardTopAgent[] }) {
-  const drivers = data.reduce((sum, row) => sum + row.drivers, 0);
-  const partners = data.reduce((sum, row) => sum + row.partners, 0);
+export function TopAgentsBoard({
+  data,
+  totalDrivers,
+  totalPartners
+}: {
+  data: DashboardTopAgent[];
+  totalDrivers?: number;
+  totalPartners?: number;
+}) {
+  const drivers = totalDrivers ?? data.reduce((sum, row) => sum + row.drivers, 0);
+  const partners = totalPartners ?? data.reduce((sum, row) => sum + row.partners, 0);
   const chartData = data.map((agent) => ({
     name: agent.name.split(" ")[0] ?? agent.name,
     fullName: agent.name,
