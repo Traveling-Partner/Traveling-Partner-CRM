@@ -476,60 +476,40 @@ export function RideStatusBoard({
 }
 
 export function CommissionBoard({ data }: { data: DashboardCommission }) {
-  const total = data.pending + data.released + data.remaining;
-  const rows = [
-    { label: "Pending", value: data.pending, color: CHART.brand },
-    { label: "Released", value: data.released, color: CHART.sage },
-    { label: "Remaining", value: data.remaining, color: CHART.bronze }
+  const total = data.total > 0 ? data.total : data.pending + data.released + data.remaining;
+  const barData = [
+    { label: "Pending", value: data.pending, fill: CHART.requested },
+    { label: "Released", value: data.released, fill: CHART.accepted },
+    { label: "Remaining", value: data.remaining, fill: CHART.completed },
+    { label: "Total", value: total, fill: CHART.canceled }
   ];
-  const barData = rows.map((row) => ({
-    label: row.label,
-    value: row.value,
-    fill: row.color
-  }));
 
   return (
-    <div>
-      <div className="mb-5 rounded-[1.5rem] bg-gradient-to-br from-[#fce001] to-[#fdb813] px-5 py-4 text-slate-900">
-        <p className="text-xs font-medium text-slate-900/65">Total commission</p>
-        <p className="mt-1 font-heading text-3xl font-semibold tabular-nums tracking-tight">
-          {pkr(total)}
-        </p>
-        <p className="mt-1 text-xs text-slate-900/60">Pending, released and remaining</p>
-      </div>
-
-      <div className="h-56 sm:h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={barData} margin={chartMargin}>
-            <CartesianGrid {...gridProps} />
-            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={axisTick}
-              width={40}
-              tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
-            />
-            <Tooltip
-              content={<AnalyticsTooltip formatValue={pkr} />}
-              cursor={{ fill: "rgba(148,163,184,0.12)" }}
-            />
-            <Bar dataKey="value" name="Amount" radius={BAR_TOP_RADIUS} maxBarSize={56}>
-              {barData.map((row) => (
-                <Cell key={row.label} fill={row.fill} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="h-56 sm:h-72">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={barData} margin={chartMargin}>
+          <CartesianGrid {...gridProps} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} tickMargin={10} />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={axisTick}
+            width={48}
+            tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+          />
+          <Tooltip
+            content={<AnalyticsTooltip formatValue={pkr} />}
+            cursor={{ fill: "rgba(148,163,184,0.12)" }}
+          />
+          <Bar dataKey="value" name="Amount" radius={BAR_TOP_RADIUS} maxBarSize={56}>
+            {barData.map((row) => (
+              <Cell key={row.label} fill={row.fill} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
-}
-
-function agentInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const letters = `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
-  return letters || "A";
 }
 
 export function TopAgentsBoard({
@@ -544,24 +524,33 @@ export function TopAgentsBoard({
   const drivers = totalDrivers ?? data.reduce((sum, row) => sum + row.drivers, 0);
   const partners = totalPartners ?? data.reduce((sum, row) => sum + row.partners, 0);
   const chartData = data.map((agent) => ({
-    name: agent.name.split(" ")[0] ?? agent.name,
-    fullName: agent.name,
+    name: agent.name,
     drivers: agent.drivers,
     partners: agent.partners
   }));
 
   return (
     <div>
-      <div className="mb-5 grid grid-cols-2 gap-2">
-        <div className="rounded-[1.35rem] bg-gradient-to-br from-[#fce001] to-[#fdb813] px-3.5 py-4 text-slate-900">
-          <p className="text-[11px] text-slate-900/65">New drivers</p>
-          <p className="mt-1 font-heading text-2xl font-semibold tabular-nums">
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-border/50 bg-muted/30 px-4 py-3.5 dark:bg-white/[0.04]">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            New drivers
+          </p>
+          <p
+            className="mt-1 font-heading text-3xl font-semibold tabular-nums tracking-tight"
+            style={{ color: CHART.requested }}
+          >
             {drivers.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-[1.35rem] px-3.5 py-4 text-white" style={{ background: CHART.sage }}>
-          <p className="text-[11px] text-white/70">New partners</p>
-          <p className="mt-1 font-heading text-2xl font-semibold tabular-nums">
+        <div className="rounded-2xl border border-border/50 bg-muted/30 px-4 py-3.5 dark:bg-white/[0.04]">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            New partners
+          </p>
+          <p
+            className="mt-1 font-heading text-3xl font-semibold tabular-nums tracking-tight"
+            style={{ color: CHART.completed }}
+          >
             {partners.toLocaleString()}
           </p>
         </div>
@@ -569,9 +558,19 @@ export function TopAgentsBoard({
 
       <div className="h-56 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={chartMargin}>
+          <BarChart data={chartData} margin={{ ...chartMargin, bottom: 12 }}>
             <CartesianGrid {...gridProps} />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={axisTick} tickMargin={10} />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={axisTick}
+              tickMargin={10}
+              interval={0}
+              angle={chartData.length > 4 ? -18 : 0}
+              textAnchor={chartData.length > 4 ? "end" : "middle"}
+              height={chartData.length > 4 ? 48 : 28}
+            />
             <YAxis
               axisLine={false}
               tickLine={false}
@@ -582,43 +581,20 @@ export function TopAgentsBoard({
             <Tooltip content={<AnalyticsTooltip />} cursor={{ fill: "rgba(148,163,184,0.12)" }} />
             <Bar
               dataKey="drivers"
-              name="Drivers"
-              fill={CHART.brand}
+              name="New Drivers"
+              fill={CHART.requested}
               radius={BAR_TOP_RADIUS}
               maxBarSize={28}
             />
             <Bar
               dataKey="partners"
-              name="Partners"
-              fill={CHART.sage}
+              name="New Partners"
+              fill={CHART.completed}
               radius={BAR_TOP_RADIUS}
               maxBarSize={28}
             />
           </BarChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-3">
-        {data.map((agent, index) => (
-          <div
-            key={`${agent.name}-${index}`}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs dark:bg-white/5"
-          >
-            <span
-              className="flex h-6 w-6 items-center justify-center rounded-full font-heading text-[10px] font-semibold"
-              style={{
-                background: index === 0 ? CHART.brand : CHART.sage,
-                color: index === 0 ? "#111827" : "#fff"
-              }}
-            >
-              {agentInitials(agent.name)}
-            </span>
-            <span className="font-medium text-foreground">{agent.name}</span>
-            <span className="tabular-nums text-muted-foreground">
-              {(agent.drivers + agent.partners).toLocaleString()}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
