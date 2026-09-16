@@ -66,7 +66,8 @@ export const DEMO_DOCUMENTS_PENDING: DashboardDocumentsPending = {
 export const DEMO_COMMISSION = {
   pending: 420000,
   released: 610000,
-  remaining: 210000
+  remaining: 210000,
+  total: 1240000
 };
 
 export const DEMO_TOP_AGENTS = [

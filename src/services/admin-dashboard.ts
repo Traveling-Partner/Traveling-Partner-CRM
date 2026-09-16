@@ -84,6 +84,7 @@ export interface DashboardCommission {
   pending: number;
   released: number;
   remaining: number;
+  total: number;
 }
 
 export interface DashboardTopAgent {
@@ -203,7 +204,8 @@ const EMPTY_DOCUMENTS: DashboardDocumentsPending = {
 const EMPTY_COMMISSION: DashboardCommission = {
   pending: 0,
   released: 0,
-  remaining: 0
+  remaining: 0,
+  total: 0
 };
 
 export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
@@ -398,7 +400,8 @@ function mapCommission(payload: unknown): DashboardCommission {
   return {
     pending,
     released,
-    remaining
+    remaining,
+    total: total > 0 ? total : pending + released + remaining
   };
 }
 

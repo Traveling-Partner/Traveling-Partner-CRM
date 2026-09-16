@@ -300,8 +300,8 @@ export default function AdminDashboardPage() {
         </ChartCard>
 
         <ChartCard
-          title="Top agents"
-          description="Drivers vs partners onboarded"
+          title="Agent performance"
+          description="New registered drivers and partners by agents"
           heightClass="h-auto"
           loading={isLoading}
           empty={!isLoading && topAgents.agents.length === 0}
@@ -315,11 +315,19 @@ export default function AdminDashboardPage() {
         </ChartCard>
 
         <ChartCard
-          title="Commission"
-          description="Pending, released and remaining"
+          title="Agent commission graph"
+          description="Pending, released, remaining and total commission"
           heightClass="h-auto"
           loading={isLoading}
-          badge={opsDemo.commission ? demoBadge : <BadgeDollarSign className="h-4 w-4 text-[#f5c518]" />}
+          badge={
+            opsDemo.commission ? (
+              demoBadge
+            ) : (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-[#f5c518]">
+                <BadgeDollarSign className="h-4 w-4" />
+              </span>
+            )
+          }
         >
           <CommissionBoard data={commission} />
         </ChartCard>
@@ -333,13 +341,15 @@ export default function AdminDashboardPage() {
         >
           <DonutMix
             items={[
-              { label: "Pending", value: commission.pending, color: CHART.brand },
-              { label: "Released", value: commission.released, color: CHART.sage },
-              { label: "Remaining", value: commission.remaining, color: CHART.bronze }
+              { label: "Pending", value: commission.pending, color: CHART.requested },
+              { label: "Released", value: commission.released, color: CHART.accepted },
+              { label: "Remaining", value: commission.remaining, color: CHART.completed }
             ]}
             centerLabel="Total"
             centerValue={
-              commission.pending + commission.released + commission.remaining
+              commission.total > 0
+                ? commission.total
+                : commission.pending + commission.released + commission.remaining
             }
           />
         </ChartCard>
