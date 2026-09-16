@@ -182,7 +182,7 @@ export function Butterfly({
   );
 }
 
-/** Donut — part-to-whole for 2–4 slices. */
+/** Donut — part-to-whole with % legend (classic distribution chart). */
 export function DonutMix({
   items,
   centerLabel,
@@ -192,23 +192,24 @@ export function DonutMix({
   centerLabel?: string;
   centerValue?: number | string;
 }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
   const data = items.map((item, index) => ({
     ...item,
     fill: colorAt(item, index)
   }));
 
   return (
-    <div className="flex flex-col items-center gap-8 lg:flex-row lg:justify-between">
-      <div className="relative h-52 w-52 shrink-0">
+    <div className="flex flex-col items-center gap-6">
+      <div className="relative h-52 w-52 shrink-0 sm:h-56 sm:w-56">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               dataKey="value"
               nameKey="label"
-              innerRadius="68%"
-              outerRadius="92%"
-              paddingAngle={3}
+              innerRadius="62%"
+              outerRadius="88%"
+              paddingAngle={2}
               stroke="transparent"
             >
               {data.map((entry) => (
@@ -227,16 +228,22 @@ export function DonutMix({
           {centerLabel ? <p className="text-xs text-muted-foreground">{centerLabel}</p> : null}
         </div>
       </div>
-      <div className="w-full max-w-sm space-y-3">
-        {data.map((item) => (
-          <div key={item.label} className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex w-full max-w-md flex-wrap justify-center gap-x-5 gap-y-2">
+        {data.map((item) => {
+          const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+          return (
+            <span
+              key={item.label}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.fill }} />
-              {item.label}
+              <span className="font-medium uppercase tracking-wide text-foreground">
+                {item.label}
+              </span>
+              <span className="tabular-nums">{pct}%</span>
             </span>
-            <span className="font-heading text-sm font-semibold tabular-nums">{item.value.toLocaleString()}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

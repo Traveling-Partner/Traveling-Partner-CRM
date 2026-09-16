@@ -1,9 +1,6 @@
 /**
- * Dashboard color system — built around the brand gold gradient
- * (#fce001 → #fdb813, hue ~42°).
- *
- * Companions are analogous (bronze, terracotta) and one cool complement
- * (sage). Same chroma range, no neon purple / lime / electric pink.
+ * Dashboard chart theme — brand gold + status colors aligned with
+ * classic line / bar / donut charts (admin dashboard look).
  */
 export const CHART = {
   brandFrom: "#fce001",
@@ -20,7 +17,15 @@ export const CHART = {
   track: "#eef0f3",
   teal: "#4a9b8c",
   amber: "#fdb813",
-  muted: "#9ca3af"
+  muted: "#9ca3af",
+  /** Axis / grid strokes that work in light + dark */
+  grid: "rgba(148, 163, 184, 0.28)",
+  axis: "#9ca3af",
+  requested: "#3b82f6",
+  accepted: "#fdb813",
+  started: "#f97316",
+  canceled: "#ef4444",
+  completed: "#22c55e"
 } as const;
 
 /** Sequential gold → bronze → sage. Use for ranked series (funnel, cities). */
@@ -45,12 +50,13 @@ export const DRIVER_STATUS_COLORS = [
   CHART.bronze
 ] as const;
 
+/** Ride status colors — match bar + donut distribution charts */
 export const RIDE_STATUS_COLORS = [
-  CHART.sand,
-  CHART.brand,
-  CHART.sage,
-  CHART.terracotta,
-  CHART.bronze
+  CHART.requested,
+  CHART.accepted,
+  CHART.started,
+  CHART.canceled,
+  CHART.completed
 ] as const;
 
 /** Lighter steps so row fills keep dark text readable. */
@@ -66,13 +72,13 @@ export const CITY_COLORS = [
 ] as const;
 
 export const FUNNEL_COLORS = [
-  "#fce001",
-  "#f5c40e",
-  "#fdb813",
-  "#e0a82a",
-  "#c4a04a",
-  "#9aaa68",
-  "#6ba87c",
+  CHART.requested,
+  "#60a5fa",
+  CHART.accepted,
+  "#fbbf24",
+  CHART.started,
+  "#fb923c",
+  CHART.completed,
   CHART.sage
 ] as const;
 
@@ -100,10 +106,19 @@ export function onChartColor(hex: string): "#111827" | "#ffffff" {
 
 export const axisTick = {
   fontSize: 11,
-  fill: "#9ca3af",
+  fill: CHART.axis,
   fontFamily: "inherit"
 };
 
-export const chartMargin = { top: 10, right: 6, left: 6, bottom: 0 };
+export const chartMargin = { top: 12, right: 12, left: 4, bottom: 4 };
+
+/** Rounded top corners for vertical bars */
+export const BAR_TOP_RADIUS: [number, number, number, number] = [6, 6, 0, 0];
 
 export const PILL_RADIUS: [number, number, number, number] = [40, 40, 40, 40];
+
+export const gridProps = {
+  stroke: CHART.grid,
+  strokeDasharray: "4 4",
+  vertical: false
+} as const;

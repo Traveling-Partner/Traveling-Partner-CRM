@@ -9,6 +9,7 @@ import { AuditLogsSection } from "@/components/audit-logs/AuditLogsSection";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { TrendArea } from "@/components/dashboard/TrendArea";
+import { DonutMix } from "@/components/dashboard/viz";
 import { Sparkline, SparkBars, SparkRows, SparkHeat } from "@/components/dashboard/Sparkline";
 import {
   RideFunnel,
@@ -16,14 +17,13 @@ import {
   FareTrend,
   CityDemand,
   DocumentsPending,
-  DriverStatusMix,
   RideStatusBoard,
   CommissionBoard,
   TopAgentsBoard
 } from "@/components/dashboard/ops-charts";
 import {
-  DRIVER_STATUS_COLORS,
-  RIDE_STATUS_COLORS
+  CHART,
+  DRIVER_STATUS_COLORS
 } from "@/components/dashboard/chart-theme";
 import {
   Users,
@@ -83,15 +83,20 @@ export default function AdminDashboardPage() {
     [driverStatusCounts]
   );
   const driverStatusTotal = statusRows.reduce((sum, row) => sum + row.value, 0);
-  const rideChartData = useMemo(
-    () =>
-      rideStatusBreakdown.map((row, idx) => ({
-        label: prettyStatus(row.status),
-        value: row.count,
-        color: RIDE_STATUS_COLORS[idx]
-      })),
-    [rideStatusBreakdown]
-  );
+  const rideChartData = useMemo(() => {
+    const colors: Record<string, string> = {
+      REQUESTED: CHART.requested,
+      ACCEPTED: CHART.accepted,
+      STARTED: CHART.started,
+      CANCELED: CHART.canceled,
+      COMPLETED: CHART.completed
+    };
+    return rideStatusBreakdown.map((row) => ({
+      label: prettyStatus(row.status),
+      value: row.count,
+      color: colors[row.status] ?? CHART.brand
+    }));
+  }, [rideStatusBreakdown]);
   const ridesTrendTotal = ridesTrend.reduce((sum, point) => sum + point.count, 0);
   const ridesDelta = useMemo(
     () => periodDelta(ridesTrend.map((point) => point.count)),
@@ -215,8 +220,8 @@ export default function AdminDashboardPage() {
         </ChartCard>
 
         <ChartCard
-          title="Rides"
-          description="Daily volume, last 14 days"
+          title="Rides trend"
+          description="Daily ride volume over the last 14 days"
           badge={
             <span className="inline-flex items-center gap-2">
               <span className="font-heading text-sm font-semibold tabular-nums">
@@ -242,22 +247,43 @@ export default function AdminDashboardPage() {
 
         <ChartCard
           title="Drivers"
-          description="Status mix"
+          description="Proportional status breakdown"
           heightClass="h-auto"
           loading={isLoading}
           empty={!isLoading && driverStatusTotal === 0}
         >
-          <DriverStatusMix items={statusRows} />
+          <DonutMix
+            items={statusRows}
+            centerLabel="Drivers"
+            centerValue={driverStatusTotal}
+          />
         </ChartCard>
 
         <ChartCard
           title="Rides by status"
-          description="Requested through completed"
+          description="Requested, accepted, started, canceled & completed"
           heightClass="h-auto"
           loading={isLoading}
           empty={!isLoading && rideChartData.every((row) => row.value === 0)}
         >
           <RideStatusBoard items={rideChartData} />
+        </ChartCard>
+
+        <ChartCard
+          title="Distribution"
+          description="Proportional ride breakdown"
+          heightClass="h-auto"
+          loading={isLoading}
+        >
+          <DonutMix
+            items={rideChartData.map((row) => ({
+              label: row.label.toUpperCase(),
+              value: row.value,
+              color: row.color
+            }))}
+            centerLabel="Rides"
+            centerValue={rideChartData.reduce((sum, row) => sum + row.value, 0)}
+          />
         </ChartCard>
 
         <ChartCard
@@ -279,6 +305,26 @@ export default function AdminDashboardPage() {
           badge={opsDemo.commission ? demoBadge : <BadgeDollarSign className="h-4 w-4 text-[#fdb813]" />}
         >
           <CommissionBoard data={commission} />
+        </ChartCard>
+
+        <ChartCard
+          title="Commission mix"
+          description="Share of pending, released and remaining"
+          heightClass="h-auto"
+          loading={isLoading}
+          badge={opsDemo.commission ? demoBadge : undefined}
+        >
+          <DonutMix
+            items={[
+              { label: "Pending", value: commission.pending, color: CHART.brand },
+              { label: "Released", value: commission.released, color: CHART.sage },
+              { label: "Remaining", value: commission.remaining, color: CHART.bronze }
+            ]}
+            centerLabel="Total"
+            centerValue={
+              commission.pending + commission.released + commission.remaining
+            }
+          />
         </ChartCard>
 
         <Suspense fallback={<Skeleton className="h-64 w-full rounded-[1.75rem]" />}>
