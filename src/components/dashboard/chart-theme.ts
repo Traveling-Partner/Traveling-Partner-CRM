@@ -1,11 +1,11 @@
 /**
- * Dashboard chart theme — brand gold + status colors aligned with
- * classic line / bar / donut charts (admin dashboard look).
+ * Dashboard chart theme — matched to legacy admin chart screenshot
+ * (dark panel, gold trend line, blue/yellow/orange/red/green status).
  */
 export const CHART = {
   brandFrom: "#fce001",
-  brandTo: "#fdb813",
-  brand: "#fdb813",
+  brandTo: "#f5c518",
+  brand: "#f5c518",
   bronze: "#c9952a",
   sage: "#4a9b8c",
   terracotta: "#c67b4e",
@@ -16,15 +16,16 @@ export const CHART = {
   slate: "#8f8a82",
   track: "#eef0f3",
   teal: "#4a9b8c",
-  amber: "#fdb813",
+  amber: "#f5c518",
   muted: "#9ca3af",
-  /** Axis / grid strokes that work in light + dark */
-  grid: "rgba(148, 163, 184, 0.28)",
-  axis: "#9ca3af",
-  requested: "#3b82f6",
-  accepted: "#fdb813",
+  /** Soft dotted grid like the old screenshot */
+  grid: "rgba(148, 163, 184, 0.22)",
+  axis: "#8b93a7",
+  /** Ride status palette (screenshot) */
+  requested: "#4a8fe7",
+  accepted: "#f5c518",
   started: "#f97316",
-  canceled: "#ef4444",
+  canceled: "#f07178",
   completed: "#22c55e"
 } as const;
 
@@ -110,15 +111,15 @@ export const axisTick = {
   fontFamily: "inherit"
 };
 
-export const chartMargin = { top: 12, right: 12, left: 4, bottom: 4 };
+export const chartMargin = { top: 16, right: 16, left: 4, bottom: 8 };
 
 /** Rounded top corners for vertical bars */
-export const BAR_TOP_RADIUS: [number, number, number, number] = [6, 6, 0, 0];
+export const BAR_TOP_RADIUS: [number, number, number, number] = [8, 8, 0, 0];
 
 export const PILL_RADIUS: [number, number, number, number] = [40, 40, 40, 40];
 
 export const gridProps = {
   stroke: CHART.grid,
-  strokeDasharray: "4 4",
+  strokeDasharray: "3 6",
   vertical: false
 } as const;

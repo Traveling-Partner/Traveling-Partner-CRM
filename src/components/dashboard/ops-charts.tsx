@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import {
+  Area,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -219,7 +221,7 @@ export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
               name="Completed"
               stroke={CHART.completed}
               strokeWidth={2.5}
-              dot={{ r: 3.5, fill: CHART.completed, stroke: "#fff", strokeWidth: 1.5 }}
+              dot={{ r: 3.5, fill: CHART.completed, strokeWidth: 0 }}
               activeDot={{ r: 5, fill: CHART.completed, stroke: "#fff", strokeWidth: 2 }}
             />
             <Line
@@ -228,7 +230,7 @@ export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
               name="Canceled"
               stroke={CHART.canceled}
               strokeWidth={2.5}
-              dot={{ r: 3.5, fill: CHART.canceled, stroke: "#fff", strokeWidth: 1.5 }}
+              dot={{ r: 3.5, fill: CHART.canceled, strokeWidth: 0 }}
               activeDot={{ r: 5, fill: CHART.canceled, stroke: "#fff", strokeWidth: 2 }}
             />
           </LineChart>
@@ -240,16 +242,23 @@ export function OutcomeTrend({ data }: { data: DashboardOutcomePoint[] }) {
 
 export function FareTrend({ data }: { data: DashboardFarePoint[] }) {
   const total = data.reduce((sum, point) => sum + point.amount, 0);
+  const fillId = useId().replace(/:/g, "");
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-[14rem] flex-col sm:min-h-[16rem]">
       <p className="mb-2 px-1 text-xs text-muted-foreground">
         Period total{" "}
         <span className="font-heading text-sm font-semibold text-foreground">{pkr(total)}</span>
       </p>
       <div className="min-h-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={chartMargin}>
+          <ComposedChart data={data} margin={chartMargin}>
+            <defs>
+              <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={CHART.brand} stopOpacity={0.28} />
+                <stop offset="100%" stopColor={CHART.brand} stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid {...gridProps} />
             <XAxis
               dataKey="day"
@@ -271,16 +280,24 @@ export function FareTrend({ data }: { data: DashboardFarePoint[] }) {
               content={<AnalyticsTooltip formatValue={pkr} />}
               cursor={{ stroke: CHART.grid, strokeWidth: 1, strokeDasharray: "4 4" }}
             />
+            <Area
+              type="monotone"
+              dataKey="amount"
+              name="Fare"
+              stroke="none"
+              fill={`url(#${fillId})`}
+            />
             <Line
               type="monotone"
               dataKey="amount"
               name="Fare"
               stroke={CHART.brand}
               strokeWidth={2.5}
-              dot={{ r: 3.5, fill: CHART.brand, stroke: "#fff", strokeWidth: 1.5 }}
+              dot={{ r: 3.5, fill: CHART.brand, strokeWidth: 0 }}
               activeDot={{ r: 5, fill: CHART.brand, stroke: "#fff", strokeWidth: 2 }}
+              legendType="none"
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>
@@ -452,20 +469,17 @@ export function RideStatusBoard({
   }));
 
   return (
-    <div className="h-56 sm:h-72">
+    <div className="h-56 sm:h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={barData} margin={chartMargin}>
+        <BarChart data={barData} margin={{ top: 12, right: 8, left: 0, bottom: 4 }}>
           <CartesianGrid {...gridProps} />
           <XAxis
             dataKey="label"
             axisLine={false}
             tickLine={false}
-            tick={axisTick}
+            tick={{ ...axisTick, fontSize: 10 }}
             tickMargin={10}
             interval={0}
-            angle={-15}
-            textAnchor="end"
-            height={44}
           />
           <YAxis
             axisLine={false}
@@ -474,8 +488,8 @@ export function RideStatusBoard({
             width={28}
             allowDecimals={false}
           />
-          <Tooltip content={<AnalyticsTooltip />} cursor={{ fill: "rgba(148,163,184,0.12)" }} />
-          <Bar dataKey="value" name="Rides" radius={BAR_TOP_RADIUS} maxBarSize={48}>
+          <Tooltip content={<AnalyticsTooltip />} cursor={{ fill: "rgba(148,163,184,0.08)" }} />
+          <Bar dataKey="value" name="Rides" radius={BAR_TOP_RADIUS} maxBarSize={56}>
             {barData.map((row) => (
               <Cell key={row.label} fill={row.fill} />
             ))}
