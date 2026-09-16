@@ -108,6 +108,12 @@ export default function AdminDashboardPage() {
     documentsPending.driverLicense +
     documentsPending.vehicle +
     documentsPending.partnerCnic;
+  const fareTrendTotal = fareTrend.reduce((sum, point) => sum + point.amount, 0);
+  const fareTotalLabel = new Intl.NumberFormat("en-PK", {
+    style: "currency",
+    currency: "PKR",
+    maximumFractionDigits: 0
+  }).format(fareTrendTotal);
   const demoBadge = (
     <span className="rounded-full bg-slate-900/6 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground dark:bg-white/10">
       Demo data
@@ -153,7 +159,7 @@ export default function AdminDashboardPage() {
             value={counts.totalPartners}
             icon={Briefcase}
             loading={isLoading}
-            chart={<SparkRows values={topAgents.map((agent) => agent.partners)} />}
+            chart={<SparkRows values={topAgents.agents.map((agent) => agent.partners)} />}
           />
           <MetricCard
             label="Total agents"
@@ -161,7 +167,9 @@ export default function AdminDashboardPage() {
             icon={UserCircle2}
             loading={isLoading}
             chart={
-              <SparkHeat values={topAgents.map((agent) => agent.drivers + agent.partners)} />
+              <SparkHeat
+                values={topAgents.agents.map((agent) => agent.drivers + agent.partners)}
+              />
             }
           />
         </div>
@@ -251,7 +259,18 @@ export default function AdminDashboardPage() {
           loading={isLoading}
           empty={!isLoading && fareTrend.length === 0}
           heightClass="h-auto"
-          badge={opsDemo.fareTrend ? demoBadge : undefined}
+          badge={
+            <span className="inline-flex items-center gap-2">
+              {opsDemo.fareTrend ? demoBadge : null}
+              <span className="font-heading text-sm font-semibold tabular-nums">
+                {isLoading ? "—" : fareTotalLabel}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-[11px] font-semibold text-slate-900">
+                <TrendingUp className="h-3 w-3" />
+                14 days
+              </span>
+            </span>
+          }
         >
           <FareTrend data={fareTrend} />
         </ChartCard>
@@ -285,10 +304,14 @@ export default function AdminDashboardPage() {
           description="Drivers vs partners onboarded"
           heightClass="h-auto"
           loading={isLoading}
-          empty={!isLoading && topAgents.length === 0}
+          empty={!isLoading && topAgents.agents.length === 0}
           badge={opsDemo.topAgents ? demoBadge : undefined}
         >
-          <TopAgentsBoard data={topAgents} />
+          <TopAgentsBoard
+            data={topAgents.agents}
+            totalDrivers={topAgents.totalDrivers}
+            totalPartners={topAgents.totalPartners}
+          />
         </ChartCard>
 
         <ChartCard

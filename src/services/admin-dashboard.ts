@@ -92,6 +92,12 @@ export interface DashboardTopAgent {
   partners: number;
 }
 
+export interface DashboardTopAgents {
+  agents: DashboardTopAgent[];
+  totalDrivers: number;
+  totalPartners: number;
+}
+
 export interface AdminDashboardData {
   counts: DashboardCounts;
   driverStatusCounts: DashboardDriverStatusCounts;
@@ -104,7 +110,7 @@ export interface AdminDashboardData {
   fareTrend: DashboardFarePoint[];
   documentsPending: DashboardDocumentsPending;
   commission: DashboardCommission;
-  topAgents: DashboardTopAgent[];
+  topAgents: DashboardTopAgents;
   opsApi: {
     rideFunnel: boolean;
     outcomeTrend: boolean;
@@ -212,7 +218,7 @@ export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
   fareTrend: [],
   documentsPending: EMPTY_DOCUMENTS,
   commission: EMPTY_COMMISSION,
-  topAgents: [],
+  topAgents: { agents: [], totalDrivers: 0, totalPartners: 0 },
   opsApi: {
     rideFunnel: false,
     outcomeTrend: false,
@@ -396,27 +402,41 @@ function mapCommission(payload: unknown): DashboardCommission {
   };
 }
 
-function mapTopAgents(payload: unknown): DashboardTopAgent[] {
-  if (!payload) return [];
-  const data = unwrapEnvelope(payload);
-  const rows = Array.isArray(asRecord(data).agents)
-    ? (asRecord(data).agents as unknown[])
-    : Array.isArray(data)
-      ? (data as unknown[])
-      : [];
-  return rows
+function mapTopAgents(payload: unknown): DashboardTopAgents {
+  if (!payload) return { agents: [], totalDrivers: 0, totalPartners: 0 };
+  const unwrapped = unwrapEnvelope(payload);
+  const data = asRecord(unwrapped);
+  const rows = Array.isArray(data.perAgent)
+    ? (data.perAgent as unknown[])
+    : Array.isArray(data.agents)
+      ? (data.agents as unknown[])
+      : Array.isArray(unwrapped)
+        ? (unwrapped as unknown[])
+        : [];
+  const agents = rows
     .map((item) => {
       const row = asRecord(item);
-      const name = String(row.name ?? row.agentName ?? "").trim();
+      const name = String(row.agentName ?? row.name ?? "").trim();
       return {
         name,
-        drivers: num(row.drivers ?? row.driverCount),
-        partners: num(row.partners ?? row.partnerCount ?? row.passengerCount)
+        drivers: num(row.newDrivers ?? row.drivers ?? row.driverCount),
+        partners: num(row.newPartners ?? row.partners ?? row.partnerCount ?? row.passengerCount)
       };
     })
     .filter((row) => row.name)
     .sort((a, b) => b.drivers + b.partners - (a.drivers + a.partners))
     .slice(0, 6);
+
+  const totalDrivers =
+    data.totalNewDrivers != null
+      ? num(data.totalNewDrivers)
+      : agents.reduce((sum, row) => sum + row.drivers, 0);
+  const totalPartners =
+    data.totalNewPartners != null
+      ? num(data.totalNewPartners)
+      : agents.reduce((sum, row) => sum + row.partners, 0);
+
+  return { agents, totalDrivers, totalPartners };
 }
 
 function mapDashboardResponse(
@@ -451,7 +471,14 @@ function mapDashboardResponse(
   const documentsPending =
     ops.documents != null ? mapDocumentsPending(ops.documents) : DEMO_DOCUMENTS_PENDING;
   const commission = ops.commission != null ? mapCommission(ops.commission) : DEMO_COMMISSION;
-  const topAgents = ops.topAgents != null ? mapTopAgents(ops.topAgents) : DEMO_TOP_AGENTS;
+  const topAgents =
+    ops.topAgents != null
+      ? mapTopAgents(ops.topAgents)
+      : {
+          agents: DEMO_TOP_AGENTS,
+          totalDrivers: DEMO_TOP_AGENTS.reduce((sum, row) => sum + row.drivers, 0),
+          totalPartners: DEMO_TOP_AGENTS.reduce((sum, row) => sum + row.partners, 0)
+        };
 
   return {
     counts,
@@ -550,8 +577,8 @@ export async function fetchAdminDashboardData(
     fetchOptionalJson("/users/rides-by-city", { ...requestInit, debugLabel: `${label}:city` }),
     fetchOptionalJson("/users/graph/fare-last-14-days", { ...requestInit, debugLabel: `${label}:fare` }),
     fetchOptionalJson("/users/documents/pending-counts", { ...requestInit, debugLabel: `${label}:docs` }),
-    fetchOptionalJson("/users/commission-summary", { ...requestInit, debugLabel: `${label}:commission` }),
-    fetchOptionalJson("/users/top-agents", { ...requestInit, debugLabel: `${label}:top-agents` })
+    fetchOptionalJson("/users/agent-commission-graph", { ...requestInit, debugLabel: `${label}:commission` }),
+    fetchOptionalJson("/users/agent-performance", { ...requestInit, debugLabel: `${label}:agent-performance` })
   ]);
 
   return mapDashboardResponse(
