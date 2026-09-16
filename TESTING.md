@@ -89,7 +89,7 @@ This document lists **manual** test cases and **edge cases** aligned with the cu
 
 | ID | Case | Expected |
 |----|------|----------|
-| DQ1 | Driver list + per-driver doc summary | Extra calls to `/users/documents/:id` for status badge |
+| DQ1 | Driver + partner list for queue | Uses list APIs only when rows embed doc status (`cnicStatus` / `licenseStatus` / `vehicleDocStatus`). Legacy per-id `/users/documents/:id` fan-out only if list has no status fields. Preview/detail still call `/users/documents/:id` once. |
 | DQ2 | Preview modal | Images + optional approve/reject in modal |
 | DQ3 | Table row **Action** dropdown | Approve / Reject opens confirm dialog (not raw POST) |
 | DQ4 | Approve/Reject all (table scope) | PUT `/users/documents/status/:driverId` with all three statuses |

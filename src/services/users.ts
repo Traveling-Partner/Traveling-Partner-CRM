@@ -1,10 +1,6 @@
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import type { PaginatedResponse } from "@/lib/api/types";
-import {
-  deriveDocStatuses,
-  type DriverDocumentsPayload
-} from "@/lib/documents-utils";
 import { fetcher } from "@/lib/fetcher";
 import type {
   AgentsListFilters,
@@ -25,6 +21,11 @@ export interface DriverRow {
   status: string;
   cnicNumber?: string | null;
   createdAt: string | null;
+  /** Optional when list API embeds document verification status (avoids N+1). */
+  cnicStatus?: string | null;
+  licenseStatus?: string | null;
+  vehicleStatus?: string | null;
+  vehicleDocStatus?: string | null;
 }
 
 export interface PartnerRow {
@@ -39,6 +40,8 @@ export interface PartnerRow {
   status: string;
   profilePicture?: string | null;
   createdAt?: string | null;
+  /** Optional when list API embeds CNIC verification status (avoids N+1). */
+  cnicStatus?: string | null;
 }
 
 export interface AgentRow {
@@ -286,14 +289,15 @@ export async function fetchDriverDetail(
   id: string | number,
   opts: RequestOpts
 ): Promise<DriverDetailBundle> {
-  const [driverRes, documentsRes] = await Promise.all([
-    fetcher<DriverDetail>(buildApiUrl(`/users/drivers/${id}`), readOpts({ ...opts, debugLabel: "users:driver-detail" })),
-    fetcher<unknown>(buildApiUrl(`/users/documents/${id}`), readOpts({ ...opts, debugLabel: "users:driver-documents" }))
-  ]);
-  const documentsPayload = unwrapEnvelope<DriverDocumentsPayload>(documentsRes);
+  // Documents load via useDriverDocumentsQuery (single GET /users/documents/{id}).
+  // Avoid a second parallel documents call here.
+  const driverRes = await fetcher<DriverDetail>(
+    buildApiUrl(`/users/drivers/${id}`),
+    readOpts({ ...opts, debugLabel: "users:driver-detail" })
+  );
   return {
     driver: driverRes,
-    docStatuses: deriveDocStatuses(documentsPayload)
+    docStatuses: { cnic: "PENDING", license: "PENDING", vehicle: "PENDING" }
   };
 }
 

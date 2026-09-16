@@ -68,6 +68,31 @@ function safeImageUrl(value: unknown): string | null {
 
 type RequestOpts = { token: string; signal?: AbortSignal };
 
+/** Read document statuses from list-row fields (or nested `documents`) when the API embeds them. */
+export function documentStatusesFromListRow(row: object): DocumentStatusPayload {
+  const record = row as Record<string, unknown>;
+  const nested =
+    record.documents && typeof record.documents === "object"
+      ? (record.documents as Record<string, unknown>)
+      : null;
+  const source = nested ?? record;
+  return {
+    cnicStatus: mapRawStatus(source.cnicStatus),
+    licenseStatus: mapRawStatus(source.licenseStatus ?? source.drivingLicenseStatus),
+    vehicleStatus: mapRawStatus(pickVehicleStatus(source))
+  };
+}
+
+export function partnerCnicStatusFromListRow(row: object): ApiDocStatus {
+  const record = row as Record<string, unknown>;
+  const nested =
+    record.documents && typeof record.documents === "object"
+      ? (record.documents as Record<string, unknown>)
+      : null;
+  const source = nested ?? record;
+  return mapRawStatus(source.cnicStatus);
+}
+
 export async function fetchDriverDocumentsPayload(
   driverId: number,
   opts: RequestOpts
@@ -75,7 +100,6 @@ export async function fetchDriverDocumentsPayload(
   const response = await fetcher<unknown>(buildApiUrl(`/users/documents/${driverId}`), {
     token: opts.token,
     signal: opts.signal,
-    dedupe: false,
     debugLabel: "documents:driver-payload"
   });
   return unwrapEnvelope<DriverDocumentsPayload>(response);
@@ -107,17 +131,33 @@ export async function fetchDocumentsQueueDrivers(
   return fetcher<PaginatedResponse<DriverRow>>(url, {
     token: opts.token,
     signal: opts.signal,
-    dedupe: false,
     debugLabel: "documents:drivers-list"
   });
 }
 
-const PENDING_DOC_STATUSES: DocumentStatusPayload = {
-  cnicStatus: "PENDING",
-  licenseStatus: "PENDING",
-  vehicleStatus: "PENDING"
-};
+function listRowHasEmbeddedDocStatus(row: object): boolean {
+  const record = row as Record<string, unknown>;
+  const nested =
+    record.documents && typeof record.documents === "object"
+      ? (record.documents as Record<string, unknown>)
+      : null;
+  const source = nested ?? record;
+  return (
+    source.cnicStatus != null ||
+    source.licenseStatus != null ||
+    source.drivingLicenseStatus != null ||
+    source.vehicleDocStatus != null ||
+    source.vehicleStatus != null ||
+    source.registrationStatus != null
+  );
+}
 
+/**
+ * Documents queue prefers list APIs only (no per-user fan-out) when drivers/partners
+ * list rows embed document status fields. If the list API does not yet embed statuses,
+ * falls back to the legacy per-id fetches so badges stay correct.
+ * Full image payloads still load only on preview/detail.
+ */
 export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
   opts: RequestOpts
@@ -146,6 +186,39 @@ export async function fetchDocumentsQueuePage(
         } as PaginatedResponse<PartnerRow>)
   ]);
 
+  const listHasStatuses =
+    drivers.content.some((driver) => listRowHasEmbeddedDocStatus(driver)) ||
+    partners.content.some((partner) => listRowHasEmbeddedDocStatus(partner));
+
+  if (listHasStatuses || (drivers.content.length === 0 && partners.content.length === 0)) {
+    const documentStatusesByDriverId: Record<number, DocumentStatusPayload> = {};
+    const documentStatusByDriverId: Record<number, ApiDocStatus> = {};
+    for (const driver of drivers.content) {
+      const raw = documentStatusesFromListRow(driver);
+      documentStatusesByDriverId[driver.id] = raw;
+      documentStatusByDriverId[driver.id] = summarizeDocumentVerificationStatus(raw);
+    }
+
+    const documentStatusesByPartnerId: Record<
+      number,
+      Pick<DocumentStatusPayload, "cnicStatus">
+    > = {};
+    for (const partner of partners.content) {
+      documentStatusesByPartnerId[partner.id] = {
+        cnicStatus: partnerCnicStatusFromListRow(partner)
+      };
+    }
+
+    return {
+      drivers,
+      partners,
+      documentStatusByDriverId,
+      documentStatusesByDriverId,
+      documentStatusesByPartnerId
+    };
+  }
+
+  // Legacy fallback until list APIs embed document statuses.
   const details = await Promise.all(
     drivers.content.map(async (driver) => {
       try {
@@ -159,7 +232,11 @@ export async function fetchDocumentsQueuePage(
         return {
           id: driver.id,
           summary: "PENDING" as ApiDocStatus,
-          raw: { ...PENDING_DOC_STATUSES }
+          raw: {
+            cnicStatus: "PENDING" as ApiDocStatus,
+            licenseStatus: "PENDING" as ApiDocStatus,
+            vehicleStatus: "PENDING" as ApiDocStatus
+          }
         };
       }
     })
@@ -245,7 +322,6 @@ export async function updateDriverDocumentStatus(
   await fetcher(buildApiUrl(`/users/documents/status/${driverId}`), {
     token: opts.token,
     signal: opts.signal,
-    dedupe: false,
     method: "PUT",
     body: JSON.stringify(toDriverDocumentStatusBody(payload)),
     debugLabel: "documents:status-update"
@@ -260,7 +336,6 @@ export async function updatePartnerCnicStatus(
   await fetcher(buildApiUrl(`/users/documents/status/${partnerId}`), {
     token: opts.token,
     signal: opts.signal,
-    dedupe: false,
     method: "PUT",
     body: JSON.stringify(payload),
     debugLabel: "documents:partner-cnic-status"
