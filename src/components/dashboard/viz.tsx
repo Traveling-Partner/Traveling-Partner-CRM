@@ -182,15 +182,18 @@ export function Butterfly({
   );
 }
 
-/** Donut — part-to-whole with % legend (classic distribution chart). */
+/** Donut — part-to-whole with % legend (legacy distribution screenshot). */
 export function DonutMix({
   items,
   centerLabel,
-  centerValue
+  centerValue,
+  /** Hide center label/value — matches empty-hole donut in old screenshot */
+  emptyCenter = false
 }: {
   items: VizItem[];
   centerLabel?: string;
   centerValue?: number | string;
+  emptyCenter?: boolean;
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const data = items.map((item, index) => ({
@@ -199,17 +202,17 @@ export function DonutMix({
   }));
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="relative h-52 w-52 shrink-0 sm:h-56 sm:w-56">
+    <div className="flex h-full flex-col items-center justify-center gap-5">
+      <div className="relative h-44 w-44 shrink-0 sm:h-52 sm:w-52">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               dataKey="value"
               nameKey="label"
-              innerRadius="62%"
-              outerRadius="88%"
-              paddingAngle={2}
+              innerRadius="64%"
+              outerRadius="90%"
+              paddingAngle={1.5}
               stroke="transparent"
             >
               {data.map((entry) => (
@@ -219,28 +222,30 @@ export function DonutMix({
             <Tooltip content={<PieTooltip />} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          {centerValue != null ? (
-            <p className="font-heading text-2xl font-semibold tabular-nums sm:text-3xl">
-              {typeof centerValue === "number" ? centerValue.toLocaleString() : centerValue}
-            </p>
-          ) : null}
-          {centerLabel ? <p className="text-xs text-muted-foreground">{centerLabel}</p> : null}
-        </div>
+        {!emptyCenter ? (
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            {centerValue != null ? (
+              <p className="font-heading text-2xl font-semibold tabular-nums sm:text-3xl">
+                {typeof centerValue === "number" ? centerValue.toLocaleString() : centerValue}
+              </p>
+            ) : null}
+            {centerLabel ? <p className="text-xs text-muted-foreground">{centerLabel}</p> : null}
+          </div>
+        ) : null}
       </div>
-      <div className="flex w-full max-w-md flex-wrap justify-center gap-x-5 gap-y-2">
+      <div className="flex w-full max-w-lg flex-wrap justify-center gap-x-5 gap-y-2.5 px-2">
         {data.map((item) => {
           const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
           return (
             <span
               key={item.label}
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+              className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs"
             >
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.fill }} />
-              <span className="font-medium uppercase tracking-wide text-foreground">
+              <span className="h-2 w-2 rounded-full" style={{ background: item.fill }} />
+              <span className="font-medium uppercase tracking-wide text-foreground/90">
                 {item.label}
               </span>
-              <span className="tabular-nums">{pct}%</span>
+              <span className="tabular-nums text-muted-foreground">{pct}%</span>
             </span>
           );
         })}

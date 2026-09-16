@@ -63,15 +63,15 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const [actionFilter, setActionFilter] = useState("");
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(isDashboard ? 10 : 20);
+  const [pageSize, setPageSize] = useState(20);
   const [highlightVisible, setHighlightVisible] = useState(Boolean(highlightId));
   const tableWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!urlSearch) return;
+    if (isDashboard || !urlSearch) return;
     setSearch(urlSearch);
     setPage(0);
-  }, [urlSearch]);
+  }, [urlSearch, isDashboard]);
 
   useEffect(() => {
     if (!highlightId) {
@@ -83,17 +83,31 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
     return () => window.clearTimeout(timer);
   }, [highlightId]);
 
-  const { data, isLoading, isFetching, error } = useAuditLogsQuery({
-    page,
-    pageSize,
-    userType,
-    search,
-    fromDate,
-    toDate,
-    module: moduleFilter,
-    action: actionFilter,
-    userId
-  });
+  const { data, isLoading, isFetching, error } = useAuditLogsQuery(
+    isDashboard
+      ? {
+          page: 0,
+          pageSize: 10,
+          userType: "all",
+          search: "",
+          fromDate: "",
+          toDate: "",
+          module: "",
+          action: "",
+          userId: ""
+        }
+      : {
+          page,
+          pageSize,
+          userType,
+          search,
+          fromDate,
+          toDate,
+          module: moduleFilter,
+          action: actionFilter,
+          userId
+        }
+  );
 
   const rows = data?.content ?? [];
   const totalPages = Math.max(1, data?.totalPages ?? 1);
@@ -150,8 +164,12 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
 
   return (
     <SectionCard
-      title="Audit logs"
-      description="Admin activity log: who did what in the CRM. Filter by user type, search the description, module, action, user ID, or date range."
+      title={isDashboard ? "Recent activity" : "Audit logs"}
+      description={
+        isDashboard
+          ? "Latest 10 admin activity logs. Open the full viewer for search and filters."
+          : "Admin activity log: who did what in the CRM. Filter by user type, search the description, module, action, user ID, or date range."
+      }
       icon={
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#fce001] to-[#fdb813] shadow-sm">
           <ScrollText className="h-5 w-5 text-foreground" />
@@ -168,99 +186,101 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
         ) : null
       }
     >
-      <div className="mb-4 rounded-xl border border-[#fdb813]/25 bg-gradient-to-r from-[#fce001]/10 via-[var(--brand-light)] to-transparent p-3 sm:p-3.5">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
-          <Input
-            placeholder="Search description…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
-            className="max-w-xs bg-background/90"
-          />
-          <Select
-            value={userType}
-            onValueChange={(value) => {
-              setUserType(value);
-              setPage(0);
-            }}
-          >
-            <SelectTrigger className="w-44 bg-background/90">
-              <SelectValue placeholder="User type" />
-            </SelectTrigger>
-            <SelectContent>
-              {USER_TYPE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            placeholder="Module"
-            value={moduleFilter}
-            onChange={(e) => {
-              setModuleFilter(e.target.value);
-              setPage(0);
-            }}
-            className="w-40 bg-background/90"
-            aria-label="Module"
-          />
-          <Input
-            placeholder="Action"
-            value={actionFilter}
-            onChange={(e) => {
-              setActionFilter(e.target.value);
-              setPage(0);
-            }}
-            className="w-40 bg-background/90"
-            aria-label="Action"
-          />
-          <Input
-            placeholder="User ID"
-            value={userId}
-            onChange={(e) => {
-              setUserId(e.target.value);
-              setPage(0);
-            }}
-            className="w-36 bg-background/90"
-            aria-label="User ID"
-          />
-          <div className="flex items-center gap-1.5">
-            <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
-              From
-            </span>
+      {!isDashboard ? (
+        <div className="mb-4 rounded-xl border border-[#fdb813]/25 bg-gradient-to-r from-[#fce001]/10 via-[var(--brand-light)] to-transparent p-3 sm:p-3.5">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
             <Input
-              type="date"
-              value={fromDate}
+              placeholder="Search description…"
+              value={search}
               onChange={(e) => {
-                setFromDate(e.target.value);
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="max-w-xs bg-background/90"
+            />
+            <Select
+              value={userType}
+              onValueChange={(value) => {
+                setUserType(value);
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-44 bg-background/90">
+                <SelectValue placeholder="User type" />
+              </SelectTrigger>
+              <SelectContent>
+                {USER_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Module"
+              value={moduleFilter}
+              onChange={(e) => {
+                setModuleFilter(e.target.value);
                 setPage(0);
               }}
               className="w-40 bg-background/90"
-              placeholder="Start date"
-              aria-label="From date"
+              aria-label="Module"
             />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
-              To
-            </span>
             <Input
-              type="date"
-              value={toDate}
+              placeholder="Action"
+              value={actionFilter}
               onChange={(e) => {
-                setToDate(e.target.value);
+                setActionFilter(e.target.value);
                 setPage(0);
               }}
               className="w-40 bg-background/90"
-              placeholder="End date"
-              aria-label="To date"
+              aria-label="Action"
             />
+            <Input
+              placeholder="User ID"
+              value={userId}
+              onChange={(e) => {
+                setUserId(e.target.value);
+                setPage(0);
+              }}
+              className="w-36 bg-background/90"
+              aria-label="User ID"
+            />
+            <div className="flex items-center gap-1.5">
+              <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
+                From
+              </span>
+              <Input
+                type="date"
+                value={fromDate}
+                onChange={(e) => {
+                  setFromDate(e.target.value);
+                  setPage(0);
+                }}
+                className="w-40 bg-background/90"
+                placeholder="Start date"
+                aria-label="From date"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
+                To
+              </span>
+              <Input
+                type="date"
+                value={toDate}
+                onChange={(e) => {
+                  setToDate(e.target.value);
+                  setPage(0);
+                }}
+                className="w-40 bg-background/90"
+                placeholder="End date"
+                aria-label="To date"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
       {error ? <p className="pb-3 text-sm text-destructive">{error.message}</p> : null}
       {showSkeleton ? (
         <div className="space-y-2 py-3">
@@ -271,7 +291,11 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
       ) : rows.length === 0 ? (
         <EmptyState
           title="No audit logs found"
-          description="Try another search, user type, module, action, user ID, or date range."
+          description={
+            isDashboard
+              ? "No recent activity yet."
+              : "Try another search, user type, module, action, user ID, or date range."
+          }
         />
       ) : (
         <div
@@ -293,34 +317,36 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
           />
         </div>
       )}
-      <div className="mt-2 flex flex-col gap-3 rounded-lg border border-border/40 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Show</span>
-          <Select
-            value={String(pageSize)}
-            onValueChange={(value) => {
-              setPageSize(Number(value));
-              setPage(0);
-            }}
-          >
-            <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <span>per page</span>
-          <span className="hidden sm:inline">· {totalElements} total</span>
+      {!isDashboard ? (
+        <div className="mt-2 flex flex-col gap-3 rounded-lg border border-border/40 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Show</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>per page</span>
+            <span className="hidden sm:inline">· {totalElements} total</span>
+          </div>
+          <PaginationControls
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </div>
-        <PaginationControls
-          currentPage={page + 1}
-          totalPages={totalPages}
-          onPageChange={(p) => setPage(p - 1)}
-        />
-      </div>
+      ) : null}
     </SectionCard>
   );
 }

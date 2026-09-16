@@ -47,7 +47,12 @@ export function ChartCard({
       </div>
       <div className="px-4 pb-6 pt-4 sm:px-6 sm:pb-7">
         {loading ? (
-          <Skeleton className={cn("w-full rounded-3xl", heightClass === "h-auto" ? "h-48" : heightClass)} />
+          <Skeleton
+            className={cn(
+              "w-full rounded-3xl",
+              heightClass === "h-auto" ? "h-48" : heightClass
+            )}
+          />
         ) : empty ? (
           <div
             className={cn(
@@ -55,7 +60,7 @@ export function ChartCard({
               heightClass
             )}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#fce001] to-[#fdb813]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#fce001] to-[#f5c518]">
               <BarChart3 className="h-4 w-4 text-slate-900" />
             </div>
             <p className="text-sm font-medium">No data yet</p>

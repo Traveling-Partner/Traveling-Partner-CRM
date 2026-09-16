@@ -97,7 +97,6 @@ export default function AdminDashboardPage() {
       color: colors[row.status] ?? CHART.brand
     }));
   }, [rideStatusBreakdown]);
-  const ridesTrendTotal = ridesTrend.reduce((sum, point) => sum + point.count, 0);
   const ridesDelta = useMemo(
     () => periodDelta(ridesTrend.map((point) => point.count)),
     [ridesTrend]
@@ -167,6 +166,54 @@ export default function AdminDashboardPage() {
           />
         </div>
 
+        {/* Rides trend + status breakdown + distribution */}
+        <ChartCard
+          title="Rides trend"
+          description="Daily ride volume over the last 14 days"
+          badge={
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+              <TrendingUp className="h-3 w-3" />
+              14 days
+            </span>
+          }
+          loading={isLoading}
+          empty={!isLoading && ridesTrend.length === 0}
+          heightClass="h-56 sm:h-72"
+        >
+          <TrendArea
+            data={ridesTrend.map((point) => ({ day: point.day, count: point.count }))}
+            xKey="day"
+            yKey="count"
+            name="Rides"
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Ride status breakdown"
+          description="Requested, Accepted, Started, Cancelled & Completed"
+          heightClass="h-56 sm:h-64"
+          loading={isLoading}
+          empty={!isLoading && rideChartData.every((row) => row.value === 0)}
+        >
+          <RideStatusBoard items={rideChartData} />
+        </ChartCard>
+
+        <ChartCard
+          title="Distribution"
+          description="Proportional ride breakdown"
+          heightClass="h-auto min-h-[16rem] sm:min-h-[18rem]"
+          loading={isLoading}
+        >
+          <DonutMix
+            emptyCenter
+            items={rideChartData.map((row) => ({
+              label: row.label.toUpperCase(),
+              value: row.value,
+              color: row.color
+            }))}
+          />
+        </ChartCard>
+
         <ChartCard
           title="Ride funnel"
           description="Requested through completed"
@@ -220,32 +267,6 @@ export default function AdminDashboardPage() {
         </ChartCard>
 
         <ChartCard
-          title="Rides trend"
-          description="Daily ride volume over the last 14 days"
-          badge={
-            <span className="inline-flex items-center gap-2">
-              <span className="font-heading text-sm font-semibold tabular-nums">
-                {isLoading ? "—" : ridesTrendTotal.toLocaleString()}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-[11px] font-semibold text-slate-900">
-                <TrendingUp className="h-3 w-3" />
-                14 days
-              </span>
-            </span>
-          }
-          loading={isLoading}
-          empty={!isLoading && ridesTrend.length === 0}
-          heightClass="h-56 sm:h-72"
-        >
-          <TrendArea
-            data={ridesTrend.map((point) => ({ day: point.day, count: point.count }))}
-            xKey="day"
-            yKey="count"
-            name="Rides"
-          />
-        </ChartCard>
-
-        <ChartCard
           title="Drivers"
           description="Proportional status breakdown"
           heightClass="h-auto"
@@ -256,33 +277,6 @@ export default function AdminDashboardPage() {
             items={statusRows}
             centerLabel="Drivers"
             centerValue={driverStatusTotal}
-          />
-        </ChartCard>
-
-        <ChartCard
-          title="Rides by status"
-          description="Requested, accepted, started, canceled & completed"
-          heightClass="h-auto"
-          loading={isLoading}
-          empty={!isLoading && rideChartData.every((row) => row.value === 0)}
-        >
-          <RideStatusBoard items={rideChartData} />
-        </ChartCard>
-
-        <ChartCard
-          title="Distribution"
-          description="Proportional ride breakdown"
-          heightClass="h-auto"
-          loading={isLoading}
-        >
-          <DonutMix
-            items={rideChartData.map((row) => ({
-              label: row.label.toUpperCase(),
-              value: row.value,
-              color: row.color
-            }))}
-            centerLabel="Rides"
-            centerValue={rideChartData.reduce((sum, row) => sum + row.value, 0)}
           />
         </ChartCard>
 
@@ -302,7 +296,7 @@ export default function AdminDashboardPage() {
           description="Pending, released and remaining"
           heightClass="h-auto"
           loading={isLoading}
-          badge={opsDemo.commission ? demoBadge : <BadgeDollarSign className="h-4 w-4 text-[#fdb813]" />}
+          badge={opsDemo.commission ? demoBadge : <BadgeDollarSign className="h-4 w-4 text-[#f5c518]" />}
         >
           <CommissionBoard data={commission} />
         </ChartCard>
