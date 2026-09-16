@@ -10,6 +10,7 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { TrendArea } from "@/components/dashboard/TrendArea";
 import { DonutMix } from "@/components/dashboard/viz";
+import { Sparkline, SparkBars, SparkRows, SparkHeat } from "@/components/dashboard/Sparkline";
 import {
   RideFunnel,
   OutcomeTrend,
@@ -32,6 +33,7 @@ import {
   TrendingUp,
   BadgeDollarSign
 } from "lucide-react";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 
 function prettyStatus(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -53,6 +55,7 @@ function periodDelta(values: number[]) {
 }
 
 export default function AdminDashboardPage() {
+  const mounted = useHasMounted();
   const { data, loading: isLoading, error } = useAdminDashboardQuery();
   const {
     counts,
@@ -114,6 +117,9 @@ export default function AdminDashboardPage() {
 
   return (
     <AppShell title="Admin Dashboard">
+      {!mounted ? (
+        <div className="min-h-[40vh]" />
+      ) : (
       <PageContainer>
         {error ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -129,28 +135,35 @@ export default function AdminDashboardPage() {
             tone="brand"
             loading={isLoading}
             delta={ridesDelta}
-            sparkline={ridesTrend.map((point) => ({ day: point.day, count: point.count }))}
+            chart={
+              <Sparkline
+                data={ridesTrend.map((point) => ({ day: point.day, count: point.count }))}
+                variant="onBrand"
+              />
+            }
           />
           <MetricCard
             label="Total drivers"
             value={counts.totalDrivers}
             icon={Users}
             loading={isLoading}
-            bars={statusRows.map((row) => row.value)}
+            chart={<SparkBars values={statusRows.map((row) => row.value)} />}
           />
           <MetricCard
             label="Total partners"
             value={counts.totalPartners}
             icon={Briefcase}
             loading={isLoading}
-            sparkline={[{ count: counts.totalPartners }]}
+            chart={<SparkRows values={topAgents.map((agent) => agent.partners)} />}
           />
           <MetricCard
             label="Total agents"
             value={counts.totalSalesAgents}
             icon={UserCircle2}
             loading={isLoading}
-            bars={[counts.totalSalesAgents]}
+            chart={
+              <SparkHeat values={topAgents.map((agent) => agent.drivers + agent.partners)} />
+            }
           />
         </div>
 
@@ -190,7 +203,7 @@ export default function AdminDashboardPage() {
           description="Gross fare, last 14 days"
           loading={isLoading}
           empty={!isLoading && fareTrend.length === 0}
-          heightClass="h-56 sm:h-72"
+          heightClass="h-auto"
           badge={opsDemo.fareTrend ? demoBadge : undefined}
         >
           <FareTrend data={fareTrend} />
@@ -236,17 +249,14 @@ export default function AdminDashboardPage() {
           title="Drivers"
           description="Proportional status breakdown"
           heightClass="h-auto"
-          loading={false}
+          loading={isLoading}
+          empty={!isLoading && driverStatusTotal === 0}
         >
-          {isLoading ? (
-            <Skeleton className="h-52 w-full rounded-3xl" />
-          ) : (
-            <DonutMix
-              items={statusRows}
-              centerLabel="Drivers"
-              centerValue={driverStatusTotal}
-            />
-          )}
+          <DonutMix
+            items={statusRows}
+            centerLabel="Drivers"
+            centerValue={driverStatusTotal}
+          />
         </ChartCard>
 
         <ChartCard
@@ -254,6 +264,7 @@ export default function AdminDashboardPage() {
           description="Requested, accepted, started, canceled & completed"
           heightClass="h-auto"
           loading={isLoading}
+          empty={!isLoading && rideChartData.every((row) => row.value === 0)}
         >
           <RideStatusBoard items={rideChartData} />
         </ChartCard>
@@ -320,6 +331,7 @@ export default function AdminDashboardPage() {
           <AuditLogsSection variant="dashboard" />
         </Suspense>
       </PageContainer>
+      )}
     </AppShell>
   );
 }

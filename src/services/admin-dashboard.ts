@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher, isAbortError } from "@/lib/fetcher";
 import {
   DEMO_DOCUMENTS_PENDING,
   DEMO_FARE_TREND,
@@ -255,9 +255,12 @@ async function fetchOptionalJson(
   searchParams?: Record<string, string | number | undefined>
 ): Promise<unknown | null> {
   try {
-    return await fetcher<unknown>(buildApiUrl(path, searchParams), requestInit);
+    return await fetcher<unknown | null>(buildApiUrl(path, searchParams), {
+      ...requestInit,
+      ignoreHttpError: true
+    });
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    if (isAbortError(error)) throw error;
     return null;
   }
 }

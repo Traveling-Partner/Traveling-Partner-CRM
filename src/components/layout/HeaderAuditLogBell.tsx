@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { Bell, ScrollText } from "lucide-react";
@@ -44,8 +44,12 @@ function writeLastSeen() {
 
 /** Header bell — latest audit logs via existing GET /audit-logs/getAll. No new API. */
 export function HeaderAuditLogBell() {
-  const [lastSeen, setLastSeen] = useState(readLastSeen);
+  const [lastSeen, setLastSeen] = useState(0);
   const [selected, setSelected] = useState<AuditLogRow | null>(null);
+
+  useEffect(() => {
+    setLastSeen(readLastSeen());
+  }, []);
 
   const { data, isLoading, refetch } = useAuditLogsQuery({
     page: 0,

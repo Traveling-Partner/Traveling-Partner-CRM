@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RevealScope } from "@/components/dashboard/RevealScope";
 import { cn } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
 
@@ -60,7 +61,7 @@ export function ChartCard({
             <p className="text-sm font-medium">No data yet</p>
           </div>
         ) : (
-          <div className={heightClass}>{children}</div>
+          <RevealScope className={heightClass}>{children}</RevealScope>
         )}
       </div>
     </section>

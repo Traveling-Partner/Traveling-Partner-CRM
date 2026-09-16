@@ -394,6 +394,52 @@ export function DocumentsPending({ data }: { data: DashboardDocumentsPending }) 
   );
 }
 
+export function DriverStatusMix({
+  items
+}: {
+  items: Array<{ label: string; value: number; color: string }>;
+}) {
+  const barData = items.map((item) => ({
+    label: item.label.toUpperCase(),
+    value: item.value,
+    fill: item.color
+  }));
+
+  return (
+    <div className="h-56 sm:h-72">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={barData} margin={chartMargin}>
+          <CartesianGrid {...gridProps} />
+          <XAxis
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            tick={axisTick}
+            tickMargin={10}
+            interval={0}
+            angle={-15}
+            textAnchor="end"
+            height={44}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={axisTick}
+            width={28}
+            allowDecimals={false}
+          />
+          <Tooltip content={<AnalyticsTooltip />} cursor={{ fill: "rgba(148,163,184,0.12)" }} />
+          <Bar dataKey="value" name="Drivers" radius={BAR_TOP_RADIUS} maxBarSize={48}>
+            {barData.map((row) => (
+              <Cell key={row.label} fill={row.fill} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function RideStatusBoard({
   items
 }: {
