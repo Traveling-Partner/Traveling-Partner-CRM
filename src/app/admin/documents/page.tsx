@@ -227,10 +227,13 @@ export default function DocumentsQueuePage() {
   const [imageModalTitle, setImageModalTitle] = useState("Document preview");
 
   const previewDocsQuery = useDriverDocumentsQuery(previewDriver?.id, previewOpen);
-  const previewDocuments =
-    previewRole === "PARTNER"
-      ? previewDocsQuery.previewDocuments.filter((doc) => doc.id === "id-document")
-      : previewDocsQuery.previewDocuments;
+  const previewDocuments = useMemo(
+    () =>
+      previewRole === "PARTNER"
+        ? previewDocsQuery.previewDocuments.filter((doc) => doc.id === "id-document")
+        : previewDocsQuery.previewDocuments,
+    [previewRole, previewDocsQuery.previewDocuments]
+  );
   const previewLoading = previewDocsQuery.isLoading || previewDocsQuery.isFetching;
   const rawDocumentStatuses = previewDocsQuery.rawStatuses ?? {
     cnicStatus: "PENDING" as ApiDocStatus,
@@ -253,11 +256,14 @@ export default function DocumentsQueuePage() {
           documentStatusByDriverId?: Record<number, ApiDocStatus>;
         };
         if (previewRole === "PARTNER") {
+          const nextCnic = normalizeApiDocStatus(statuses.cnicStatus);
+          const prev = page.documentStatusesByPartnerId?.[userId]?.cnicStatus;
+          if (prev === nextCnic) return old;
           return {
             ...page,
             documentStatusesByPartnerId: {
               ...(page.documentStatusesByPartnerId ?? {}),
-              [userId]: { cnicStatus: normalizeApiDocStatus(statuses.cnicStatus) }
+              [userId]: { cnicStatus: nextCnic }
             }
           };
         }
@@ -266,6 +272,15 @@ export default function DocumentsQueuePage() {
           licenseStatus: normalizeApiDocStatus(statuses.licenseStatus),
           vehicleStatus: normalizeApiDocStatus(statuses.vehicleStatus)
         };
+        const prev = page.documentStatusesByDriverId?.[userId];
+        if (
+          prev &&
+          prev.cnicStatus === next.cnicStatus &&
+          prev.licenseStatus === next.licenseStatus &&
+          prev.vehicleStatus === next.vehicleStatus
+        ) {
+          return old;
+        }
         const summary =
           next.cnicStatus === "REJECTED" ||
           next.licenseStatus === "REJECTED" ||
@@ -388,9 +403,8 @@ export default function DocumentsQueuePage() {
   useEffect(() => {
     const selected =
       previewDocuments.find((doc) => doc.id === selectedDocumentId) ?? previewDocuments[0];
-    if (selected) {
-      setPreviewSrc(selected.frontUrl);
-    }
+    if (!selected) return;
+    setPreviewSrc((prev) => (prev === selected.frontUrl ? prev : selected.frontUrl));
   }, [previewDocuments, selectedDocumentId]);
 
   const openPreview = (

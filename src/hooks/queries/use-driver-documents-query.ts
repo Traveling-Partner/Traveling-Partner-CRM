@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useApiQuery } from "@/hooks/api";
 import { queryKeys } from "@/lib/api/query-keys";
 import {
@@ -15,8 +16,14 @@ export function useDriverDocumentsQuery(driverId: number | undefined, enabled = 
     queryFn: ({ token, signal }) => fetchDriverDocumentsPayload(driverId!, { token, signal })
   });
 
-  const previewDocuments = query.data ? buildPreviewDocuments(query.data) : [];
-  const rawStatuses = query.data ? buildRawDocumentStatuses(query.data) : null;
+  const previewDocuments = useMemo(
+    () => (query.data ? buildPreviewDocuments(query.data) : []),
+    [query.data]
+  );
+  const rawStatuses = useMemo(
+    () => (query.data ? buildRawDocumentStatuses(query.data) : null),
+    [query.data]
+  );
 
   return { ...query, previewDocuments, rawStatuses };
 }
