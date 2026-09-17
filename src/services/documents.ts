@@ -135,28 +135,11 @@ export async function fetchDocumentsQueueDrivers(
   });
 }
 
-function listRowHasEmbeddedDocStatus(row: object): boolean {
-  const record = row as Record<string, unknown>;
-  const nested =
-    record.documents && typeof record.documents === "object"
-      ? (record.documents as Record<string, unknown>)
-      : null;
-  const source = nested ?? record;
-  return (
-    source.cnicStatus != null ||
-    source.licenseStatus != null ||
-    source.drivingLicenseStatus != null ||
-    source.vehicleDocStatus != null ||
-    source.vehicleStatus != null ||
-    source.registrationStatus != null
-  );
-}
-
 /**
- * Documents queue prefers list APIs only (no per-user fan-out) when drivers/partners
- * list rows embed document status fields. If the list API does not yet embed statuses,
- * falls back to the legacy per-id fetches so badges stay correct.
- * Full image payloads still load only on preview/detail.
+ * Documents queue uses drivers + partners list only.
+ * Status badges come from list-embedded fields (`cnicStatus`, `licenseStatus`,
+ * `vehicleDocStatus`). Null status fields map to PENDING.
+ * Full image payloads still load only on preview/detail via GET /users/documents/{id}.
  */
 export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
@@ -186,84 +169,30 @@ export async function fetchDocumentsQueuePage(
         } as PaginatedResponse<PartnerRow>)
   ]);
 
-  const listHasStatuses =
-    drivers.content.some((driver) => listRowHasEmbeddedDocStatus(driver)) ||
-    partners.content.some((partner) => listRowHasEmbeddedDocStatus(partner));
-
-  if (listHasStatuses || (drivers.content.length === 0 && partners.content.length === 0)) {
-    const documentStatusesByDriverId: Record<number, DocumentStatusPayload> = {};
-    const documentStatusByDriverId: Record<number, ApiDocStatus> = {};
-    for (const driver of drivers.content) {
-      const raw = documentStatusesFromListRow(driver);
-      documentStatusesByDriverId[driver.id] = raw;
-      documentStatusByDriverId[driver.id] = summarizeDocumentVerificationStatus(raw);
-    }
-
-    const documentStatusesByPartnerId: Record<
-      number,
-      Pick<DocumentStatusPayload, "cnicStatus">
-    > = {};
-    for (const partner of partners.content) {
-      documentStatusesByPartnerId[partner.id] = {
-        cnicStatus: partnerCnicStatusFromListRow(partner)
-      };
-    }
-
-    return {
-      drivers,
-      partners,
-      documentStatusByDriverId,
-      documentStatusesByDriverId,
-      documentStatusesByPartnerId
-    };
+  const documentStatusesByDriverId: Record<number, DocumentStatusPayload> = {};
+  const documentStatusByDriverId: Record<number, ApiDocStatus> = {};
+  for (const driver of drivers.content) {
+    const raw = documentStatusesFromListRow(driver);
+    documentStatusesByDriverId[driver.id] = raw;
+    documentStatusByDriverId[driver.id] = summarizeDocumentVerificationStatus(raw);
   }
 
-  // Legacy fallback until list APIs embed document statuses.
-  const details = await Promise.all(
-    drivers.content.map(async (driver) => {
-      try {
-        const payload = await fetchDriverDocumentsPayload(driver.id, opts);
-        return {
-          id: driver.id,
-          summary: summarizeDocumentVerificationStatus(payload),
-          raw: buildRawDocumentStatuses(payload)
-        };
-      } catch {
-        return {
-          id: driver.id,
-          summary: "PENDING" as ApiDocStatus,
-          raw: {
-            cnicStatus: "PENDING" as ApiDocStatus,
-            licenseStatus: "PENDING" as ApiDocStatus,
-            vehicleStatus: "PENDING" as ApiDocStatus
-          }
-        };
-      }
-    })
-  );
-
-  const partnerDetails = await Promise.all(
-    partners.content.map(async (partner) => {
-      try {
-        const payload = await fetchDriverDocumentsPayload(partner.id, opts);
-        return {
-          id: partner.id,
-          cnicStatus: mapRawStatus(payload.cnicStatus)
-        };
-      } catch {
-        return { id: partner.id, cnicStatus: "PENDING" as ApiDocStatus };
-      }
-    })
-  );
+  const documentStatusesByPartnerId: Record<
+    number,
+    Pick<DocumentStatusPayload, "cnicStatus">
+  > = {};
+  for (const partner of partners.content) {
+    documentStatusesByPartnerId[partner.id] = {
+      cnicStatus: partnerCnicStatusFromListRow(partner)
+    };
+  }
 
   return {
     drivers,
     partners,
-    documentStatusByDriverId: Object.fromEntries(details.map((item) => [item.id, item.summary])),
-    documentStatusesByDriverId: Object.fromEntries(details.map((item) => [item.id, item.raw])),
-    documentStatusesByPartnerId: Object.fromEntries(
-      partnerDetails.map((item) => [item.id, { cnicStatus: item.cnicStatus }])
-    )
+    documentStatusByDriverId,
+    documentStatusesByDriverId,
+    documentStatusesByPartnerId
   };
 }
 
