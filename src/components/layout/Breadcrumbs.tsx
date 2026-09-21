@@ -124,7 +124,12 @@ export function Breadcrumbs() {
 
   visibleSegments.forEach((segment, index) => {
     const groupLabel = GROUP_BY_SEGMENT[segment];
-    if (groupLabel && !groupInserted) {
+    const segmentLabel = toTitle(segment);
+    // Skip the group crumb when the segment itself already carries that label
+    const isDuplicateGroup =
+      groupLabel === segmentLabel || items.some((item) => item.label === groupLabel);
+
+    if (groupLabel && !groupInserted && !isDuplicateGroup) {
       items.push({ label: groupLabel, isLast: false });
       groupInserted = true;
     }
@@ -134,7 +139,7 @@ export function Breadcrumbs() {
       : visibleSegments.slice(0, index + 1);
 
     items.push({
-      label: toTitle(segment),
+      label: segmentLabel,
       href: "/" + hrefSegments.join("/"),
       isLast: index === visibleSegments.length - 1
     });

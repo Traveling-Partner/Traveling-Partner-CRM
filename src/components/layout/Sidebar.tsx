@@ -24,7 +24,7 @@ import {
 } from "@/config/navigation";
 import { getDefaultRouteForRole } from "@/lib/rbac";
 
-function isLinkActive(pathname: string, href: string) {
+function isLinkActive(pathname: string, href: string, siblings?: SidebarLink[]) {
   if (pathname === href) return true;
 
   if (
@@ -38,11 +38,21 @@ function isLinkActive(pathname: string, href: string) {
     return false;
   }
 
-  return pathname.startsWith(`${href}/`);
+  if (!pathname.startsWith(`${href}/`)) return false;
+
+  /**
+   * A more specific sibling owns this path — e.g. on `/admin/safety/services`
+   * only "Emergency Services" highlights, not its parent `/admin/safety`.
+   */
+  return !siblings?.some(
+    (sibling) =>
+      sibling.href.length > href.length &&
+      (pathname === sibling.href || pathname.startsWith(`${sibling.href}/`))
+  );
 }
 
 function groupHasActiveChild(pathname: string, items: SidebarLink[]) {
-  return items.some((item) => isLinkActive(pathname, item.href));
+  return items.some((item) => isLinkActive(pathname, item.href, items));
 }
 
 interface SidebarProps {
@@ -63,11 +73,13 @@ interface NavLinkProps {
   pathname: string;
   collapsed: boolean;
   nested?: boolean;
+  /** Links this one competes with for the active highlight. */
+  siblings?: SidebarLink[];
   onNavigate: () => void;
 }
 
-function NavLink({ item, pathname, collapsed, nested, onNavigate }: NavLinkProps) {
-  const isActive = isLinkActive(pathname, item.href);
+function NavLink({ item, pathname, collapsed, nested, siblings, onNavigate }: NavLinkProps) {
+  const isActive = isLinkActive(pathname, item.href, siblings);
 
   return (
     <Link
@@ -154,7 +166,7 @@ function NavGroup({
                 href={item.href}
                 className={cn(
                   "flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm",
-                  isLinkActive(pathname, item.href)
+                  isLinkActive(pathname, item.href, group.items)
                     ? "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 focus:text-slate-900"
                     : "text-foreground focus:bg-accent focus:text-accent-foreground"
                 )}
@@ -213,6 +225,7 @@ function NavGroup({
               pathname={pathname}
               collapsed={collapsed}
               nested
+              siblings={group.items}
               onNavigate={onNavigate}
             />
           ))}
