@@ -1,4 +1,5 @@
 import type { DefaultOptions } from "@tanstack/react-query";
+import { RequestTimeoutError } from "@/lib/fetcher";
 
 function isAbortError(error: unknown): boolean {
   return (
@@ -25,6 +26,8 @@ export const defaultQueryClientOptions: DefaultOptions = {
     gcTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
       if (isAbortError(error)) return false;
+      // Retrying a timeout just doubles how long the loader stays up
+      if (error instanceof RequestTimeoutError) return false;
       return failureCount < 1;
     },
     refetchOnWindowFocus: false,
