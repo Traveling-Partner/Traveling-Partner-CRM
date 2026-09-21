@@ -23,8 +23,7 @@ import {
   TrendingUp,
   ShieldAlert,
   Siren,
-  Phone,
-  Settings
+  Phone
 } from "lucide-react";
 import { ROLES, type AppRole } from "@/lib/roles";
 
@@ -136,16 +135,14 @@ export const vehicleManagementGroup: SidebarGroup = {
   ]
 };
 
-/** Admin-only Safety Center (SOS) — mock module until APIs exist. */
+/** Admin-only Safety Center (SOS). */
 export const safetyCenterGroup: SidebarGroup = {
   id: "safety-center",
   label: "Safety Center",
   icon: ShieldAlert,
   items: [
-    { label: "Overview", href: "/admin/safety", icon: LayoutDashboard },
-    { label: "SOS Incidents", href: "/admin/safety/incidents", icon: Siren },
-    { label: "Emergency Services", href: "/admin/safety/services", icon: Phone },
-    { label: "Safety Settings", href: "/admin/safety/settings", icon: Settings }
+    { label: "SOS Overview", href: "/admin/safety", icon: Siren },
+    { label: "Emergency Services", href: "/admin/safety/services", icon: Phone }
   ]
 };
 

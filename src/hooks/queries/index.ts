@@ -20,6 +20,13 @@ export { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newslett
 export { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
 export { useRideDetailQuery } from "@/hooks/queries/use-ride-detail-query";
 export {
+  useSosOverviewQuery,
+  useSosIncidentsQuery,
+  useSosIncidentDetailQuery,
+  useUpdateSosIncidentStatusMutation,
+  useAddSosCaseNoteMutation
+} from "@/hooks/queries/use-sos-incidents";
+export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
   useVehicleColorsQuery,
