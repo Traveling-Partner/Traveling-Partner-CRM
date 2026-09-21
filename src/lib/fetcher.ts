@@ -13,10 +13,26 @@ interface FetcherOptions extends RequestInit {
    * Use for optional endpoints so Next.js does not treat expected misses as runtime errors.
    */
   ignoreHttpError?: boolean;
+  /** Abort after this long so a hung backend cannot spin a loader forever. */
+  timeoutMs?: number;
 }
 
 const FALLBACK_ERROR = "Request failed. Please try again.";
 const NETWORK_ERROR = "Unable to reach the server. Please try again.";
+const TIMEOUT_ERROR = "The server took too long to respond. Please try again.";
+
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+/**
+ * Distinct from `AbortError`: a timeout is a real failure the UI must surface,
+ * not a cancellation that should leave the query pending.
+ */
+export class RequestTimeoutError extends Error {
+  constructor(message = TIMEOUT_ERROR) {
+    super(message);
+    this.name = "RequestTimeoutError";
+  }
+}
 
 /**
  * Wait one task so React Strict Mode remount (subscribe → unsubscribe → subscribe)
@@ -108,8 +124,16 @@ export async function fetcher<T = unknown>(
   endpoint: string,
   options: FetcherOptions = {}
 ): Promise<T> {
-  const { token, headers, dedupe: _dedupe, debugLabel, signal, ignoreHttpError, ...rest } =
-    options;
+  const {
+    token,
+    headers,
+    dedupe: _dedupe,
+    debugLabel,
+    signal,
+    ignoreHttpError,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    ...rest
+  } = options;
   const method = (rest.method ?? "GET").toUpperCase();
   const key = getDedupeKey(method, endpoint);
   /**
@@ -135,7 +159,14 @@ export async function fetcher<T = unknown>(
   }
 
   const controller = useDedupe ? new AbortController() : null;
-  const fetchSignal = controller?.signal ?? signal;
+  /** Deduped GETs already own a controller; other methods need one to time out. */
+  const abortController = controller ?? new AbortController();
+  if (!controller && signal) {
+    if (signal.aborted) abortController.abort();
+    else signal.addEventListener("abort", () => abortController.abort(), { once: true });
+  }
+  const fetchSignal = abortController.signal;
+  let timedOut = false;
 
   const run = async (): Promise<T> => {
     const storageToken =
@@ -164,6 +195,9 @@ export async function fetcher<T = unknown>(
         }
       });
     } catch (error) {
+      if (timedOut) {
+        throw new RequestTimeoutError();
+      }
       if (isAbortError(error)) {
         throw error;
       }
@@ -186,12 +220,22 @@ export async function fetcher<T = unknown>(
     return data as T;
   };
 
-  const promise = run().catch((error: unknown) => {
-    if (isAbortError(error) && shouldDebugApi()) {
-      console.debug("[fetcher] aborted", { label: debugLabel, method, endpoint });
-    }
-    throw error;
-  });
+  const timeoutTimer = setTimeout(() => {
+    timedOut = true;
+    abortController.abort();
+  }, timeoutMs);
+
+  const promise = run()
+    .catch((error: unknown) => {
+      if (timedOut) {
+        throw new RequestTimeoutError();
+      }
+      if (isAbortError(error) && shouldDebugApi()) {
+        console.debug("[fetcher] aborted", { label: debugLabel, method, endpoint });
+      }
+      throw error;
+    })
+    .finally(() => clearTimeout(timeoutTimer));
 
   if (useDedupe && controller) {
     const entry: InFlightGet = {
