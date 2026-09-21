@@ -27,10 +27,28 @@ import {
   useUpdateSosIncidentStatusMutation
 } from "@/hooks/queries/use-sos-incidents";
 import type { SosIncidentStatusAction } from "@/services/sos-incidents";
+import { cn } from "@/lib/utils";
 
 function formatEnum(value: string | null | undefined): string {
   if (!value) return "—";
   return value.replace(/_/g, " ");
+}
+
+function EmptyPanel({
+  icon: Icon,
+  message
+}: {
+  icon: typeof Siren;
+  message: string;
+}) {
+  return (
+    <div className="flex min-h-[8rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/10 px-4 py-6 text-center">
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Icon className="h-4 w-4" />
+      </span>
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -51,6 +69,7 @@ export default function AdminSafetyIncidentDetailPage() {
   const incident = detailQuery.data ?? null;
   const trip = incident?.trip ?? null;
   const isClosed = Boolean(incident?.resolution);
+  const hasContacts = (incident?.emergencyContacts.length ?? 0) > 0;
 
   const routePoints = useMemo<SosMapPoint[]>(() => {
     if (!incident) return [];
@@ -175,85 +194,18 @@ export default function AdminSafetyIncidentDetailPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <SectionCard
-            className="lg:col-span-2"
-            title="Ride route & SOS location"
-            description="Pickup to dropoff, with the point where SOS was triggered."
-          >
-            {routePoints.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No ride or location data is linked to this incident.
-              </p>
-            ) : (
-              <LocationMapPlaceholder points={routePoints} />
-            )}
-          </SectionCard>
-
-          <SectionCard
-            title="Case actions"
-            description={isClosed ? "This case is closed." : "Move this case forward."}
-          >
-            {isClosed && incident.resolution ? (
-              <dl className="space-y-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Outcome</dt>
-                  <dd className="mt-1">
-                    <StatusBadge status={incident.resolution.status} />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Comment</dt>
-                  <dd className="font-medium">
-                    {incident.resolution.comment || "No comment recorded."}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Closed by</dt>
-                  <dd className="font-medium">
-                    {incident.resolution.resolvedBy?.name ?? "—"}
-                    <span className="block text-xs text-muted-foreground">
-                      {formatDateTime(incident.resolution.resolvedAt)}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  disabled={incident.status !== "ACTIVE" || isUpdatingStatus}
-                  onClick={() => runStatusUpdate("ACKNOWLEDGED", "SOS acknowledged")}
-                >
-                  Acknowledge
-                </Button>
-                <Textarea
-                  placeholder="Resolution comment (saved with resolve / false alarm)"
-                  rows={3}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  disabled={isUpdatingStatus}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isUpdatingStatus}
-                  onClick={() => runStatusUpdate("RESOLVED", "SOS marked resolved")}
-                >
-                  Resolve
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isUpdatingStatus}
-                  onClick={() => runStatusUpdate("FALSE_ALARM", "Marked as false alarm")}
-                >
-                  False alarm
-                </Button>
-              </div>
-            )}
-          </SectionCard>
-        </div>
+        <SectionCard
+          title="Ride route & SOS location"
+          description="Pickup to dropoff, with the point where SOS was triggered."
+        >
+          {routePoints.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No ride or location data is linked to this incident.
+            </p>
+          ) : (
+            <LocationMapPlaceholder points={routePoints} />
+          )}
+        </SectionCard>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <SectionCard
@@ -345,25 +297,30 @@ export default function AdminSafetyIncidentDetailPage() {
           </SectionCard>
         </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div
+          className={cn(
+            "mt-4 grid gap-4 md:grid-cols-2",
+            hasContacts && "xl:grid-cols-3"
+          )}
+        >
           <SectionCard
             title="Emergency actions pressed"
             description="In-app actions the user triggered during this SOS"
           >
             {incident.emergencyActions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No emergency action was pressed.
-              </p>
+              <EmptyPanel icon={Siren} message="No emergency action was pressed." />
             ) : (
               <ul className="space-y-2">
                 {incident.emergencyActions.map((action) => (
                   <li
                     key={`${action.action}-${action.triggeredAt}`}
-                    className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm"
+                    className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2.5 text-sm"
                   >
-                    <Siren className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-600 dark:text-red-400">
+                      <Siren className="h-4 w-4" />
+                    </span>
                     <div className="min-w-0">
-                      <p className="font-medium">{formatEnum(action.action)}</p>
+                      <p className="truncate font-medium">{formatEnum(action.action)}</p>
                       <p className="text-[11px] text-muted-foreground">
                         {formatDateTime(action.triggeredAt)}
                       </p>
@@ -374,27 +331,33 @@ export default function AdminSafetyIncidentDetailPage() {
             )}
           </SectionCard>
 
-          {incident.emergencyContacts.length > 0 && (
+          {hasContacts && (
             <SectionCard
               title="Emergency contacts"
               description="Shared by the app when SOS was triggered"
             >
-              <ul className="space-y-2">
+              <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
                 {incident.emergencyContacts.map((c) => (
                   <li
                     key={`${c.name}-${c.phone}`}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2 text-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/10 px-3 py-2.5 text-sm"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {[formatEnum(c.relation), formatEnum(c.userRole), c.phone]
-                          .filter((part) => part && part !== "—")
+                      <p className="truncate font-mono text-xs tabular-nums text-muted-foreground">
+                        {c.phone}
+                      </p>
+                      <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
+                        {[formatEnum(c.relation), formatEnum(c.userRole)]
+                          .filter((part) => part !== "—")
                           .join(" · ")}
                       </p>
                     </div>
-                    <Button asChild size="sm" variant="outline">
-                      <a href={`tel:${c.phone}`}>Call</a>
+                    <Button asChild size="sm" variant="outline" className="shrink-0">
+                      <a href={`tel:${c.phone}`}>
+                        <Phone className="mr-1 h-3.5 w-3.5" />
+                        Call
+                      </a>
                     </Button>
                   </li>
                 ))}
@@ -404,26 +367,36 @@ export default function AdminSafetyIncidentDetailPage() {
 
           <SectionCard
             title="Nearby services"
-            description={incident.city ? `City: ${incident.city}` : "Emergency helplines"}
+            description={
+              incident.city
+                ? `${incident.nearbyServices.length} helpline(s) · ${incident.city}`
+                : `${incident.nearbyServices.length} helpline(s)`
+            }
           >
             {incident.nearbyServices.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No emergency services matched this location.
-              </p>
+              <EmptyPanel
+                icon={Phone}
+                message="No emergency services matched this location."
+              />
             ) : (
-              <ul className="space-y-2">
+              <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
                 {incident.nearbyServices.map((s) => (
                   <li
                     key={s.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2 text-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/10 px-3 py-2.5 text-sm"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{s.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {[s.state, s.number].filter(Boolean).join(" · ")}
+                      <p className="truncate font-mono text-xs tabular-nums text-muted-foreground">
+                        {s.number}
                       </p>
+                      {s.state && (
+                        <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
+                          {s.state}
+                        </p>
+                      )}
                     </div>
-                    <Button asChild size="sm" variant="outline">
+                    <Button asChild size="sm" variant="outline" className="shrink-0">
                       <a href={`tel:${s.number}`}>
                         <Phone className="mr-1 h-3.5 w-3.5" />
                         Call
@@ -457,6 +430,73 @@ export default function AdminSafetyIncidentDetailPage() {
             }}
             onSubmit={handleNoteSubmit}
           />
+        </SectionCard>
+
+        <SectionCard
+          className="mt-4"
+          title="Case actions"
+          description={isClosed ? "This case is closed." : "Move this case forward."}
+        >
+          {isClosed && incident.resolution ? (
+            <dl className="grid gap-3 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-muted-foreground">Outcome</dt>
+                <dd className="mt-1">
+                  <StatusBadge status={incident.resolution.status} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Comment</dt>
+                <dd className="font-medium">
+                  {incident.resolution.comment || "No comment recorded."}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Closed by</dt>
+                <dd className="font-medium">
+                  {incident.resolution.resolvedBy?.name ?? "—"}
+                  <span className="block text-xs text-muted-foreground">
+                    {formatDateTime(incident.resolution.resolvedAt)}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Resolution comment (saved with resolve / false alarm)"
+                rows={3}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                disabled={isUpdatingStatus}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  disabled={incident.status !== "ACTIVE" || isUpdatingStatus}
+                  onClick={() => runStatusUpdate("ACKNOWLEDGED", "SOS acknowledged")}
+                >
+                  Acknowledge
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isUpdatingStatus}
+                  onClick={() => runStatusUpdate("RESOLVED", "SOS marked resolved")}
+                >
+                  Resolve
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isUpdatingStatus}
+                  onClick={() => runStatusUpdate("FALSE_ALARM", "Marked as false alarm")}
+                >
+                  False alarm
+                </Button>
+              </div>
+            </div>
+          )}
         </SectionCard>
       </PageContainer>
     </AppShell>
