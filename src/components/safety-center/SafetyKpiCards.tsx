@@ -40,7 +40,7 @@ export function SafetyKpiCards({
       <MetricCard
         label="Total tracked"
         value={total}
-        hint="Mock seed set"
+        hint="All SOS incidents"
         icon={Radio}
       />
     </div>

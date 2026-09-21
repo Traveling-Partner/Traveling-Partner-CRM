@@ -75,7 +75,14 @@ export const queryKeys = {
   },
   sos: {
     all: ["sos"] as const,
-    list: (filters: SosListFilters) => ["sos", "list", filters] as const
+    list: (filters: SosListFilters) => ["sos", "list", filters] as const,
+    overview: () => ["sos", "overview"] as const,
+    /** Prefix for every incidents list page — invalidate without touching detail. */
+    incidentLists: ["sos", "incidents", "list"] as const,
+    incidentList: (filters: SosIncidentsListFilters) =>
+      ["sos", "incidents", "list", filters] as const,
+    incidentDetail: (id: string | number) =>
+      ["sos", "incidents", "detail", String(id)] as const
   },
   platformFee: {
     all: ["platformFee"] as const,
@@ -178,6 +185,17 @@ export interface SosListFilters {
   page: number;
   pageSize: number;
   search: string;
+}
+
+export interface SosIncidentsListFilters {
+  page: number;
+  pageSize: number;
+  /** SOS code, rider name or driver name. */
+  search: string;
+  status: string;
+  city: string;
+  /** Matches when the id is either the ride's rider or its driver. */
+  userId: string;
 }
 
 export interface PlatformFeeListFilters {
