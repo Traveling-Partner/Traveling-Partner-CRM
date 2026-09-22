@@ -76,28 +76,28 @@ export function fetchVehicleTypes(
   filters: VehicleTypesListFilters,
   opts: RequestOpts
 ) {
-  return fetchEnvelopePage<VehicleEntity>("/vehicleTypes/getAll", filters, opts, "vehicle:types");
+  return fetchEnvelopePage<VehicleEntity>("/vehicleTypes/portal/getAll", filters, opts, "vehicle:types");
 }
 
 export function fetchVehicleModels(
   filters: VehicleModelsListFilters,
   opts: RequestOpts
 ) {
-  return fetchEnvelopePage<VehicleModel>("/modelYears/getAll", filters, opts, "vehicle:models");
+  return fetchEnvelopePage<VehicleModel>("/modelYears/portal/getAll", filters, opts, "vehicle:models");
 }
 
 export function fetchVehicleColors(
   filters: VehicleColorsListFilters,
   opts: RequestOpts
 ) {
-  return fetchEnvelopePage<VehicleModelVariant>("/modelVariants/getAll", filters, opts, "vehicle:model-variants");
+  return fetchEnvelopePage<VehicleModelVariant>("/modelVariants/portal/getAll", filters, opts, "vehicle:model-variants");
 }
 
 export function fetchVehicleBrands(
   filters: VehicleBrandsListFilters,
   opts: RequestOpts
 ) {
-  return fetchEnvelopePage<VehicleBrand>("/brands/getAll", filters, opts, "vehicle:brands");
+  return fetchEnvelopePage<VehicleBrand>("/brands/portal/getAll", filters, opts, "vehicle:brands");
 }
 
 /** Walks every GET page so Add/Edit dropdowns are not stuck on the first page. */
@@ -122,15 +122,15 @@ async function fetchAllEnvelopePages<T>(
 }
 
 export function fetchAllVehicleTypes(opts: RequestOpts) {
-  return fetchAllEnvelopePages<VehicleEntity>("/vehicleTypes/getAll", opts, "vehicle:types-all");
+  return fetchAllEnvelopePages<VehicleEntity>("/vehicleTypes/portal/getAll", opts, "vehicle:types-all");
 }
 
 export function fetchAllVehicleBrands(opts: RequestOpts) {
-  return fetchAllEnvelopePages<VehicleBrand>("/brands/getAll", opts, "vehicle:brands-all");
+  return fetchAllEnvelopePages<VehicleBrand>("/brands/portal/getAll", opts, "vehicle:brands-all");
 }
 
 export function fetchAllVehicleModels(opts: RequestOpts) {
-  return fetchAllEnvelopePages<VehicleModel>("/modelYears/getAll", opts, "vehicle:models-all");
+  return fetchAllEnvelopePages<VehicleModel>("/modelYears/portal/getAll", opts, "vehicle:models-all");
 }
 
 export interface VehicleTypePayload {
