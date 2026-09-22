@@ -56,6 +56,9 @@ export async function fetchBlogList(
   if (filters.featured !== "all") {
     params.set("isFeatured", filters.featured);
   }
+  if (filters.category !== "all") {
+    params.set("categoryName", filters.category);
+  }
 
   const url = `${apiUrl("/blog/getAll")}?${params.toString()}`;
   const res = await fetcher<unknown>(url, {
