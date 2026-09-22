@@ -32,12 +32,16 @@ import {
 } from "@/lib/documents-utils";
 import { queryKeys } from "@/lib/api/query-keys";
 import {
+  buildRawDocumentStatuses,
+  fetchDriverDocumentsPayload,
   updateDriverDocumentStatus,
   updatePartnerCnicStatus,
+  type DocumentQueueApiRow,
   type DocumentStatusPayload,
   type PreviewDocument
 } from "@/services/documents";
-import type { DriverRow, PartnerRow } from "@/services/users";
+import { useAuthToken } from "@/hooks/api/use-auth-token";
+import type { DriverRow } from "@/services/users";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import TPLoader from "@/components/TPLoader";
 
@@ -55,33 +59,33 @@ interface DocumentQueueRow {
   status: ApiDocStatus;
 }
 
-function partnerAsQueueUser(partner: PartnerRow): DriverRow {
+/** Minimal user shape the table cells and preview dialog read. */
+function queueUserFromRow(row: DocumentQueueApiRow): DriverRow {
+  const name = row.name ?? "";
   return {
-    id: partner.id,
-    name: partner.name,
-    username: partner.name,
-    email: partner.email,
-    mobileNumber: partner.mobileNumber ?? "",
-    gender: partner.gender,
-    referralCode: partner.referralCode,
-    city: partner.city,
-    cnicNumber: partner.cnicNumber,
-    status: partner.status,
-    profilePicture: partner.profilePicture,
-    createdAt: partner.createdAt ?? null
-  };
+    id: row.userId,
+    name,
+    username: name,
+    email: row.email ?? "",
+    mobileNumber: row.mobileNumber ?? "",
+    gender: row.gender ?? "",
+    referralCode: "",
+    city: row.city ?? "",
+    cnicNumber: row.cnicNumber ?? "",
+    status: row.status,
+    profilePicture: null,
+    createdAt: null
+  } as DriverRow;
 }
 
-const DOCUMENT_ENTRIES: Array<{
-  kind: DocumentKind;
-  previewId: PreviewDocument["id"];
-  label: string;
-  apiFilter: string;
-}> = [
-  { kind: "cnic", previewId: "id-document", label: "CNIC", apiFilter: "CNIC" },
-  { kind: "license", previewId: "driver-license", label: "License", apiFilter: "LICENSE" },
-  { kind: "vehicle", previewId: "vehicle-registration", label: "Vehicle", apiFilter: "VEHICLE" }
-];
+const DOCUMENT_TYPE_MAP: Record<
+  string,
+  { kind: DocumentKind; previewId: PreviewDocument["id"]; label: string }
+> = {
+  CNIC: { kind: "cnic", previewId: "id-document", label: "CNIC" },
+  LICENSE: { kind: "license", previewId: "driver-license", label: "License" },
+  VEHICLE: { kind: "vehicle", previewId: "vehicle-registration", label: "Vehicle" }
+};
 
 const PENDING_STATUSES: DocumentStatusPayload = {
   cnicStatus: "PENDING",
@@ -131,6 +135,7 @@ function previewDocLabel(id: PreviewDocument["id"]): string {
 export default function DocumentsQueuePage() {
   const { success, error } = useToast();
   const queryClient = useQueryClient();
+  const token = useAuthToken();
 
   const [nameFilter, setNameFilter] = useState("");
   const [phoneFilter, setPhoneFilter] = useState("");
@@ -152,70 +157,28 @@ export default function DocumentsQueuePage() {
     documentType: documentTypeFilter
   });
 
-  const drivers = queueQuery.data?.drivers.content ?? [];
-  const partners = queueQuery.data?.partners.content ?? [];
-  const documentStatusesByDriverId = queueQuery.data?.documentStatusesByDriverId ?? {};
-  const documentStatusesByPartnerId = queueQuery.data?.documentStatusesByPartnerId ?? {};
-  const includePartnerCnic =
-    documentTypeFilter === "all" || documentTypeFilter === "CNIC";
-  const totalPages = Math.max(
-    queueQuery.data?.drivers.totalPages ?? 1,
-    includePartnerCnic ? (queueQuery.data?.partners.totalPages ?? 0) : 0,
-    1
-  );
+  const queueRows = useMemo(() => queueQuery.data?.content ?? [], [queueQuery.data]);
+  const totalPages = Math.max(queueQuery.data?.totalPages ?? 1, 1);
   const loading = queueQuery.isLoading || queueQuery.isFetching;
   const resetPage = () => setPage(0);
 
-  const documentRows: DocumentQueueRow[] = useMemo(() => {
-    const driverRows = drivers.flatMap((driver) =>
-      DOCUMENT_ENTRIES.map((entry) => {
-        const raw = documentStatusesByDriverId[driver.id];
-        const statusValue =
-          entry.kind === "cnic"
-            ? raw?.cnicStatus
-            : entry.kind === "license"
-              ? raw?.licenseStatus
-              : raw?.vehicleStatus;
+  const documentRows: DocumentQueueRow[] = useMemo(
+    () =>
+      queueRows.map((row) => {
+        const type = (row.documentType ?? "").toUpperCase();
+        const entry = DOCUMENT_TYPE_MAP[type] ?? DOCUMENT_TYPE_MAP.CNIC;
         return {
-          rowId: `driver-${driver.id}-${entry.kind}`,
+          rowId: `${row.role}-${row.userId}-${type || entry.kind}`,
           kind: entry.kind,
           previewId: entry.previewId,
           label: entry.label,
-          driver,
-          role: "DRIVER" as const,
-          status: normalizeApiDocStatus(statusValue)
+          driver: queueUserFromRow(row),
+          role: row.role === "PARTNER" ? ("PARTNER" as const) : ("DRIVER" as const),
+          status: normalizeApiDocStatus(row.status)
         };
-      })
-    );
-
-    const partnerRows: DocumentQueueRow[] = includePartnerCnic
-      ? partners.map((partner) => ({
-          rowId: `partner-${partner.id}-cnic`,
-          kind: "cnic" as const,
-          previewId: "id-document" as const,
-          label: "CNIC",
-          driver: partnerAsQueueUser(partner),
-          role: "PARTNER" as const,
-          status: normalizeApiDocStatus(documentStatusesByPartnerId[partner.id]?.cnicStatus)
-        }))
-      : [];
-
-    const rows = [...partnerRows, ...driverRows];
-
-    if (documentTypeFilter === "all") return rows;
-    return rows.filter(
-      (row) =>
-        DOCUMENT_ENTRIES.find((entry) => entry.kind === row.kind)?.apiFilter ===
-        documentTypeFilter
-    );
-  }, [
-    drivers,
-    partners,
-    documentStatusesByDriverId,
-    documentStatusesByPartnerId,
-    documentTypeFilter,
-    includePartnerCnic
-  ]);
+      }),
+    [queueRows]
+  );
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDriver, setPreviewDriver] = useState<DriverRow | null>(null);
@@ -235,82 +198,6 @@ export default function DocumentsQueuePage() {
     [previewRole, previewDocsQuery.previewDocuments]
   );
   const previewLoading = previewDocsQuery.isLoading || previewDocsQuery.isFetching;
-  const rawDocumentStatuses = previewDocsQuery.rawStatuses ?? {
-    cnicStatus: "PENDING" as ApiDocStatus,
-    licenseStatus: "PENDING" as ApiDocStatus,
-    vehicleStatus: "PENDING" as ApiDocStatus
-  };
-
-  // When preview loads full docs, sync status badges into the queue cache (no extra list fan-out).
-  useEffect(() => {
-    if (!previewOpen || !previewDriver?.id || !previewDocsQuery.rawStatuses) return;
-    const userId = previewDriver.id;
-    const statuses = previewDocsQuery.rawStatuses;
-    queryClient.setQueriesData(
-      { queryKey: ["users", "documents", "queue"] },
-      (old: unknown) => {
-        if (!old || typeof old !== "object") return old;
-        const page = old as {
-          documentStatusesByDriverId?: Record<number, DocumentStatusPayload>;
-          documentStatusesByPartnerId?: Record<number, { cnicStatus: ApiDocStatus }>;
-          documentStatusByDriverId?: Record<number, ApiDocStatus>;
-        };
-        if (previewRole === "PARTNER") {
-          const nextCnic = normalizeApiDocStatus(statuses.cnicStatus);
-          const prev = page.documentStatusesByPartnerId?.[userId]?.cnicStatus;
-          if (prev === nextCnic) return old;
-          return {
-            ...page,
-            documentStatusesByPartnerId: {
-              ...(page.documentStatusesByPartnerId ?? {}),
-              [userId]: { cnicStatus: nextCnic }
-            }
-          };
-        }
-        const next: DocumentStatusPayload = {
-          cnicStatus: normalizeApiDocStatus(statuses.cnicStatus),
-          licenseStatus: normalizeApiDocStatus(statuses.licenseStatus),
-          vehicleStatus: normalizeApiDocStatus(statuses.vehicleStatus)
-        };
-        const prev = page.documentStatusesByDriverId?.[userId];
-        if (
-          prev &&
-          prev.cnicStatus === next.cnicStatus &&
-          prev.licenseStatus === next.licenseStatus &&
-          prev.vehicleStatus === next.vehicleStatus
-        ) {
-          return old;
-        }
-        const summary =
-          next.cnicStatus === "REJECTED" ||
-          next.licenseStatus === "REJECTED" ||
-          next.vehicleStatus === "REJECTED"
-            ? "REJECTED"
-            : next.cnicStatus === "APPROVED" &&
-                next.licenseStatus === "APPROVED" &&
-                next.vehicleStatus === "APPROVED"
-              ? "APPROVED"
-              : "PENDING";
-        return {
-          ...page,
-          documentStatusesByDriverId: {
-            ...(page.documentStatusesByDriverId ?? {}),
-            [userId]: next
-          },
-          documentStatusByDriverId: {
-            ...(page.documentStatusByDriverId ?? {}),
-            [userId]: summary
-          }
-        };
-      }
-    );
-  }, [
-    previewOpen,
-    previewDriver?.id,
-    previewRole,
-    previewDocsQuery.rawStatuses,
-    queryClient
-  ]);
 
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
   const [decisionType, setDecisionType] = useState<DecisionType | null>(null);
@@ -337,56 +224,9 @@ export default function DocumentsQueuePage() {
       return updateDriverDocumentStatus(variables.userId, variables.payload, { token });
     },
     onSuccess: async (_data, variables) => {
-      // Patch queue caches in place so we don't need a full list remount before UI updates.
-      queryClient.setQueriesData(
-        { queryKey: ["users", "documents", "queue"] },
-        (old: unknown) => {
-          if (!old || typeof old !== "object") return old;
-          const page = old as {
-            documentStatusesByDriverId?: Record<number, DocumentStatusPayload>;
-            documentStatusesByPartnerId?: Record<number, { cnicStatus: ApiDocStatus }>;
-            documentStatusByDriverId?: Record<number, ApiDocStatus>;
-          };
-          if (variables.role === "PARTNER") {
-            return {
-              ...page,
-              documentStatusesByPartnerId: {
-                ...(page.documentStatusesByPartnerId ?? {}),
-                [variables.userId]: { cnicStatus: variables.payload.cnicStatus }
-              }
-            };
-          }
-          return {
-            ...page,
-            documentStatusesByDriverId: {
-              ...(page.documentStatusesByDriverId ?? {}),
-              [variables.userId]: {
-                cnicStatus: variables.payload.cnicStatus,
-                licenseStatus: variables.payload.licenseStatus,
-                vehicleStatus: variables.payload.vehicleStatus
-              }
-            },
-            documentStatusByDriverId: {
-              ...(page.documentStatusByDriverId ?? {}),
-              [variables.userId]: normalizeApiDocStatus(
-                variables.payload.cnicStatus === "REJECTED" ||
-                  variables.payload.licenseStatus === "REJECTED" ||
-                  variables.payload.vehicleStatus === "REJECTED"
-                  ? "REJECTED"
-                  : variables.payload.cnicStatus === "APPROVED" &&
-                      variables.payload.licenseStatus === "APPROVED" &&
-                      variables.payload.vehicleStatus === "APPROVED"
-                    ? "APPROVED"
-                    : "PENDING"
-              )
-            }
-          };
-        }
-      );
       await queryClient.invalidateQueries({
         queryKey: queryKeys.users.driverDocuments(variables.userId)
       });
-      // Soft refetch lists only (no per-user docs fan-out when list embeds statuses).
       await queryClient.invalidateQueries({ queryKey: ["users", "documents", "queue"] });
       if (variables.role === "PARTNER") {
         await queryClient.invalidateQueries({
@@ -466,15 +306,32 @@ export default function DocumentsQueuePage() {
     [error]
   );
 
+  /**
+   * The queue row only knows its own document's status, but the driver PUT sends
+   * all three — so read the current set before overwriting one of them.
+   */
+  const resolveCurrentStatuses = async (
+    driver: DriverRow,
+    role: QueueRole
+  ): Promise<DocumentStatusPayload> => {
+    if (previewDriver?.id === driver.id && previewDocsQuery.rawStatuses) {
+      return previewDocsQuery.rawStatuses;
+    }
+    if (role === "PARTNER" || !token) return PENDING_STATUSES;
+    try {
+      const payload = await fetchDriverDocumentsPayload(driver.id, { token });
+      return buildRawDocumentStatuses(payload);
+    } catch {
+      return PENDING_STATUSES;
+    }
+  };
+
   const buildDecisionPayload = (
     type: DecisionType,
-    driver: DriverRow,
+    source: DocumentStatusPayload,
     selectedId: PreviewDocument["id"],
     rejectionReasonText?: string
   ): DocumentStatusPayload => {
-    const fromPreview =
-      previewDriver?.id === driver.id ? rawDocumentStatuses : undefined;
-    const source = fromPreview ?? documentStatusesByDriverId[driver.id] ?? PENDING_STATUSES;
     const payload: DocumentStatusPayload = {
       cnicStatus: normalizeApiDocStatus(source.cnicStatus),
       licenseStatus: normalizeApiDocStatus(source.licenseStatus),
@@ -502,9 +359,10 @@ export default function DocumentsQueuePage() {
     type: DecisionType,
     rejectionReasonText?: string
   ) => {
+    const current = await resolveCurrentStatuses(driver, decisionRole);
     const payload = buildDecisionPayload(
       type,
-      driver,
+      current,
       selectedDocumentId,
       rejectionReasonText
     );

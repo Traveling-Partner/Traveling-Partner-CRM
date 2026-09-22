@@ -11,8 +11,6 @@ import {
   isPartnerDocumentsPayload
 } from "@/lib/documents-utils";
 import { fetcher } from "@/lib/fetcher";
-import type { DriverRow, PartnerRow } from "@/services/users";
-import { fetchPartnersList } from "@/services/users";
 import type { DocumentsQueueFilters } from "@/lib/api/query-keys";
 import type { PaginatedResponse } from "@/lib/api/types";
 
@@ -46,13 +44,25 @@ export function toDriverDocumentStatusBody(payload: DocumentStatusPayload): Reco
   return body;
 }
 
-export interface DocumentsQueuePage {
-  drivers: PaginatedResponse<DriverRow>;
-  partners: PaginatedResponse<PartnerRow>;
-  documentStatusByDriverId: Record<number, ApiDocStatus>;
-  documentStatusesByDriverId: Record<number, DocumentStatusPayload>;
-  documentStatusesByPartnerId: Record<number, Pick<DocumentStatusPayload, "cnicStatus">>;
+export type DocumentQueueRole = "DRIVER" | "PARTNER";
+
+/** One row per document, as returned by GET /users/documents. */
+export interface DocumentQueueApiRow {
+  userId: number;
+  role: DocumentQueueRole;
+  name: string | null;
+  mobileNumber: string | null;
+  gender: string | null;
+  city: string | null;
+  email: string | null;
+  cnicNumber: string | null;
+  documentType: string;
+  status: string;
+  rejectionReason: string | null;
+  vehicleType: string | null;
 }
+
+export type DocumentsQueuePage = PaginatedResponse<DocumentQueueApiRow>;
 
 const FALLBACK_BY_TYPE = {
   DRIVER_LICENSE: "/mock-images/driver-license.svg",
@@ -113,86 +123,40 @@ export async function fetchDriverDocumentSummaryStatus(
   return summarizeDocumentVerificationStatus(payload);
 }
 
-export async function fetchDocumentsQueueDrivers(
-  filters: DocumentsQueueFilters,
-  opts: RequestOpts
-): Promise<PaginatedResponse<DriverRow>> {
-  const url = buildApiUrl("/users/drivers", {
-    page: filters.page,
-    size: filters.pageSize,
-    name: filters.name.trim() || undefined,
-    mobileNumber: filters.mobileNumber.trim() || undefined,
-    city: filters.city.trim() || undefined,
-    gender: filters.gender === "all" ? undefined : filters.gender,
-    status: filters.status === "all" ? undefined : filters.status,
-    documentType: filters.documentType === "all" ? undefined : filters.documentType
-  });
-
-  return fetcher<PaginatedResponse<DriverRow>>(url, {
-    token: opts.token,
-    signal: opts.signal,
-    debugLabel: "documents:drivers-list"
-  });
-}
-
 /**
- * Documents queue uses drivers + partners list only.
- * Status badges come from list-embedded fields (`cnicStatus`, `licenseStatus`,
- * `vehicleDocStatus`). Null status fields map to PENDING.
- * Full image payloads still load only on preview/detail via GET /users/documents/{id}.
+ * Single source for the verification queue: one row per document, already
+ * covering both drivers and partners. Image payloads are not included, so the
+ * preview dialog still loads GET /users/documents/{id} on demand.
  */
 export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
   opts: RequestOpts
 ): Promise<DocumentsQueuePage> {
-  const includePartners = filters.documentType === "all" || filters.documentType === "CNIC";
-  const [drivers, partners] = await Promise.all([
-    fetchDocumentsQueueDrivers(filters, opts),
-    includePartners
-      ? fetchPartnersList(
-          {
-            page: filters.page,
-            pageSize: filters.pageSize,
-            status: filters.status,
-            name: filters.name,
-            mobileNumber: filters.mobileNumber,
-            city: filters.city,
-            gender: filters.gender
-          },
-          opts
-        )
-      : Promise.resolve({
-          content: [] as PartnerRow[],
-          totalPages: 0,
-          totalElements: 0,
-          number: filters.page
-        } as PaginatedResponse<PartnerRow>)
-  ]);
+  const url = buildApiUrl("/users/documents", {
+    page: filters.page,
+    size: filters.pageSize,
+    name: filters.name.trim() || undefined,
+    phonenumber: filters.mobileNumber.trim() || undefined,
+    city: filters.city.trim() || undefined,
+    gender: filters.gender === "all" ? undefined : filters.gender,
+    status: filters.status === "all" ? undefined : filters.status,
+    type: filters.documentType === "all" ? undefined : filters.documentType
+  });
 
-  const documentStatusesByDriverId: Record<number, DocumentStatusPayload> = {};
-  const documentStatusByDriverId: Record<number, ApiDocStatus> = {};
-  for (const driver of drivers.content) {
-    const raw = documentStatusesFromListRow(driver);
-    documentStatusesByDriverId[driver.id] = raw;
-    documentStatusByDriverId[driver.id] = summarizeDocumentVerificationStatus(raw);
-  }
+  const res = await fetcher<unknown>(url, {
+    token: opts.token,
+    signal: opts.signal,
+    debugLabel: "documents:queue"
+  });
 
-  const documentStatusesByPartnerId: Record<
-    number,
-    Pick<DocumentStatusPayload, "cnicStatus">
-  > = {};
-  for (const partner of partners.content) {
-    documentStatusesByPartnerId[partner.id] = {
-      cnicStatus: partnerCnicStatusFromListRow(partner)
-    };
-  }
+  const data = unwrapEnvelope<PaginatedResponse<DocumentQueueApiRow>>(res);
+  const content = Array.isArray(data?.content) ? data.content : [];
 
   return {
-    drivers,
-    partners,
-    documentStatusByDriverId,
-    documentStatusesByDriverId,
-    documentStatusesByPartnerId
+    content,
+    totalPages: data?.totalPages ?? 1,
+    totalElements: data?.totalElements ?? content.length,
+    number: data?.number ?? filters.page
   };
 }
 
