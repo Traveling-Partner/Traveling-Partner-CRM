@@ -81,6 +81,7 @@ export default function AdminBlogPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [featuredFilter, setFeaturedFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -88,6 +89,7 @@ export default function AdminBlogPage() {
     page,
     pageSize,
     status: statusFilter,
+    featured: featuredFilter,
     search
   });
 
@@ -160,19 +162,22 @@ export default function AdminBlogPage() {
           let variant: "success" | "secondary" | "outline" = "outline";
           if (s === "ACTIVE") variant = "success";
           else if (s === "DRAFT") variant = "secondary";
-          return (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {s === "PUBLISHED" ? (
-                <Badge className={BRAND_BADGE}>{label}</Badge>
-              ) : (
-                <Badge variant={variant}>{label || "—"}</Badge>
-              )}
-              {row.original.isFeatured === true && (
-                <Badge className={BRAND_BADGE}>FEATURED</Badge>
-              )}
-            </div>
+          return s === "PUBLISHED" ? (
+            <Badge className={BRAND_BADGE}>{label}</Badge>
+          ) : (
+            <Badge variant={variant}>{label || "—"}</Badge>
           );
         }
+      },
+      {
+        id: "featured",
+        header: "Featured",
+        cell: ({ row }) =>
+          row.original.isFeatured === true ? (
+            <Badge className={BRAND_BADGE}>FEATURED</Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )
       },
       {
         accessorKey: "categoryName",
@@ -279,6 +284,7 @@ export default function AdminBlogPage() {
               onChange={(e) => handleSearchChange(e.target.value)}
               className="max-w-xs"
             />
+            <div className="flex flex-wrap items-center gap-2.5">
             <Select
               value={statusFilter}
               onValueChange={(value) => {
@@ -293,10 +299,25 @@ export default function AdminBlogPage() {
                 <SelectItem value="all">All status</SelectItem>
                 <SelectItem value="PUBLISHED">Published</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="FEATURED">Featured</SelectItem>
               </SelectContent>
             </Select>
+            <Select
+              value={featuredFilter}
+              onValueChange={(value) => {
+                setFeaturedFilter(value);
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Featured" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All posts</SelectItem>
+                <SelectItem value="true">Featured only</SelectItem>
+                <SelectItem value="false">Not featured</SelectItem>
+              </SelectContent>
+            </Select>
+            </div>
           </div>
           {loading ? (
             <div className="space-y-2 py-3">
