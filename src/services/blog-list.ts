@@ -49,7 +49,10 @@ export async function fetchBlogList(
     size: String(filters.pageSize),
     search: filters.search.trim()
   });
-  if (filters.status !== "all") {
+  // Featured is a flag on the post, not a status value
+  if (filters.status === "FEATURED") {
+    params.set("isFeatured", "true");
+  } else if (filters.status !== "all") {
     params.set("status", filters.status);
   }
 
