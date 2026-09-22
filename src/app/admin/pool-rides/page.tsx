@@ -29,6 +29,7 @@ import { PoolRideResponsiveTable } from "@/components/pool-rides/PoolRideRespons
 import { usePoolRidesMock } from "@/hooks/pool-rides/usePoolRidesMock";
 import { poolRides } from "@/mock-data/pool-rides";
 import { computePoolRideStats } from "@/types/pool-ride";
+import { PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 function PoolRideTableSkeleton() {
   return (
@@ -259,9 +260,11 @@ export default function PoolRidesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="8">8 / page</SelectItem>
-                <SelectItem value="10">10 / page</SelectItem>
-                <SelectItem value="20">20 / page</SelectItem>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} / page
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

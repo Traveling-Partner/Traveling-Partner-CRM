@@ -29,13 +29,14 @@ import {
   useUpdateSosMutation
 } from "@/hooks/queries/use-sos-directory";
 import type { SosApiRecord, SosUpsertPayload } from "@/services/sos";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 export default function AdminSafetyServicesPage() {
   const { success, error: showError, toast } = useToast();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SosApiRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SosApiRecord | null>(null);
@@ -212,10 +213,11 @@ export default function AdminSafetyServicesPage() {
                     <SelectValue placeholder="Page size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="5">5 / page</SelectItem>
-                    <SelectItem value="10">10 / page</SelectItem>
-                    <SelectItem value="20">20 / page</SelectItem>
-                    <SelectItem value="50">50 / page</SelectItem>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size} / page
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <span>

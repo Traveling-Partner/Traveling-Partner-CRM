@@ -18,8 +18,7 @@ import { useDriverStatusCountsQuery } from "@/hooks/queries/use-driver-status-co
 import type { DriverRow } from "@/services/users";
 import { Search, Filter, UserCircle, Clock, CheckCircle2, Ban, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const DEFAULT_PAGE_SIZE = 25;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 export default function AdminDriversPage() {
   const router = useRouter();
@@ -330,10 +329,11 @@ export default function AdminDriversPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="250">250</SelectItem>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {/* <span>per page</span> */}

@@ -50,6 +50,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { VehicleDeleteDialog } from "@/components/vehicle-management/VehicleDeleteDialog";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 type TabValue = "vehicleTypes" | "vehicleModels" | "vehicleColors" | "vehicleBrands";
 
@@ -199,8 +200,6 @@ type VehicleTypeForm = z.infer<typeof vehicleTypeSchema>;
 type ModelForm = z.infer<typeof modelSchema>;
 type ColorForm = z.infer<typeof colorSchema>;
 type BrandForm = z.infer<typeof brandSchema>;
-
-const DEFAULT_PAGE_SIZE = 10;
 
 export default function VehicleTypesPage() {
   const { success, error } = useToast();
@@ -602,9 +601,11 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size} / page
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <PaginationControls currentPage={typePage} totalPages={typeTotalPages} onPageChange={setTypePage} />
@@ -698,9 +699,11 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size} / page
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <PaginationControls currentPage={modelPage} totalPages={modelTotalPages} onPageChange={setModelPage} />
@@ -791,9 +794,11 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size} / page
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <PaginationControls currentPage={colorPage} totalPages={colorTotalPages} onPageChange={setColorPage} />
@@ -892,9 +897,11 @@ export default function VehicleTypesPage() {
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 / page</SelectItem>
-                      <SelectItem value="20">20 / page</SelectItem>
-                      <SelectItem value="50">50 / page</SelectItem>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size} / page
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <PaginationControls currentPage={brandPage} totalPages={brandTotalPages} onPageChange={setBrandPage} />

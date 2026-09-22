@@ -7,8 +7,8 @@ import type {
   PoolRideStats
 } from "@/types/pool-ride";
 import { computePoolRideStats } from "@/types/pool-ride";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
-const DEFAULT_PAGE_SIZE = 8;
 const INITIAL_LOAD_DELAY_MS = 400;
 
 export type PoolRideTypeFilter = "all" | string;

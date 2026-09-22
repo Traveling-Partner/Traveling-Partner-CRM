@@ -22,8 +22,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newsletter-subscriber-detail-query";
 import type { SubscriberNewsletterRow } from "@/services/newsletter-subscribers";
-
-const SENT_NEWSLETTERS_PAGE_SIZE = 5;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
@@ -52,7 +51,7 @@ export default function NewsletterSubscriberDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [sentPage, setSentPage] = useState(0);
-  const [sentPageSize, setSentPageSize] = useState(SENT_NEWSLETTERS_PAGE_SIZE);
+  const [sentPageSize, setSentPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useNewsletterSubscriberDetailQuery({
     id: params.id,
@@ -211,9 +210,11 @@ export default function NewsletterSubscriberDetailPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <span>per page</span>
