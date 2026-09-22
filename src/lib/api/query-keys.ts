@@ -153,6 +153,8 @@ export interface BlogListFilters {
   pageSize: number;
   search: string;
   status: string;
+  /** "all" | "true" | "false" — the post's `isFeatured` flag, filtered separately from status. */
+  featured: string;
 }
 
 export interface NewsletterListFilters {
