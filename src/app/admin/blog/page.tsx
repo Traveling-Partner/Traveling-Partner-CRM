@@ -30,6 +30,10 @@ import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 
 const DEFAULT_PAGE_SIZE = 6;
 
+/** Brand gradient shared by the Published and Featured tags. */
+const BRAND_BADGE =
+  "border-transparent bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900";
+
 function asText(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "string") return value;
@@ -151,12 +155,22 @@ export default function AdminBlogPage() {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => {
-          const s = asText(row.original.status).toUpperCase();
+          const label = asText(row.original.status).trim();
+          const s = label.toUpperCase();
           let variant: "success" | "secondary" | "outline" = "outline";
-          if (s === "PUBLISHED" || s === "ACTIVE") variant = "success";
+          if (s === "ACTIVE") variant = "success";
           else if (s === "DRAFT") variant = "secondary";
           return (
-            <Badge variant={variant}>{asText(row.original.status).trim() || "—"}</Badge>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {s === "PUBLISHED" ? (
+                <Badge className={BRAND_BADGE}>{label}</Badge>
+              ) : (
+                <Badge variant={variant}>{label || "—"}</Badge>
+              )}
+              {row.original.isFeatured === true && (
+                <Badge className={BRAND_BADGE}>FEATURED</Badge>
+              )}
+            </div>
           );
         }
       },
@@ -280,6 +294,7 @@ export default function AdminBlogPage() {
                 <SelectItem value="PUBLISHED">Published</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="FEATURED">Featured</SelectItem>
               </SelectContent>
             </Select>
           </div>
