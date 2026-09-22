@@ -28,6 +28,7 @@ import { deleteBlog } from "@/services/blog";
 import type { BlogRow } from "@/services/blog-list";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { BLOG_CATEGORIES } from "@/lib/blog-categories";
 
 /** Brand gradient shared by the Published and Featured tags. */
 const BRAND_BADGE =
@@ -81,6 +82,7 @@ export default function AdminBlogPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [featuredFilter, setFeaturedFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -89,6 +91,7 @@ export default function AdminBlogPage() {
     pageSize,
     status: statusFilter,
     featured: featuredFilter,
+    category: categoryFilter,
     search
   });
 
@@ -276,14 +279,12 @@ export default function AdminBlogPage() {
             </Button>
           }
         >
-          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-2.5 pb-3 sm:grid-cols-2 xl:grid-cols-4">
             <Input
               placeholder="Search by title…"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="max-w-xs"
             />
-            <div className="flex flex-wrap items-center gap-2.5">
             <Select
               value={statusFilter}
               onValueChange={(value) => {
@@ -291,7 +292,7 @@ export default function AdminBlogPage() {
                 setPage(0);
               }}
             >
-              <SelectTrigger className="w-44">
+              <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -307,7 +308,7 @@ export default function AdminBlogPage() {
                 setPage(0);
               }}
             >
-              <SelectTrigger className="w-44">
+              <SelectTrigger>
                 <SelectValue placeholder="Featured" />
               </SelectTrigger>
               <SelectContent>
@@ -316,7 +317,25 @@ export default function AdminBlogPage() {
                 <SelectItem value="false">Not featured</SelectItem>
               </SelectContent>
             </Select>
-            </div>
+            <Select
+              value={categoryFilter}
+              onValueChange={(value) => {
+                setCategoryFilter(value);
+                setPage(0);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {BLOG_CATEGORIES.map((category) => (
+                  <SelectItem key={category.name} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {loading ? (
             <div className="space-y-2 py-3">
@@ -327,7 +346,7 @@ export default function AdminBlogPage() {
           ) : rows.length === 0 ? (
             <EmptyState
               title="No posts found"
-              description="Try another search or status filter."
+              description="Try another search, status, featured, or category filter."
             />
           ) : (
             <DataTable
