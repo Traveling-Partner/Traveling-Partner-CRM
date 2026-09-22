@@ -27,6 +27,7 @@ import {
   useSosOverviewQuery
 } from "@/hooks/queries/use-sos-incidents";
 import type { SosIncidentRow } from "@/services/sos-incidents";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 const ALL = "all";
 
@@ -45,7 +46,7 @@ export default function AdminSafetyOverviewPage() {
   const [city, setCity] = useState(ALL);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const overviewQuery = useSosOverviewQuery();
   const listQuery = useSosIncidentsQuery({
@@ -253,10 +254,11 @@ export default function AdminSafetyOverviewPage() {
                     <SelectValue placeholder="Page size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="5">5 / page</SelectItem>
-                    <SelectItem value="10">10 / page</SelectItem>
-                    <SelectItem value="20">20 / page</SelectItem>
-                    <SelectItem value="50">50 / page</SelectItem>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size} / page
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <span>

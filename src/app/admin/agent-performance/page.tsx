@@ -27,8 +27,7 @@ import {
   formatAgentDate,
   type AgentPerformanceRow
 } from "@/lib/agent-onboarding";
-
-const DEFAULT_PAGE_SIZE = 10;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 export default function AdminAgentPerformancePage() {
   const router = useRouter();
@@ -243,10 +242,11 @@ export default function AdminAgentPerformancePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <span>per page</span>

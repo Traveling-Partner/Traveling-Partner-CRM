@@ -24,8 +24,7 @@ import { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
 import { usePartnerStatusCountsQuery } from "@/hooks/queries/use-partner-status-counts-query";
 import type { PartnerRow } from "@/services/users";
 import { cn } from "@/lib/utils";
-
-const DEFAULT_PAGE_SIZE = 25;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 export default function AdminPartnersPage() {
   const router = useRouter();
@@ -328,10 +327,11 @@ export default function AdminPartnersPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="250">250</SelectItem>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

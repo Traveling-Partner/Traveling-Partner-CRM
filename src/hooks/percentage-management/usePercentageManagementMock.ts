@@ -6,7 +6,8 @@ import type {
   PercentageManagementItem
 } from "@/types/percentage-management";
 
-const DEFAULT_PAGE_SIZE = 10;
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+
 const INITIAL_LOAD_DELAY_MS = 600;
 
 interface UsePercentageManagementMockOptions {

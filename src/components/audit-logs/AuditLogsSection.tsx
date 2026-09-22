@@ -22,6 +22,7 @@ import { PaginationControls } from "@/components/vehicle-management/PaginationCo
 import { useAuditLogsQuery } from "@/hooks/queries/use-audit-logs-query";
 import type { AuditLogRow } from "@/services/audit-logs";
 import { cn } from "@/lib/utils";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 const USER_TYPE_OPTIONS = [
   { value: "all", label: "All user types" },
@@ -63,7 +64,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const [actionFilter, setActionFilter] = useState("");
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [highlightVisible, setHighlightVisible] = useState(Boolean(highlightId));
   const tableWrapRef = useRef<HTMLDivElement>(null);
 
@@ -332,9 +333,11 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <span>per page</span>

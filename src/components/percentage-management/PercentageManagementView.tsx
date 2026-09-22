@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
+import { PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 import { usePercentageManagementMock } from "@/hooks/percentage-management/usePercentageManagementMock";
 import type {
   PercentageManagementFormValues,
@@ -346,10 +347,11 @@ export function PercentageManagementView({
                     <SelectValue placeholder="Page size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="5">5 / page</SelectItem>
-                    <SelectItem value="10">10 / page</SelectItem>
-                    <SelectItem value="20">20 / page</SelectItem>
-                    <SelectItem value="50">50 / page</SelectItem>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size} / page
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <span>

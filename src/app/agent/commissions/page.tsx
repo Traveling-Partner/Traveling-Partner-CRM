@@ -19,10 +19,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuthStore } from "@/store/auth.store";
 import { commissions } from "@/mock-data/commissions";
 import type { Commission } from "@/types/domain";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 type CommissionRow = Commission & { statusLabel: "PENDING" | "PAID" };
-
-const PAGE_SIZE = 10;
 
 const monthOptions = (() => {
   const months: string[] = [];
@@ -43,6 +42,7 @@ export default function AgentCommissionsPage() {
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const myCommissions = useMemo(
     () =>
@@ -63,11 +63,11 @@ export default function AgentCommissionsPage() {
   }, [myCommissions, monthFilter, statusFilter]);
 
   const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+    const start = page * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   const columns: ColumnDef<CommissionRow>[] = [
     {
@@ -184,17 +184,37 @@ export default function AgentCommissionsPage() {
               />
 
               <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  Showing{" "}
-                  <span className="font-medium">
-                    {paginated.length ? page * PAGE_SIZE + 1 : 0}
-                  </span>{" "}
-                  –{" "}
-                  <span className="font-medium">
-                    {page * PAGE_SIZE + paginated.length}
-                  </span>{" "}
-                  of <span className="font-medium">{filtered.length}</span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span>
+                    Showing{" "}
+                    <span className="font-medium">
+                      {paginated.length ? page * pageSize + 1 : 0}
+                    </span>{" "}
+                    –{" "}
+                    <span className="font-medium">
+                      {page * pageSize + paginated.length}
+                    </span>{" "}
+                    of <span className="font-medium">{filtered.length}</span>
+                  </span>
+                </div>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="outline"

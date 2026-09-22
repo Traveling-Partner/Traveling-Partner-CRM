@@ -16,7 +16,7 @@ import type {
   PercentageManagementItem
 } from "@/types/percentage-management";
 
-const DEFAULT_PAGE_SIZE = 10;
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 /**
  * Real API-backed controller for PercentageManagementView (Tax page).

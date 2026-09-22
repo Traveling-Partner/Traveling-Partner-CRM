@@ -20,7 +20,7 @@ export function VehiclePageSizeSelect({ pageSize, onPageSizeChange }: VehiclePag
       </SelectTrigger>
       <SelectContent>
         {PAGE_SIZE_OPTIONS.map((size) => (
-          <SelectItem key={size} value={size}>
+          <SelectItem key={size} value={String(size)}>
             {size} / page
           </SelectItem>
         ))}

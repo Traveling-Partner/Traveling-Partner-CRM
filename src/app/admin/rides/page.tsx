@@ -24,8 +24,7 @@ import {
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
 import { RIDE_STATUSES, type RideRow } from "@/services/rides";
-
-const DEFAULT_PAGE_SIZE = 10;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 const currency = (n: number | null) => {
   if (n === null || Number.isNaN(n)) return "—";
@@ -224,10 +223,11 @@ export default function AdminRidesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

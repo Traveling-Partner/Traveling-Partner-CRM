@@ -24,8 +24,7 @@ import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
 import { useAgentStatusCountsQuery } from "@/hooks/queries/use-agent-status-counts-query";
 import type { AgentRow } from "@/services/users";
 import { cn } from "@/lib/utils";
-
-const DEFAULT_PAGE_SIZE = 25;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 export default function AdminAgentsPage() {
   const router = useRouter();
@@ -296,10 +295,11 @@ export default function AdminAgentsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="250">250</SelectItem>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

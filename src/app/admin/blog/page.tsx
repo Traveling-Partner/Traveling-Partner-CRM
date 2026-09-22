@@ -27,8 +27,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { deleteBlog } from "@/services/blog";
 import type { BlogRow } from "@/services/blog-list";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
-
-const DEFAULT_PAGE_SIZE = 6;
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 /** Brand gradient shared by the Published and Featured tags. */
 const BRAND_BADGE =
@@ -351,10 +350,11 @@ export default function AdminBlogPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <span>per page</span>
