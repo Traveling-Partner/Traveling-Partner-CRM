@@ -108,7 +108,8 @@ async function fetchAllEnvelopePages<T>(
 ): Promise<T[]> {
   const all: T[] = [];
   let page = 0;
-  const pageSize = 10;
+  /** Large page: these walks are sequential, so a small size costs a round-trip each. */
+  const pageSize = 100;
 
   for (let i = 0; i < 40; i += 1) {
     const res = await fetchEnvelopePage<T>(path, { page, pageSize, search: "" }, opts, label);

@@ -42,6 +42,8 @@ function writeLastSeen() {
   window.localStorage.setItem(LAST_SEEN_KEY, String(Date.now()));
 }
 
+const BELL_STALE_TIME_MS = 5 * 60 * 1000;
+
 /** Header bell — latest audit logs via existing GET /audit-logs/getAll. No new API. */
 export function HeaderAuditLogBell() {
   const [lastSeen, setLastSeen] = useState(0);
@@ -51,17 +53,21 @@ export function HeaderAuditLogBell() {
     setLastSeen(readLastSeen());
   }, []);
 
-  const { data, isLoading, refetch } = useAuditLogsQuery({
-    page: 0,
-    pageSize: 8,
-    userType: "all",
-    search: "",
-    fromDate: "",
-    toDate: "",
-    module: "",
-    action: "",
-    userId: ""
-  });
+  const { data, isLoading, refetch } = useAuditLogsQuery(
+    {
+      page: 0,
+      pageSize: 8,
+      userType: "all",
+      search: "",
+      fromDate: "",
+      toDate: "",
+      module: "",
+      action: "",
+      userId: ""
+    },
+    // Header renders on every admin page — without this the bell refetches on each one
+    { staleTime: BELL_STALE_TIME_MS }
+  );
 
   const rows = data?.content ?? [];
   const unreadCount = useMemo(() => {
