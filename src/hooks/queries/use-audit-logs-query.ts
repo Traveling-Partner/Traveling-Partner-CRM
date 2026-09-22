@@ -5,17 +5,21 @@ import { useDebouncedValue, usePaginatedQuery } from "@/hooks/api";
 import { queryKeys, type AuditLogsFilters } from "@/lib/api/query-keys";
 import { fetchAuditLogs } from "@/services/audit-logs";
 
-export function useAuditLogsQuery(params: {
-  page: number;
-  pageSize: number;
-  userType: string;
-  search: string;
-  fromDate: string;
-  toDate: string;
-  module: string;
-  action: string;
-  userId: string;
-}) {
+export function useAuditLogsQuery(
+  params: {
+    page: number;
+    pageSize: number;
+    userType: string;
+    search: string;
+    fromDate: string;
+    toDate: string;
+    module: string;
+    action: string;
+    userId: string;
+  },
+  /** Callers rendered on every page (e.g. the header bell) pass a longer window. */
+  options?: { staleTime?: number }
+) {
   const debouncedSearch = useDebouncedValue(params.search);
   const debouncedModule = useDebouncedValue(params.module);
   const debouncedAction = useDebouncedValue(params.action);
@@ -49,6 +53,7 @@ export function useAuditLogsQuery(params: {
   return usePaginatedQuery({
     queryKey: queryKeys.audit.logs(filters),
     filters,
+    staleTime: options?.staleTime,
     fetchPage: ({ token, signal, filters: f }) => fetchAuditLogs(f, { token, signal })
   });
 }
