@@ -60,6 +60,14 @@ export interface DocumentQueueApiRow {
   status: string;
   rejectionReason: string | null;
   vehicleType: string | null;
+  frontUrl?: string | null;
+  backUrl?: string | null;
+  cnicFront?: string | null;
+  cnicBack?: string | null;
+  licenseFront?: string | null;
+  licenseBack?: string | null;
+  registrationFront?: string | null;
+  registrationBack?: string | null;
 }
 
 export type DocumentsQueuePage = PaginatedResponse<DocumentQueueApiRow>;
@@ -125,8 +133,7 @@ export async function fetchDriverDocumentSummaryStatus(
 
 /**
  * Single source for the verification queue: one row per document, already
- * covering both drivers and partners. Image payloads are not included, so the
- * preview dialog still loads GET /users/documents/{id} on demand.
+ * covering both drivers and partners. List rows include front/back image URLs.
  */
 export async function fetchDocumentsQueuePage(
   filters: DocumentsQueueFilters,
@@ -158,6 +165,84 @@ export async function fetchDocumentsQueuePage(
     totalElements: data?.totalElements ?? content.length,
     number: data?.number ?? filters.page
   };
+}
+
+const QUEUE_TYPE_TO_PREVIEW: Record<
+  string,
+  { id: PreviewDocument["id"]; type: PreviewDocument["type"]; fileName: string; fallback: string }
+> = {
+  CNIC: {
+    id: "id-document",
+    type: "ID_DOCUMENT",
+    fileName: "id-document.jpg",
+    fallback: FALLBACK_BY_TYPE.ID_DOCUMENT
+  },
+  LICENSE: {
+    id: "driver-license",
+    type: "DRIVER_LICENSE",
+    fileName: "driver-license.jpg",
+    fallback: FALLBACK_BY_TYPE.DRIVER_LICENSE
+  },
+  VEHICLE: {
+    id: "vehicle-registration",
+    type: "VEHICLE_REGISTRATION",
+    fileName: "vehicle-registration.jpg",
+    fallback: FALLBACK_BY_TYPE.VEHICLE_REGISTRATION
+  }
+};
+
+function pickQueueImageUrl(
+  row: DocumentQueueApiRow,
+  side: "front" | "back"
+): string | null {
+  const record = row as unknown as Record<string, unknown>;
+  const keys =
+    side === "front"
+      ? ["frontUrl", "cnicFront", "licenseFront", "registrationFront"]
+      : ["backUrl", "cnicBack", "licenseBack", "registrationBack"];
+  for (const key of keys) {
+    const url = safeImageUrl(record[key]);
+    if (url) return url;
+  }
+  return null;
+}
+
+/** Build a preview card from a GET /users/documents list row. */
+export function previewDocumentFromQueueRow(row: DocumentQueueApiRow): PreviewDocument {
+  const type = (row.documentType ?? "").toUpperCase();
+  const mapping = QUEUE_TYPE_TO_PREVIEW[type] ?? QUEUE_TYPE_TO_PREVIEW.CNIC;
+  return {
+    id: mapping.id,
+    type: mapping.type,
+    fileName: mapping.fileName,
+    frontUrl: pickQueueImageUrl(row, "front") || mapping.fallback,
+    backUrl: pickQueueImageUrl(row, "back") || mapping.fallback,
+    status: normalizeDocumentStatus(row.status)
+  };
+}
+
+/** All list-row statuses for one user — used so approve/reject does not GET by id. */
+export function documentStatusesFromQueueRows(
+  rows: DocumentQueueApiRow[],
+  userId: number,
+  role: DocumentQueueRole
+): DocumentStatusPayload {
+  const payload: DocumentStatusPayload = {
+    cnicStatus: "PENDING",
+    licenseStatus: "PENDING",
+    vehicleStatus: "PENDING"
+  };
+  for (const row of rows) {
+    if (row.userId !== userId) continue;
+    const rowRole = row.role === "PARTNER" ? "PARTNER" : "DRIVER";
+    if (rowRole !== role) continue;
+    const type = (row.documentType ?? "").toUpperCase();
+    const status = mapRawStatus(row.status);
+    if (type === "LICENSE") payload.licenseStatus = status;
+    else if (type === "VEHICLE") payload.vehicleStatus = status;
+    else payload.cnicStatus = status;
+  }
+  return payload;
 }
 
 export function buildPreviewDocuments(payload: DriverDocumentsPayload): PreviewDocument[] {

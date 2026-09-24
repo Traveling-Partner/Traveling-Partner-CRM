@@ -25,25 +25,22 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
 import { useApiMutation } from "@/hooks/api";
 import { useDocumentsQueueQuery } from "@/hooks/queries/use-documents-queue-query";
-import { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 import {
   normalizeApiDocStatus,
   type ApiDocStatus
 } from "@/lib/documents-utils";
 import { queryKeys } from "@/lib/api/query-keys";
 import {
-  buildRawDocumentStatuses,
-  fetchDriverDocumentsPayload,
+  documentStatusesFromQueueRows,
+  previewDocumentFromQueueRow,
   updateDriverDocumentStatus,
   updatePartnerCnicStatus,
   type DocumentQueueApiRow,
   type DocumentStatusPayload,
   type PreviewDocument
 } from "@/services/documents";
-import { useAuthToken } from "@/hooks/api/use-auth-token";
 import type { DriverRow } from "@/services/users";
 import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
-import TPLoader from "@/components/TPLoader";
 
 type DecisionType = "APPROVE" | "REJECT";
 type DocumentKind = "cnic" | "license" | "vehicle";
@@ -135,7 +132,6 @@ function previewDocLabel(id: PreviewDocument["id"]): string {
 export default function DocumentsQueuePage() {
   const { success, error } = useToast();
   const queryClient = useQueryClient();
-  const token = useAuthToken();
 
   const [nameFilter, setNameFilter] = useState("");
   const [phoneFilter, setPhoneFilter] = useState("");
@@ -189,15 +185,22 @@ export default function DocumentsQueuePage() {
   const [imageModalSrc, setImageModalSrc] = useState<string>(fallbackImage);
   const [imageModalTitle, setImageModalTitle] = useState("Document preview");
 
-  const previewDocsQuery = useDriverDocumentsQuery(previewDriver?.id, previewOpen);
-  const previewDocuments = useMemo(
-    () =>
-      previewRole === "PARTNER"
-        ? previewDocsQuery.previewDocuments.filter((doc) => doc.id === "id-document")
-        : previewDocsQuery.previewDocuments,
-    [previewRole, previewDocsQuery.previewDocuments]
-  );
-  const previewLoading = previewDocsQuery.isLoading || previewDocsQuery.isFetching;
+  const previewDocuments = useMemo(() => {
+    if (!previewDriver) return [];
+    const seen = new Set<PreviewDocument["id"]>();
+    const docs: PreviewDocument[] = [];
+    for (const row of queueRows) {
+      if (row.userId !== previewDriver.id) continue;
+      const rowRole = row.role === "PARTNER" ? "PARTNER" : "DRIVER";
+      if (rowRole !== previewRole) continue;
+      const doc = previewDocumentFromQueueRow(row);
+      if (previewRole === "PARTNER" && doc.id !== "id-document") continue;
+      if (seen.has(doc.id)) continue;
+      seen.add(doc.id);
+      docs.push(doc);
+    }
+    return docs;
+  }, [previewDriver, previewRole, queueRows]);
 
   const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
   const [decisionType, setDecisionType] = useState<DecisionType | null>(null);
@@ -306,24 +309,12 @@ export default function DocumentsQueuePage() {
     [error]
   );
 
-  /**
-   * The queue row only knows its own document's status, but the driver PUT sends
-   * all three — so read the current set before overwriting one of them.
-   */
-  const resolveCurrentStatuses = async (
+  const resolveCurrentStatuses = (
     driver: DriverRow,
     role: QueueRole
-  ): Promise<DocumentStatusPayload> => {
-    if (previewDriver?.id === driver.id && previewDocsQuery.rawStatuses) {
-      return previewDocsQuery.rawStatuses;
-    }
-    if (role === "PARTNER" || !token) return PENDING_STATUSES;
-    try {
-      const payload = await fetchDriverDocumentsPayload(driver.id, { token });
-      return buildRawDocumentStatuses(payload);
-    } catch {
-      return PENDING_STATUSES;
-    }
+  ): DocumentStatusPayload => {
+    if (role === "PARTNER") return PENDING_STATUSES;
+    return documentStatusesFromQueueRows(queueRows, driver.id, role);
   };
 
   const buildDecisionPayload = (
@@ -359,7 +350,7 @@ export default function DocumentsQueuePage() {
     type: DecisionType,
     rejectionReasonText?: string
   ) => {
-    const current = await resolveCurrentStatuses(driver, decisionRole);
+    const current = resolveCurrentStatuses(driver, decisionRole);
     const payload = buildDecisionPayload(
       type,
       current,
@@ -650,12 +641,7 @@ export default function DocumentsQueuePage() {
                 {previewRole === "PARTNER" ? " (Partner)" : " (Driver)"}
               </DialogTitle>
             </DialogHeader>
-            {previewLoading ? (
-              <div className="flex justify-center py-8">
-                <TPLoader variant="inline" size={120} label="Loading documents…" />
-              </div>
-            ) : (
-              <div className="grid gap-3 text-xs lg:grid-cols-[320px,1fr]">
+            <div className="grid gap-3 text-xs lg:grid-cols-[320px,1fr]">
                 <div className="space-y-2">
                   {previewDocuments.map((doc) => (
                     <button
@@ -837,7 +823,6 @@ export default function DocumentsQueuePage() {
                     </div>
                 </div>
               </div>
-            )}
           </DialogContent>
         </Dialog>
         <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
