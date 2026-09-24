@@ -26,6 +26,8 @@ interface DataTableProps<TData, TValue> {
   getRowId?: (originalRow: TData, index: number) => string;
   /** Optional extra classes for a row (e.g. highlight). Other tables can omit this. */
   getRowClassName?: (originalRow: TData, index: number) => string | undefined;
+  /** Classes on the inner <table> (e.g. min-width so wide lists scroll instead of wrapping). */
+  tableClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -35,7 +37,8 @@ export function DataTable<TData, TValue>({
   emptyDescription = "Once records are available, they will appear here.",
   className,
   getRowId,
-  getRowClassName
+  getRowClassName,
+  tableClassName
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -56,7 +59,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn("w-full overflow-hidden rounded-lg border border-border/50 bg-card", className)}>
-      <Table>
+      <Table className={tableClassName}>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent border-0">
