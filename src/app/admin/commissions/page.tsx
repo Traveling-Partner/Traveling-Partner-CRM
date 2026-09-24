@@ -19,7 +19,8 @@ import { useToast } from "@/components/ui/toast";
 import { commissions } from "@/mock-data/commissions";
 import { agents } from "@/mock-data/agents";
 import type { Commission } from "@/types/domain";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 const monthOptions = (() => {
   const m: string[] = [];
   for (let i = 0; i < 12; i++) {
@@ -135,46 +136,16 @@ export default function AdminCommissionsPage() {
             </Select>
           </div>
           <DataTable columns={columns} data={paginated} />
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_SIZE_OPTIONS.map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>
-                Showing {paginated.length ? page * pageSize + 1 : 0} – {page * pageSize + paginated.length} of{" "}
-                {filtered.length}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-                Previous
-              </Button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(0);
+            }}
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </SectionCard>
       </PageContainer>
     </AppShell>

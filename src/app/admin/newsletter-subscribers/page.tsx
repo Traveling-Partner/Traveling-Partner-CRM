@@ -20,10 +20,10 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { useNewsletterSubscribersListQuery } from "@/hooks/queries/use-newsletter-subscribers-list-query";
 import type { SubscriberListRow } from "@/services/newsletter-subscribers";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -193,39 +193,16 @@ export default function NewsletterSubscribersPage() {
           )}
 
           {!loading && totalSubscribers > 0 && (
-            <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>Show</span>
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setPage(0);
-                  }}
-                >
-                  <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAGE_SIZE_OPTIONS.map((size) => (
-                      <SelectItem key={size} value={String(size)}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span>per page</span>
-                <span>
-                  · Showing {page * pageSize + 1}–
-                  {Math.min((page + 1) * pageSize, totalSubscribers)} of {totalSubscribers}
-                </span>
-              </div>
-              <PaginationControls
-                currentPage={page + 1}
-                totalPages={totalPages}
-                onPageChange={(nextPage) => setPage(nextPage - 1)}
-              />
-            </div>
+            <ListPaginationFooter
+              pageSize={pageSize}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(0);
+              }}
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => setPage(nextPage - 1)}
+            />
           )}
 
           <p className="mt-4 text-xs text-muted-foreground">

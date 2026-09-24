@@ -7,7 +7,6 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectTrigger,
@@ -19,7 +18,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuthStore } from "@/store/auth.store";
 import { commissions } from "@/mock-data/commissions";
 import type { Commission } from "@/types/domain";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 type CommissionRow = Commission & { statusLabel: "PENDING" | "PAID" };
 
@@ -183,62 +183,16 @@ export default function AgentCommissionsPage() {
                 emptyDescription="Try changing the month or status filter."
               />
 
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={String(pageSize)}
-                    onValueChange={(value) => {
-                      setPageSize(Number(value));
-                      setPage(0);
-                    }}
-                  >
-                    <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAGE_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span>
-                    Showing{" "}
-                    <span className="font-medium">
-                      {paginated.length ? page * pageSize + 1 : 0}
-                    </span>{" "}
-                    –{" "}
-                    <span className="font-medium">
-                      {page * pageSize + paginated.length}
-                    </span>{" "}
-                    of <span className="font-medium">{filtered.length}</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <span>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page + 1 >= totalPages}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages - 1, p + 1))
-                    }
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
+              <ListPaginationFooter
+                pageSize={pageSize}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(0);
+                }}
+                currentPage={page + 1}
+                totalPages={totalPages}
+                onPageChange={(p) => setPage(p - 1)}
+              />
             </>
           )}
         </SectionCard>

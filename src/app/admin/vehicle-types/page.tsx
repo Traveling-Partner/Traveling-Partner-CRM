@@ -35,7 +35,7 @@ import { FormField } from "@/components/common/FormField";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
 import { ImageUploadField } from "@/components/vehicle-management/ImageUploadField";
 import { ManagementTable } from "@/components/vehicle-management/ManagementTable";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { VehicleDeleteDialog } from "@/components/vehicle-management/VehicleDeleteDialog";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 type TabValue = "vehicleTypes" | "vehicleModels" | "vehicleColors" | "vehicleBrands";
 
@@ -589,27 +589,16 @@ export default function VehicleTypesPage() {
                     ))}
                   </div>
                 )}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Select
-                    value={String(typePageSize)}
-                    onValueChange={(value) => {
-                      setTypePageSize(Number(value));
-                      setTypePage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAGE_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size} / page
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <PaginationControls currentPage={typePage} totalPages={typeTotalPages} onPageChange={setTypePage} />
-                </div>
+                <ListPaginationFooter
+                  pageSize={typePageSize}
+                  onPageSizeChange={(size) => {
+                    setTypePageSize(size);
+                    setTypePage(1);
+                  }}
+                  currentPage={typePage}
+                  totalPages={typeTotalPages}
+                  onPageChange={setTypePage}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -687,27 +676,16 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Select
-                    value={String(modelPageSize)}
-                    onValueChange={(value) => {
-                      setModelPageSize(Number(value));
-                      setModelPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAGE_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size} / page
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <PaginationControls currentPage={modelPage} totalPages={modelTotalPages} onPageChange={setModelPage} />
-                </div>
+                <ListPaginationFooter
+                  pageSize={modelPageSize}
+                  onPageSizeChange={(size) => {
+                    setModelPageSize(size);
+                    setModelPage(1);
+                  }}
+                  currentPage={modelPage}
+                  totalPages={modelTotalPages}
+                  onPageChange={setModelPage}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -782,27 +760,16 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Select
-                    value={String(colorPageSize)}
-                    onValueChange={(value) => {
-                      setColorPageSize(Number(value));
-                      setColorPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAGE_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size} / page
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <PaginationControls currentPage={colorPage} totalPages={colorTotalPages} onPageChange={setColorPage} />
-                </div>
+                <ListPaginationFooter
+                  pageSize={colorPageSize}
+                  onPageSizeChange={(size) => {
+                    setColorPageSize(size);
+                    setColorPage(1);
+                  }}
+                  currentPage={colorPage}
+                  totalPages={colorTotalPages}
+                  onPageChange={setColorPage}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -885,27 +852,16 @@ export default function VehicleTypesPage() {
                     }
                   ]}
                 />
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Select
-                    value={String(brandPageSize)}
-                    onValueChange={(value) => {
-                      setBrandPageSize(Number(value));
-                      setBrandPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAGE_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size} / page
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <PaginationControls currentPage={brandPage} totalPages={brandTotalPages} onPageChange={setBrandPage} />
-                </div>
+                <ListPaginationFooter
+                  pageSize={brandPageSize}
+                  onPageSizeChange={(size) => {
+                    setBrandPageSize(size);
+                    setBrandPage(1);
+                  }}
+                  currentPage={brandPage}
+                  totalPages={brandTotalPages}
+                  onPageChange={setBrandPage}
+                />
               </CardContent>
             </Card>
           </TabsContent>

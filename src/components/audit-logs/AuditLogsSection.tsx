@@ -18,11 +18,11 @@ import {
   SelectContent,
   SelectItem
 } from "@/components/ui/select";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { useAuditLogsQuery } from "@/hooks/queries/use-audit-logs-query";
 import type { AuditLogRow } from "@/services/audit-logs";
 import { cn } from "@/lib/utils";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 const USER_TYPE_OPTIONS = [
   { value: "all", label: "All user types" },
@@ -319,36 +319,16 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
         </div>
       )}
       {!isDashboard ? (
-        <div className="mt-2 flex flex-col gap-3 rounded-lg border border-border/40 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Show</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(value) => {
-                setPageSize(Number(value));
-                setPage(0);
-              }}
-            >
-              <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span>per page</span>
-            <span className="hidden sm:inline">· {totalElements} total</span>
-          </div>
-          <PaginationControls
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
-          />
-        </div>
+        <ListPaginationFooter
+          pageSize={pageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+          currentPage={page + 1}
+          totalPages={totalPages}
+          onPageChange={(p) => setPage(p - 1)}
+        />
       ) : null}
     </SectionCard>
   );

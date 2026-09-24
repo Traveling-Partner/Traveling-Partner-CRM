@@ -13,9 +13,8 @@ import { FormField } from "@/components/common/FormField";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
 import { ImageUploadField } from "@/components/vehicle-management/ImageUploadField";
 import { ManagementTable } from "@/components/vehicle-management/ManagementTable";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
 import { VehicleDeleteDialog } from "@/components/vehicle-management/VehicleDeleteDialog";
-import { VehiclePageSizeSelect } from "@/components/vehicle-management/VehiclePageSizeSelect";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -221,16 +220,16 @@ export function VehicleBrandsSection() {
               }
             ]}
           />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <VehiclePageSizeSelect
-              pageSize={pageSize}
-              onPageSizeChange={(size) => {
-                setPageSize(size);
-                setPage(1);
-              }}
-            />
-            <PaginationControls currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 

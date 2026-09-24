@@ -14,19 +14,11 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { EntityModal } from "@/components/vehicle-management/EntityModal";
 import { ManagementTable } from "@/components/vehicle-management/ManagementTable";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
-import { PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 import { usePercentageManagementMock } from "@/hooks/percentage-management/usePercentageManagementMock";
 import type {
   PercentageManagementFormValues,
@@ -337,34 +329,13 @@ export function PercentageManagementView({
           )}
 
           {!showEmptyState && (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => handlePageSizeChange(Number(value))}
-                >
-                  <SelectTrigger className="h-8 w-32">
-                    <SelectValue placeholder="Page size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAGE_SIZE_OPTIONS.map((size) => (
-                      <SelectItem key={size} value={String(size)}>
-                        {size} / page
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span>
-                  Showing {totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–
-                  {Math.min(page * pageSize, totalItems)} of {totalItems}
-                </span>
-              </div>
-              <PaginationControls
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </div>
+            <ListPaginationFooter
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           )}
         </SectionCard>
       </PageContainer>
