@@ -148,9 +148,13 @@ export default function AdminBlogPage() {
             asText(row.original.description2).trim() ||
             "—";
           return (
-            <div className="space-y-0.5">
-              <p className="font-medium">{title}</p>
-              <p className="line-clamp-1 text-xs text-muted-foreground">{desc}</p>
+            <div className="min-w-[220px] max-w-[280px] space-y-0.5">
+              <p className="line-clamp-2 font-medium leading-snug" title={title}>
+                {title}
+              </p>
+              <p className="line-clamp-1 text-xs text-muted-foreground" title={desc}>
+                {desc}
+              </p>
             </div>
           );
         }
@@ -165,9 +169,11 @@ export default function AdminBlogPage() {
           if (s === "ACTIVE") variant = "success";
           else if (s === "DRAFT") variant = "secondary";
           return s === "PUBLISHED" ? (
-            <Badge className={BRAND_BADGE}>{label}</Badge>
+            <Badge className={`${BRAND_BADGE} whitespace-nowrap`}>{label}</Badge>
           ) : (
-            <Badge variant={variant}>{label || "—"}</Badge>
+            <Badge variant={variant} className="whitespace-nowrap">
+              {label || "—"}
+            </Badge>
           );
         }
       },
@@ -176,9 +182,9 @@ export default function AdminBlogPage() {
         header: "Featured",
         cell: ({ row }) =>
           row.original.isFeatured === true ? (
-            <Badge className={BRAND_BADGE}>FEATURED</Badge>
+            <Badge className={`${BRAND_BADGE} whitespace-nowrap`}>FEATURED</Badge>
           ) : (
-            <span className="text-xs text-muted-foreground">—</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">—</span>
           )
       },
       {
@@ -190,9 +196,9 @@ export default function AdminBlogPage() {
             return <span className="text-xs text-muted-foreground">—</span>;
           }
           return (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex min-w-[168px] max-w-[220px] flex-wrap gap-1">
               {names.map((name) => (
-                <Badge key={name} variant="secondary">
+                <Badge key={name} variant="secondary" className="shrink-0 whitespace-nowrap">
                   {name}
                 </Badge>
               ))}
@@ -204,7 +210,7 @@ export default function AdminBlogPage() {
         accessorKey: "author",
         header: "Author",
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
+          <span className="whitespace-nowrap text-xs text-muted-foreground">
             {asText(row.original.author).trim() || "—"}
           </span>
         )
@@ -214,7 +220,10 @@ export default function AdminBlogPage() {
         accessorKey: "date",
         header: "Posted",
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground" title={formatBlogDate(row.original.date)}>
+          <span
+            className="whitespace-nowrap text-xs text-muted-foreground"
+            title={formatBlogDate(row.original.date)}
+          >
             {formatRelativePostTime(asText(row.original.date) || null)}
           </span>
         )
@@ -223,7 +232,7 @@ export default function AdminBlogPage() {
         accessorKey: "date",
         header: "Date",
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
+          <span className="whitespace-nowrap text-xs text-muted-foreground">
             {formatBlogDate(row.original.date)}
           </span>
         )
@@ -238,7 +247,7 @@ export default function AdminBlogPage() {
             v = extractViews(row.original);
           }
           return typeof v === "number" && Number.isFinite(v) ? (
-            <span className="font-medium tabular-nums text-foreground">{v}</span>
+            <span className="whitespace-nowrap font-medium tabular-nums text-foreground">{v}</span>
           ) : (
             <span className="text-muted-foreground">—</span>
           );
@@ -248,7 +257,7 @@ export default function AdminBlogPage() {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <div className="flex gap-2">
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
             <Button variant="outline" size="sm" asChild>
               <Link href={`/admin/blog/${row.original.id}`}>Edit</Link>
             </Button>
@@ -267,6 +276,7 @@ export default function AdminBlogPage() {
           <Button
             variant="destructive"
             size="sm"
+            className="shrink-0"
             onClick={() => openDeleteDialog(row.original)}
           >
             Delete
@@ -363,6 +373,7 @@ export default function AdminBlogPage() {
               columns={columns}
               data={rows}
               getRowId={(row) => String(row.id)}
+              tableClassName="min-w-[1180px]"
             />
           )}
           <ListPaginationFooter
