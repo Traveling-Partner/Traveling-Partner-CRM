@@ -18,7 +18,7 @@ import {
   SelectItem,
   SelectValue
 } from "@/components/ui/select";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/components/ui/toast";
 import { useApiMutation } from "@/hooks/api";
@@ -27,8 +27,8 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { deleteBlog } from "@/services/blog";
 import type { BlogRow } from "@/services/blog-list";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
-
-const DEFAULT_PAGE_SIZE = 6;
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+import { BLOG_CATEGORIES, parseCategoryNames } from "@/lib/blog-categories";
 
 /** Brand gradient shared by the Published and Featured tags. */
 const BRAND_BADGE =
@@ -81,6 +81,8 @@ export default function AdminBlogPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [featuredFilter, setFeaturedFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -88,6 +90,8 @@ export default function AdminBlogPage() {
     page,
     pageSize,
     status: statusFilter,
+    featured: featuredFilter,
+    category: categoryFilter,
     search
   });
 
@@ -160,28 +164,41 @@ export default function AdminBlogPage() {
           let variant: "success" | "secondary" | "outline" = "outline";
           if (s === "ACTIVE") variant = "success";
           else if (s === "DRAFT") variant = "secondary";
-          return (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {s === "PUBLISHED" ? (
-                <Badge className={BRAND_BADGE}>{label}</Badge>
-              ) : (
-                <Badge variant={variant}>{label || "—"}</Badge>
-              )}
-              {row.original.isFeatured === true && (
-                <Badge className={BRAND_BADGE}>FEATURED</Badge>
-              )}
-            </div>
+          return s === "PUBLISHED" ? (
+            <Badge className={BRAND_BADGE}>{label}</Badge>
+          ) : (
+            <Badge variant={variant}>{label || "—"}</Badge>
           );
         }
       },
       {
+        id: "featured",
+        header: "Featured",
+        cell: ({ row }) =>
+          row.original.isFeatured === true ? (
+            <Badge className={BRAND_BADGE}>FEATURED</Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )
+      },
+      {
         accessorKey: "categoryName",
         header: "Category",
-        cell: ({ row }) => (
-          <span className="text-xs font-medium text-muted-foreground">
-            {asText(row.original.categoryName).trim() || "—"}
-          </span>
-        )
+        cell: ({ row }) => {
+          const names = parseCategoryNames(row.original.categoryName);
+          if (names.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {names.map((name) => (
+                <Badge key={name} variant="secondary">
+                  {name}
+                </Badge>
+              ))}
+            </div>
+          );
+        }
       },
       {
         accessorKey: "author",
@@ -272,12 +289,11 @@ export default function AdminBlogPage() {
             </Button>
           }
         >
-          <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-2.5 pb-3 sm:grid-cols-2 xl:grid-cols-4">
             <Input
               placeholder="Search by title…"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="max-w-xs"
             />
             <Select
               value={statusFilter}
@@ -286,15 +302,48 @@ export default function AdminBlogPage() {
                 setPage(0);
               }}
             >
-              <SelectTrigger className="w-44">
+              <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All status</SelectItem>
                 <SelectItem value="PUBLISHED">Published</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="FEATURED">Featured</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={featuredFilter}
+              onValueChange={(value) => {
+                setFeaturedFilter(value);
+                setPage(0);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Featured" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All posts</SelectItem>
+                <SelectItem value="true">Featured only</SelectItem>
+                <SelectItem value="false">Not featured</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={categoryFilter}
+              onValueChange={(value) => {
+                setCategoryFilter(value);
+                setPage(0);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {BLOG_CATEGORIES.map((category) => (
+                  <SelectItem key={category.name} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -307,7 +356,7 @@ export default function AdminBlogPage() {
           ) : rows.length === 0 ? (
             <EmptyState
               title="No posts found"
-              description="Try another search or status filter."
+              description="Try another search, status, featured, or category filter."
             />
           ) : (
             <DataTable
@@ -316,34 +365,16 @@ export default function AdminBlogPage() {
               getRowId={(row) => String(row.id)}
             />
           )}
-          <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Show</span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-              <span>per page</span>
-            </div>
-            <PaginationControls
-              currentPage={page + 1}
-              totalPages={totalPages}
-              onPageChange={(p) => setPage(p - 1)}
-            />
-          </div>
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(0);
+            }}
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </SectionCard>
 
         <ConfirmDialog

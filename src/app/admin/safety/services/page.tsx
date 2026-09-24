@@ -12,15 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { SosServiceFormDialog } from "@/components/safety-center/SosServiceFormDialog";
 import {
   useCreateSosMutation,
@@ -29,13 +22,14 @@ import {
   useUpdateSosMutation
 } from "@/hooks/queries/use-sos-directory";
 import type { SosApiRecord, SosUpsertPayload } from "@/services/sos";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 export default function AdminSafetyServicesPage() {
   const { success, error: showError, toast } = useToast();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SosApiRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SosApiRecord | null>(null);
@@ -199,36 +193,16 @@ export default function AdminSafetyServicesPage() {
           )}
 
           {!listQuery.isLoading && rows.length > 0 && (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-32">
-                    <SelectValue placeholder="Page size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5 / page</SelectItem>
-                    <SelectItem value="10">10 / page</SelectItem>
-                    <SelectItem value="20">20 / page</SelectItem>
-                    <SelectItem value="50">50 / page</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span>
-                  Showing {totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–
-                  {Math.min(page * pageSize, totalItems)} of {totalItems}
-                </span>
-              </div>
-              <PaginationControls
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </div>
+            <ListPaginationFooter
+              pageSize={pageSize}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           )}
         </SectionCard>
 

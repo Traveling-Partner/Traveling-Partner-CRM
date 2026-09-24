@@ -49,11 +49,15 @@ export async function fetchBlogList(
     size: String(filters.pageSize),
     search: filters.search.trim()
   });
-  // Featured is a flag on the post, not a status value
-  if (filters.status === "FEATURED") {
-    params.set("isFeatured", "true");
-  } else if (filters.status !== "all") {
+  if (filters.status !== "all") {
     params.set("status", filters.status);
+  }
+  // Featured is a flag on the post, filtered independently of status
+  if (filters.featured !== "all") {
+    params.set("isFeatured", filters.featured);
+  }
+  if (filters.category !== "all") {
+    params.set("categoryName", filters.category);
   }
 
   const url = `${apiUrl("/blog/getAll")}?${params.toString()}`;

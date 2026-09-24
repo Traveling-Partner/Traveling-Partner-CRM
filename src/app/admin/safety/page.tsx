@@ -20,13 +20,14 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { SafetyKpiCards } from "@/components/safety-center/SafetyKpiCards";
 import {
   useSosIncidentsQuery,
   useSosOverviewQuery
 } from "@/hooks/queries/use-sos-incidents";
 import type { SosIncidentRow } from "@/services/sos-incidents";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 const ALL = "all";
 
@@ -45,7 +46,7 @@ export default function AdminSafetyOverviewPage() {
   const [city, setCity] = useState(ALL);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const overviewQuery = useSosOverviewQuery();
   const listQuery = useSosIncidentsQuery({
@@ -240,36 +241,16 @@ export default function AdminSafetyOverviewPage() {
           )}
 
           {!listQuery.isLoading && !listQuery.isError && rows.length > 0 && (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-32">
-                    <SelectValue placeholder="Page size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5 / page</SelectItem>
-                    <SelectItem value="10">10 / page</SelectItem>
-                    <SelectItem value="20">20 / page</SelectItem>
-                    <SelectItem value="50">50 / page</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span>
-                  Showing {totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–
-                  {Math.min(page * pageSize, totalItems)} of {totalItems}
-                </span>
-              </div>
-              <PaginationControls
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </div>
+            <ListPaginationFooter
+              pageSize={pageSize}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           )}
         </SectionCard>
       </PageContainer>

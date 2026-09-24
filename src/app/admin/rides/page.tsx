@@ -21,11 +21,10 @@ import {
   SelectContent,
   SelectItem
 } from "@/components/ui/select";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
 import { RIDE_STATUSES, type RideRow } from "@/services/rides";
-
-const DEFAULT_PAGE_SIZE = 10;
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 const currency = (n: number | null) => {
   if (n === null || Number.isNaN(n)) return "—";
@@ -211,32 +210,16 @@ export default function AdminRidesPage() {
           ) : (
             <DataTable columns={columns} data={rides} getRowId={(row) => String(row.id)} />
           )}
-          <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <PaginationControls
-              currentPage={page + 1}
-              totalPages={totalPages}
-              onPageChange={(newPage) => setPage(newPage - 1)}
-            />
-          </div>
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(0);
+            }}
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(newPage) => setPage(newPage - 1)}
+          />
         </SectionCard>
       </PageContainer>
     </AppShell>

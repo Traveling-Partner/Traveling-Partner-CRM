@@ -9,6 +9,8 @@ export function useBlogListQuery(params: {
   page: number;
   pageSize: number;
   status: string;
+  featured: string;
+  category: string;
   search: string;
 }) {
   const debouncedSearch = useDebouncedValue(params.search);
@@ -18,9 +20,11 @@ export function useBlogListQuery(params: {
       page: params.page,
       pageSize: params.pageSize,
       status: params.status,
+      featured: params.featured,
+      category: params.category,
       search: debouncedSearch
     }),
-    [params.page, params.pageSize, params.status, debouncedSearch]
+    [params.page, params.pageSize, params.status, params.featured, params.category, debouncedSearch]
   );
 
   return usePaginatedQuery({

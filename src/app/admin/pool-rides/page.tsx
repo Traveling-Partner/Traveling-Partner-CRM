@@ -23,7 +23,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { PoolRideStatCard } from "@/components/pool-rides/PoolRideStatCard";
 import { PoolRideResponsiveTable } from "@/components/pool-rides/PoolRideResponsiveTable";
 import { usePoolRidesMock } from "@/hooks/pool-rides/usePoolRidesMock";
@@ -251,19 +251,6 @@ export default function PoolRidesPage() {
               className="h-11 w-full sm:col-span-1 xl:col-span-2"
               aria-label="Filter by booking date"
             />
-            <Select
-              value={String(pageSize)}
-              onValueChange={(v) => handlePageSizeChange(Number(v))}
-            >
-              <SelectTrigger className="h-11 w-full sm:col-span-1 xl:col-span-2">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="8">8 / page</SelectItem>
-                <SelectItem value="10">10 / page</SelectItem>
-                <SelectItem value="20">20 / page</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {isLoading ? (
@@ -283,25 +270,13 @@ export default function PoolRidesPage() {
           )}
 
           {!isLoading && filteredCount > 0 ? (
-            <div className="mt-4 flex flex-col gap-3 border-t border-border/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-muted-foreground">
-                Showing{" "}
-                <span className="font-medium text-foreground">
-                  {page * pageSize + 1}
-                </span>
-                –
-                <span className="font-medium text-foreground">
-                  {Math.min((page + 1) * pageSize, filteredCount)}
-                </span>{" "}
-                of{" "}
-                <span className="font-medium text-foreground">{filteredCount}</span>
-              </p>
-              <PaginationControls
-                currentPage={page + 1}
-                totalPages={totalPages}
-                onPageChange={(next) => setPage(next - 1)}
-              />
-            </div>
+            <ListPaginationFooter
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(next) => setPage(next - 1)}
+            />
           ) : null}
         </SectionCard>
       </PageContainer>

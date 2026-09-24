@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NewsletterSubscriber, NewsletterSubscriberStatus } from "@/types/newsletter-subscribers";
 
-const DEFAULT_PAGE_SIZE = 6;
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+
 const INITIAL_LOAD_DELAY_MS = 500;
 
 interface UseNewsletterSubscribersMockOptions {

@@ -9,23 +9,15 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { EmptyState } from "@/components/common/EmptyState";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/components/ui/toast";
 import { useApiMutation } from "@/hooks/api";
 import { useCarouselBannersQuery, type BannerRow } from "@/hooks/queries/use-carousel-banners-query";
 import { queryKeys } from "@/lib/api/query-keys";
 import { deleteBanner } from "@/services/carousel";
-
-const DEFAULT_PAGE_SIZE = 6;
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 export default function AdminCarouselListPage() {
   const { success, error: showError } = useToast();
@@ -167,34 +159,16 @@ export default function AdminCarouselListPage() {
             />
           )}
 
-          <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Show</span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-              <span>per page</span>
-            </div>
-            <PaginationControls
-              currentPage={Math.min(page + 1, totalPages)}
-              totalPages={totalPages}
-              onPageChange={(nextPage) => setPage(nextPage - 1)}
-            />
-          </div>
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(0);
+            }}
+            currentPage={Math.min(page + 1, totalPages)}
+            totalPages={totalPages}
+            onPageChange={(nextPage) => setPage(nextPage - 1)}
+          />
         </SectionCard>
 
         <ConfirmDialog

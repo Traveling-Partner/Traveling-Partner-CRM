@@ -7,7 +7,6 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectTrigger,
@@ -19,10 +18,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuthStore } from "@/store/auth.store";
 import { commissions } from "@/mock-data/commissions";
 import type { Commission } from "@/types/domain";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 type CommissionRow = Commission & { statusLabel: "PENDING" | "PAID" };
-
-const PAGE_SIZE = 10;
 
 const monthOptions = (() => {
   const months: string[] = [];
@@ -43,6 +42,7 @@ export default function AgentCommissionsPage() {
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const myCommissions = useMemo(
     () =>
@@ -63,11 +63,11 @@ export default function AgentCommissionsPage() {
   }, [myCommissions, monthFilter, statusFilter]);
 
   const paginated = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+    const start = page * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   const columns: ColumnDef<CommissionRow>[] = [
     {
@@ -183,42 +183,16 @@ export default function AgentCommissionsPage() {
                 emptyDescription="Try changing the month or status filter."
               />
 
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  Showing{" "}
-                  <span className="font-medium">
-                    {paginated.length ? page * PAGE_SIZE + 1 : 0}
-                  </span>{" "}
-                  –{" "}
-                  <span className="font-medium">
-                    {page * PAGE_SIZE + paginated.length}
-                  </span>{" "}
-                  of <span className="font-medium">{filtered.length}</span>
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <span>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page + 1 >= totalPages}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages - 1, p + 1))
-                    }
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
+              <ListPaginationFooter
+                pageSize={pageSize}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(0);
+                }}
+                currentPage={page + 1}
+                totalPages={totalPages}
+                onPageChange={(p) => setPage(p - 1)}
+              />
             </>
           )}
         </SectionCard>

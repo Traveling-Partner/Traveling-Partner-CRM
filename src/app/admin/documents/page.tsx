@@ -30,6 +30,7 @@ import {
   type ApiDocStatus
 } from "@/lib/documents-utils";
 import { queryKeys } from "@/lib/api/query-keys";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import {
   documentStatusesFromQueueRows,
   previewDocumentFromQueueRow,
@@ -40,7 +41,7 @@ import {
   type PreviewDocument
 } from "@/services/documents";
 import type { DriverRow } from "@/services/users";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 
 type DecisionType = "APPROVE" | "REJECT";
 type DocumentKind = "cnic" | "license" | "vehicle";
@@ -90,7 +91,6 @@ const PENDING_STATUSES: DocumentStatusPayload = {
   vehicleStatus: "PENDING"
 };
 
-const DEFAULT_PAGE_SIZE = 25;
 const fallbackImage = "/mock-images/document-fallback.svg";
 const fallbackByType = {
   DRIVER_LICENSE: "/mock-images/driver-license.svg",
@@ -602,34 +602,16 @@ export default function DocumentsQueuePage() {
               />
             )}
 
-            <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {/* <span>Show</span> */}
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setPage(0);
-                  }}
-                >
-                  <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="250">250</SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* <span>per page</span> */}
-              </div>
-              <PaginationControls
-                currentPage={page + 1}
-                totalPages={totalPages}
-                onPageChange={(newPage) => setPage(newPage - 1)}
-              />
-            </div>
+            <ListPaginationFooter
+              pageSize={pageSize}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(0);
+              }}
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage - 1)}
+            />
           </>
         </SectionCard>
 
