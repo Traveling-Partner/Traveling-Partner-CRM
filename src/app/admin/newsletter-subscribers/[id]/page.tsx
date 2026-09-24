@@ -11,18 +11,11 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newsletter-subscriber-detail-query";
 import type { SubscriberNewsletterRow } from "@/services/newsletter-subscribers";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
@@ -196,39 +189,16 @@ export default function NewsletterSubscriberDetailPage() {
                 data={newsletters}
                 getRowId={(row) => String(row.newsletterId)}
               />
-              <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span>Show</span>
-                  <Select
-                    value={String(sentPageSize)}
-                    onValueChange={(value) => {
-                      setSentPageSize(Number(value));
-                      setSentPage(0);
-                    }}
-                  >
-                    <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAGE_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span>per page</span>
-                  <span>
-                    · Showing {currentPage * sentPageSize + 1}–
-                    {Math.min((currentPage + 1) * sentPageSize, totalElements)} of {totalElements}
-                  </span>
-                </div>
-                <PaginationControls
-                  currentPage={currentPage + 1}
-                  totalPages={totalPages}
-                  onPageChange={(nextPage) => setSentPage(nextPage - 1)}
-                />
-              </div>
+              <ListPaginationFooter
+                pageSize={sentPageSize}
+                onPageSizeChange={(size) => {
+                  setSentPageSize(size);
+                  setSentPage(0);
+                }}
+                currentPage={currentPage + 1}
+                totalPages={totalPages}
+                onPageChange={(nextPage) => setSentPage(nextPage - 1)}
+              />
             </>
           )}
         </SectionCard>

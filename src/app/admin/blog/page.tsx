@@ -18,7 +18,7 @@ import {
   SelectItem,
   SelectValue
 } from "@/components/ui/select";
-import { PaginationControls } from "@/components/vehicle-management/PaginationControls";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/components/ui/toast";
 import { useApiMutation } from "@/hooks/api";
@@ -27,7 +27,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { deleteBlog } from "@/services/blog";
 import type { BlogRow } from "@/services/blog-list";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
+import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import { BLOG_CATEGORIES, parseCategoryNames } from "@/lib/blog-categories";
 
 /** Brand gradient shared by the Published and Featured tags. */
@@ -365,35 +365,16 @@ export default function AdminBlogPage() {
               getRowId={(row) => String(row.id)}
             />
           )}
-          <div className="mt-2 flex flex-col gap-3 rounded-lg bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Show</span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="h-7 w-[4.5rem] border-border/40 bg-background text-xs shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_SIZE_OPTIONS.map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>per page</span>
-            </div>
-            <PaginationControls
-              currentPage={page + 1}
-              totalPages={totalPages}
-              onPageChange={(p) => setPage(p - 1)}
-            />
-          </div>
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(0);
+            }}
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p - 1)}
+          />
         </SectionCard>
 
         <ConfirmDialog
