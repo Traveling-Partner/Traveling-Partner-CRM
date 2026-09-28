@@ -70,7 +70,7 @@ export async function fetchDriversList(
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
     name: filters.name.trim() || undefined,
-    mobileNumber: filters.mobileNumber.trim() || undefined,
+    phonenumber: filters.mobileNumber.trim() || undefined,
     city: filters.city.trim() || undefined,
     gender: filters.gender === "all" ? undefined : filters.gender
   });
@@ -154,7 +154,7 @@ export async function fetchPartnersList(
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
     name: filters.name.trim() || undefined,
-    mobileNumber: filters.mobileNumber.trim() || undefined,
+    phonenumber: filters.mobileNumber.trim() || undefined,
     city: filters.city.trim() || undefined,
     gender: filters.gender === "all" ? undefined : filters.gender
   });
@@ -170,7 +170,7 @@ export async function fetchAgentsList(
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
     name: filters.name.trim() || undefined,
-    mobileNumber: filters.mobileNumber.trim() || undefined,
+    phonenumber: filters.mobileNumber.trim() || undefined,
     city: filters.city.trim() || undefined,
     gender: filters.gender === "all" ? undefined : filters.gender
   });
