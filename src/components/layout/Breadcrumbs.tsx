@@ -15,6 +15,7 @@ const SKIP_SEGMENTS = new Set([
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   "pool-rides": "Pool Ride",
+  rides: "Rides",
   drivers: "Drivers",
   passengers: "Passengers",
   partners: "Partners",
@@ -80,6 +81,7 @@ const GROUP_BY_SEGMENT: Record<string, string> = {
   reports: "Financial Management",
   commissions: "Commission Management",
   users: "User Management",
+  rides: "Ride Management",
   "vehicle-types": "Vehicle Management",
   "vehicle-brands": "Vehicle Management",
   "vehicle-models": "Vehicle Management",
