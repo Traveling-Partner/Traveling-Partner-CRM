@@ -179,7 +179,7 @@ function buildTimeline(
 function bookingStatusFor(rideStatus: PoolRideStatus): PoolRide["bookingStatus"] {
   if (rideStatus === "CANCELLED") return "CANCELLED";
   if (rideStatus === "COMPLETED") return "COMPLETED";
-  if (rideStatus === "BOOKED") return "PENDING";
+  if (rideStatus === "BOOKED") return "CONFIRMED";
   return "CONFIRMED";
 }
 
