@@ -1,4 +1,4 @@
-import { buildApiUrl } from "@/lib/api/endpoints";
+import { apiUrl } from "@/lib/api-base";
 import type { PaginatedResponse } from "@/lib/api/types";
 import { fetcher } from "@/lib/fetcher";
 import type { RidesListFilters } from "@/lib/api/query-keys";
@@ -58,15 +58,17 @@ export async function fetchRidesList(
   filters: RidesListFilters,
   opts: RequestOpts
 ): Promise<PaginatedResponse<RideRow>> {
-  const url = buildApiUrl("/rides", {
-    page: filters.page,
-    size: filters.pageSize,
-    status: filters.status === "all" ? undefined : filters.status,
-    city: filters.city.trim() || undefined,
-    search: filters.search.trim() || undefined,
-    bookingReference: filters.bookingReference.trim() || undefined
-  });
-  return fetcher<PaginatedResponse<RideRow>>(url, {
+  const params = new URLSearchParams();
+  params.set("page", String(filters.page));
+  params.set("size", String(filters.pageSize));
+  if (filters.status && filters.status !== "all") params.set("status", filters.status);
+  if (filters.city.trim()) params.set("city", filters.city.trim());
+  if (filters.search.trim()) params.set("search", filters.search.trim());
+  if (filters.bookingReference.trim()) {
+    params.set("bookingReference", filters.bookingReference.trim());
+  }
+
+  return fetcher<PaginatedResponse<RideRow>>(`${apiUrl("/rides")}?${params.toString()}`, {
     token: opts.token,
     signal: opts.signal,
     dedupe: false,
@@ -78,7 +80,7 @@ export async function fetchRideDetail(
   id: string | number,
   opts: RequestOpts
 ): Promise<RideDetail> {
-  return fetcher<RideDetail>(buildApiUrl(`/rides/${id}`), {
+  return fetcher<RideDetail>(apiUrl(`/rides/${id}`), {
     token: opts.token,
     signal: opts.signal,
     dedupe: false,
