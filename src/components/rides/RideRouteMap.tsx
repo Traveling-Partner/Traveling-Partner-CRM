@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { MapPin, Navigation } from "lucide-react";
+import { MissingData } from "@/components/common/MissingData";
 
 export interface RideRouteMapProps {
   startLat: number | null;
@@ -84,7 +85,7 @@ export function RideRouteMap({
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-slate-400">
-            Map coordinates are not available for this ride.
+            Map coordinates are missing from the API.
           </div>
         )}
       </div>
@@ -100,9 +101,11 @@ export function RideRouteMap({
             </p>
             <p className="text-sm font-medium leading-snug text-slate-100">{pickupLabel}</p>
             <p className="mt-0.5 font-mono text-[0.65rem] text-slate-500">
-              {startLat != null && startLng != null
-                ? `${startLat.toFixed(5)}, ${startLng.toFixed(5)}`
-                : "—"}
+              {startLat != null && startLng != null ? (
+                `${startLat.toFixed(5)}, ${startLng.toFixed(5)}`
+              ) : (
+                <MissingData className="border-amber-300/40 bg-amber-400/15 text-amber-100" />
+              )}
             </p>
           </div>
         </div>
@@ -116,9 +119,11 @@ export function RideRouteMap({
             </p>
             <p className="text-sm font-medium leading-snug text-slate-100">{dropoffLabel}</p>
             <p className="mt-0.5 font-mono text-[0.65rem] text-slate-500">
-              {endLat != null && endLng != null
-                ? `${endLat.toFixed(5)}, ${endLng.toFixed(5)}`
-                : "—"}
+              {endLat != null && endLng != null ? (
+                `${endLat.toFixed(5)}, ${endLng.toFixed(5)}`
+              ) : (
+                <MissingData className="border-amber-300/40 bg-amber-400/15 text-amber-100" />
+              )}
             </p>
           </div>
         </div>

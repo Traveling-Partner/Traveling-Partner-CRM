@@ -120,7 +120,7 @@ export const rideManagementGroup: SidebarGroup = {
   id: "ride-management",
   label: "Ride Management",
   icon: Route,
-  items: [{ label: "Rides", href: "/admin/pool-rides", icon: Share2 }]
+  items: [{ label: "Rides", href: "/admin/rides", icon: Share2 }]
 };
 
 export const vehicleManagementGroup: SidebarGroup = {

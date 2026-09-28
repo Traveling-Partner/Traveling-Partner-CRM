@@ -29,43 +29,43 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { RideRouteMap } from "@/components/rides/RideRouteMap";
 import TPLoader from "@/components/TPLoader";
+import { MissingData, MISSING_DATA_LABEL } from "@/components/common/MissingData";
 import { useRideDetailQuery } from "@/hooks/queries/use-ride-detail-query";
 import type { RideDetail } from "@/services/rides";
+import type { ReactNode } from "react";
 
-const DASH = "—";
-
-const currency = (n: number | null) => {
-  if (n == null || Number.isNaN(n)) return DASH;
+function currency(n: number | null): ReactNode {
+  if (n == null || Number.isNaN(n)) return <MissingData />;
   return new Intl.NumberFormat("en-PK", {
     style: "currency",
     currency: "PKR",
     maximumFractionDigits: 0
   }).format(n);
-};
+}
 
-function text(value: string | number | null | undefined) {
-  if (value == null || value === "") return DASH;
+function text(value: string | number | null | undefined): ReactNode {
+  if (value == null || value === "") return <MissingData />;
   return String(value);
 }
 
-function humanize(value: string | null | undefined) {
-  if (!value) return DASH;
+function humanize(value: string | null | undefined): ReactNode {
+  if (!value) return <MissingData />;
   return value.replaceAll("_", " ");
 }
 
-function formatWhen(value: string | null | undefined, pattern = "MMM d, yyyy · HH:mm") {
-  if (!value) return DASH;
+function formatWhen(value: string | null | undefined, pattern = "MMM d, yyyy · HH:mm"): ReactNode {
+  if (!value) return <MissingData />;
   try {
     const d = parseISO(value);
-    if (Number.isNaN(d.getTime())) return DASH;
+    if (Number.isNaN(d.getTime())) return <MissingData />;
     return format(d, pattern);
   } catch {
-    return DASH;
+    return <MissingData />;
   }
 }
 
-function paymentLabel(method: string | null) {
-  if (!method) return DASH;
+function paymentLabel(method: string | null): ReactNode {
+  if (!method) return <MissingData />;
   if (method === "CARD") return "Card";
   if (method === "WALLET") return "In-app wallet";
   if (method === "CASH") return "Cash";
@@ -90,7 +90,7 @@ function buildTimeline(ride: RideDetail) {
   }
 
   if (LIVE_STATUSES.has(ride.status)) {
-    steps.push({ title: humanize(ride.status), at: null, tone: "warn" });
+    steps.push({ title: ride.status.replaceAll("_", " "), at: null, tone: "warn" });
   }
 
   if (ride.status === "COMPLETED") {
@@ -172,15 +172,17 @@ export default function AdminRideDetailPage() {
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={ride.status} />
+                {ride.status ? <StatusBadge status={ride.status} /> : <MissingData />}
                 {ride.rideType ? (
                   <Badge variant="outline" className="border-white/20 bg-white/5 text-[0.65rem] text-white/90">
                     {humanize(ride.rideType)}
                   </Badge>
-                ) : null}
+                ) : (
+                  <MissingData className="border-amber-300/40 bg-amber-400/15 text-amber-100" />
+                )}
               </div>
               <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
-                {ride.city ? `${ride.city} trip` : "Ride detail"}
+                {ride.city ? `${ride.city} trip` : <MissingData className="border-amber-300/40 bg-amber-400/15 text-amber-100" />}
               </h1>
               <p className="max-w-xl text-sm text-white/70">
                 Booking{" "}
@@ -215,7 +217,7 @@ export default function AdminRideDetailPage() {
                   Distance
                 </p>
                 <p className="mt-1 font-heading text-xl font-semibold">
-                  {ride.distanceKm == null ? DASH : `${ride.distanceKm} km`}
+                  {ride.distanceKm == null ? <MissingData className="border-amber-300/40 bg-amber-400/15 text-amber-100" /> : `${ride.distanceKm} km`}
                 </p>
               </div>
               <div className="col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md sm:col-span-1">
@@ -223,7 +225,11 @@ export default function AdminRideDetailPage() {
                   Duration
                 </p>
                 <p className="mt-1 font-heading text-xl font-semibold">
-                  {ride.durationMinutes == null ? DASH : `${ride.durationMinutes} min`}
+                  {ride.durationMinutes == null ? (
+                    <MissingData className="border-amber-300/40 bg-amber-400/15 text-amber-100" />
+                  ) : (
+                    `${ride.durationMinutes} min`
+                  )}
                 </p>
               </div>
             </div>
@@ -236,8 +242,8 @@ export default function AdminRideDetailPage() {
             startLng={ride.startLng}
             endLat={ride.endLat}
             endLng={ride.endLng}
-            pickupLabel={ride.pickupAddress || "Pickup address unavailable"}
-            dropoffLabel={ride.dropoffAddress || "Drop-off address unavailable"}
+            pickupLabel={ride.pickupAddress?.trim() || MISSING_DATA_LABEL}
+            dropoffLabel={ride.dropoffAddress?.trim() || MISSING_DATA_LABEL}
           />
         </div>
 
@@ -321,6 +327,15 @@ export default function AdminRideDetailPage() {
                     Cancellation reason
                   </p>
                   <p className="mt-1 text-sm">{ride.cancellationReason}</p>
+                </div>
+              ) : ride.status === "CANCELED" ? (
+                <div className="sm:col-span-2 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                    Cancellation reason
+                  </p>
+                  <p className="mt-1">
+                    <MissingData />
+                  </p>
                 </div>
               ) : null}
             </div>
@@ -415,7 +430,7 @@ export default function AdminRideDetailPage() {
               <div>
                 <p className="text-[0.65rem] font-semibold uppercase text-muted-foreground">Distance</p>
                 <p className="font-medium">
-                  {ride.distanceKm == null ? DASH : `${ride.distanceKm} km`}
+                  {ride.distanceKm == null ? <MissingData /> : `${ride.distanceKm} km`}
                 </p>
               </div>
             </div>
@@ -424,7 +439,7 @@ export default function AdminRideDetailPage() {
               <div>
                 <p className="text-[0.65rem] font-semibold uppercase text-muted-foreground">Duration</p>
                 <p className="font-medium">
-                  {ride.durationMinutes == null ? DASH : `${ride.durationMinutes} minutes`}
+                  {ride.durationMinutes == null ? <MissingData /> : `${ride.durationMinutes} minutes`}
                 </p>
               </div>
             </div>

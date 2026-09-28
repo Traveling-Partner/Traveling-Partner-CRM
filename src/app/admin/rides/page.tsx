@@ -22,23 +22,24 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { MissingData } from "@/components/common/MissingData";
 import { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
 import { RIDE_STATUSES, type RideRow } from "@/services/rides";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
-const currency = (n: number | null) => {
-  if (n === null || Number.isNaN(n)) return "—";
+function currency(n: number | null) {
+  if (n == null || Number.isNaN(n)) return <MissingData />;
   return new Intl.NumberFormat("en-PK", {
     style: "currency",
     currency: "PKR",
     maximumFractionDigits: 0
   }).format(n);
-};
+}
 
 function formatDateTime(value: string | null) {
-  if (!value) return "—";
+  if (!value) return <MissingData />;
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return <MissingData />;
   return d.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -75,27 +76,29 @@ export default function AdminRidesPage() {
       {
         accessorKey: "bookingReference",
         header: "Booking",
-        cell: ({ row }) => (
-          <span className="font-mono text-xs font-medium">
-            {row.original.bookingReference || "—"}
-          </span>
-        )
+        cell: ({ row }) =>
+          row.original.bookingReference ? (
+            <span className="font-mono text-xs font-medium">{row.original.bookingReference}</span>
+          ) : (
+            <MissingData />
+          )
       },
       {
         accessorKey: "city",
         header: "City",
-        cell: ({ row }) => row.original.city || "—"
+        cell: ({ row }) => (row.original.city ? row.original.city : <MissingData />)
       },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />
+        cell: ({ row }) =>
+          row.original.status ? <StatusBadge status={row.original.status} /> : <MissingData />
       },
       {
         accessorKey: "distanceKm",
         header: "Distance",
         cell: ({ row }) =>
-          row.original.distanceKm == null ? "—" : `${row.original.distanceKm} km`
+          row.original.distanceKm == null ? <MissingData /> : `${row.original.distanceKm} km`
       },
       {
         accessorKey: "fare",
@@ -139,7 +142,7 @@ export default function AdminRidesPage() {
         </div>
         <SectionCard
           title="Ride list"
-          description="Open any row for full trip detail, route map, and settlement."
+          description="Live data from GET /api/rides. If a field is empty, the API did not send it (Missing data)."
           className="mt-4"
         >
           {error ? (
