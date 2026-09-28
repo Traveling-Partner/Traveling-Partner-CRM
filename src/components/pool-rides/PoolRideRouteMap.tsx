@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PoolRide } from "@/types/pool-ride";
+import {
+  POOL_RIDE_ACTUAL_METRICS_HINT,
+  poolRideHasActualMetrics
+} from "@/components/pool-rides/PoolRideBadges";
 
 interface PoolRideRouteMapProps {
   ride: PoolRide;
@@ -22,12 +26,11 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
     ride.rideStatus === "IN_PROGRESS" ||
     ride.rideStatus === "STARTED" ||
     ride.rideStatus === "DRIVER_ARRIVED";
-
+  const hasActualMetrics = poolRideHasActualMetrics(ride);
+  const actualDistance = hasActualMetrics ? `${ride.actualDistanceKm} km` : "—";
+  const actualTime = hasActualMetrics ? `${ride.actualTimeMinutes} min` : "—";
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${ride.startLat},${ride.startLng}&destination=${ride.endLat},${ride.endLng}&travelmode=driving`;
-
   const googleMapsEmbedSimple = `https://maps.google.com/maps?saddr=${ride.startLat},${ride.startLng}&daddr=${ride.endLat},${ride.endLng}&hl=en&z=14&output=embed`;
-  const actualDistance = ride.actualDistanceKm != null ? `${ride.actualDistanceKm} km` : "—";
-  const actualTime = ride.actualTimeMinutes != null ? `${ride.actualTimeMinutes} min` : "—";
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -87,6 +90,11 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
               Actual distance
             </p>
             <p className="mt-0.5 text-sm font-semibold text-foreground">{actualDistance}</p>
+            {!hasActualMetrics ? (
+              <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                {POOL_RIDE_ACTUAL_METRICS_HINT}
+              </p>
+            ) : null}
           </div>
           <div className="rounded-lg border border-border/50 bg-card/80 px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -101,12 +109,17 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
               Actual time
             </p>
             <p className="mt-0.5 text-sm font-semibold text-foreground">{actualTime}</p>
+            {!hasActualMetrics ? (
+              <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                {POOL_RIDE_ACTUAL_METRICS_HINT}
+              </p>
+            ) : null}
           </div>
           <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 sm:col-span-2 lg:col-span-1">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
               Pickup address
             </p>
-            <p className="mt-0.5 line-clamp-2 text-sm font-medium text-foreground">
+            <p className="mt-0.5 text-sm font-medium text-foreground">
               {ride.pickupAddress}
             </p>
           </div>
@@ -114,7 +127,7 @@ export function PoolRideRouteMap({ ride, className, fullWidth }: PoolRideRouteMa
             <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-400">
               Destination address
             </p>
-            <p className="mt-0.5 line-clamp-2 text-sm font-medium text-foreground">
+            <p className="mt-0.5 text-sm font-medium text-foreground">
               {ride.destinationAddress}
             </p>
           </div>

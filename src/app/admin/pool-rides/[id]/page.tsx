@@ -21,7 +21,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   PoolRideBadge,
   poolRideCurrency,
-  poolRidePaymentLabel
+  poolRideHasActualMetrics,
+  poolRidePaymentLabel,
+  poolRideServiceModeLabel,
+  POOL_RIDE_ACTUAL_METRICS_HINT
 } from "@/components/pool-rides/PoolRideBadges";
 import { PoolRideRouteMap } from "@/components/pool-rides/PoolRideRouteMap";
 import { PoolRideTimeline } from "@/components/pool-rides/PoolRideTimeline";
@@ -67,6 +70,7 @@ export default function PoolRideDetailPage() {
 
   const isCancelled = ride.rideStatus === "CANCELLED";
   const isCompleted = ride.rideStatus === "COMPLETED";
+  const hasActualMetrics = poolRideHasActualMetrics(ride);
   const PaymentIcon = ride.paymentMethod === "WALLET" ? Wallet : CreditCard;
 
   return (
@@ -89,19 +93,36 @@ export default function PoolRideDetailPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <PoolRideBadge status={ride.rideStatus} variant="ride" />
                   <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-[11px] font-semibold text-slate-900 shadow-sm">
-                    {ride.serviceMode === "POOL_RIDE" ? "Pool Ride" : "Taxi Stand Car"}
+                    {poolRideServiceModeLabel(ride.serviceMode)}
                   </span>
                   <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] font-semibold text-foreground">
                     {ride.rideType}
                   </span>
                 </div>
-                <h1 className="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl md:text-3xl">
-                  {ride.pickupAddress.split(",")[0]} → {ride.destinationAddress.split(",")[0]}
-                </h1>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                      Pickup
+                    </p>
+                    <p className="mt-0.5 font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl md:text-2xl">
+                      {ride.pickupAddress}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                      Drop-off
+                    </p>
+                    <p className="mt-0.5 font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl md:text-2xl">
+                      {ride.destinationAddress}
+                    </p>
+                  </div>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Booked {format(parseISO(ride.bookingDate), "PPP · p")} ·{" "}
-                  {ride.tripType.replace(/_/g, " ")} · {ride.vehicleType} · Booking{" "}
-                  <span className="font-medium text-foreground">{ride.bookingStatus.toLowerCase()}</span>
+                  Booked {format(parseISO(ride.bookingDate), "PPP · p")} · Trip type:{" "}
+                  {ride.tripType.replace(/_/g, " ")} · {ride.vehicleType} · Booking:{" "}
+                  <span className="font-medium text-foreground">
+                    {ride.bookingStatus.replace(/_/g, " ").toLowerCase()}
+                  </span>
                 </p>
                 <div className="flex flex-wrap gap-2 pt-0.5">
                   <span className="inline-flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/30 px-2.5 py-1 text-xs font-medium text-foreground">
@@ -125,19 +146,33 @@ export default function PoolRideDetailPage() {
                   </div>
                   <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
                     <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {ride.rideStatus === "COMPLETED" ? "Distance" : "Est. distance"}
+                      {hasActualMetrics ? "Actual distance" : "Est. distance"}
                     </p>
                     <p className="mt-1 font-heading text-xl font-semibold text-foreground tabular-nums">
-                      {ride.actualDistanceKm ?? ride.estimatedDistanceKm} km
+                      {hasActualMetrics
+                        ? `${ride.actualDistanceKm} km`
+                        : `${ride.estimatedDistanceKm} km`}
                     </p>
+                    {!hasActualMetrics ? (
+                      <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+                        {POOL_RIDE_ACTUAL_METRICS_HINT}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="col-span-2 rounded-xl border border-border/60 bg-muted/20 p-4 sm:col-span-1">
                     <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {ride.rideStatus === "COMPLETED" ? "Actual time" : "Est. time"}
+                      {hasActualMetrics ? "Actual time" : "Est. time"}
                     </p>
                     <p className="mt-1 font-heading text-xl font-semibold text-foreground tabular-nums">
-                      {ride.actualTimeMinutes ?? ride.estimatedTimeMinutes} min
+                      {hasActualMetrics
+                        ? `${ride.actualTimeMinutes} min`
+                        : `${ride.estimatedTimeMinutes} min`}
                     </p>
+                    {!hasActualMetrics ? (
+                      <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+                        {POOL_RIDE_ACTUAL_METRICS_HINT}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
             </div>
@@ -179,13 +214,26 @@ export default function PoolRideDetailPage() {
               <InfoField label="Final amount" value={poolRideCurrency(ride.finalAmount)} />
               <InfoField
                 label="Distance"
-                value={`${ride.actualDistanceKm ?? ride.estimatedDistanceKm} km`}
+                value={
+                  hasActualMetrics
+                    ? `${ride.actualDistanceKm} km`
+                    : `${ride.estimatedDistanceKm} km`
+                }
               />
               <InfoField
                 label="Duration"
-                value={`${ride.actualTimeMinutes ?? ride.estimatedTimeMinutes} min`}
+                value={
+                  hasActualMetrics
+                    ? `${ride.actualTimeMinutes} min`
+                    : `${ride.estimatedTimeMinutes} min`
+                }
               />
             </div>
+            {!hasActualMetrics ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {POOL_RIDE_ACTUAL_METRICS_HINT}
+              </p>
+            ) : null}
           </SectionCard>
         </div>
 

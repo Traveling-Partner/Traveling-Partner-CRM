@@ -29,11 +29,6 @@ function formatDate(value: string) {
   });
 }
 
-function shortAddress(address: string) {
-  const part = address.split(",")[0]?.trim() ?? address;
-  return part.length > 42 ? `${part.slice(0, 40)}…` : part;
-}
-
 function SortableHeader({
   label,
   field,
@@ -118,7 +113,7 @@ function RideMobileCard({ ride }: { ride: PoolRide }) {
               Pickup
             </p>
             <p className="text-sm leading-snug text-foreground">
-              {shortAddress(ride.pickupAddress)}
+              {ride.pickupAddress}
             </p>
           </div>
         </div>
@@ -132,7 +127,7 @@ function RideMobileCard({ ride }: { ride: PoolRide }) {
               Destination
             </p>
             <p className="text-sm leading-snug text-foreground">
-              {shortAddress(ride.destinationAddress)}
+              {ride.destinationAddress}
             </p>
           </div>
         </div>
@@ -294,13 +289,13 @@ export function PoolRideResponsiveTable({
                   <td className="hidden px-3 py-3.5 text-[12px] text-muted-foreground xl:table-cell">
                     {ride.vehicleType}
                   </td>
-                  <td className="hidden max-w-[160px] px-3 py-3.5 xl:table-cell">
-                    <span className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+                  <td className="hidden min-w-[180px] px-3 py-3.5 xl:table-cell">
+                    <span className="text-[12px] leading-snug text-muted-foreground">
                       {ride.pickupAddress}
                     </span>
                   </td>
-                  <td className="hidden max-w-[160px] px-3 py-3.5 2xl:table-cell">
-                    <span className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+                  <td className="hidden min-w-[180px] px-3 py-3.5 2xl:table-cell">
+                    <span className="text-[12px] leading-snug text-muted-foreground">
                       {ride.destinationAddress}
                     </span>
                   </td>

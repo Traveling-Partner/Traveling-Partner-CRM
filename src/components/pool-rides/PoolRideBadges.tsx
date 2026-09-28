@@ -119,10 +119,21 @@ export function poolRidePaymentLabel(method: PoolRide["paymentMethod"]) {
   return "Cash";
 }
 
+export function poolRideServiceModeLabel(mode: PoolRide["serviceMode"]) {
+  return mode === "POOL_RIDE" ? "Pool Ride" : "Taxi Stand";
+}
+
+export const POOL_RIDE_ACTUAL_METRICS_HINT =
+  "Actual distance and time will be calculated and shown here after the ride starts and ends.";
+
+export function poolRideHasActualMetrics(ride: Pick<PoolRide, "rideStatus">) {
+  return ride.rideStatus === "COMPLETED";
+}
+
 export function poolRideCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-PK", {
     style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2
+    currency: "PKR",
+    maximumFractionDigits: 0
   }).format(amount);
 }

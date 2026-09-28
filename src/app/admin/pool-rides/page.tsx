@@ -137,7 +137,7 @@ export default function PoolRidesPage() {
         return [
           ...baseCards,
           {
-            label: "Taxi Stand Car",
+            label: "Taxi Stand",
             value: scopedStats.taxiStandCars,
             icon: CarTaxiFront,
             iconBg: "bg-violet-50 dark:bg-violet-500/10",
@@ -158,7 +158,7 @@ export default function PoolRidesPage() {
           accentBorder: "border-emerald-500/20"
         },
         {
-          label: "Taxi Stand Car",
+          label: "Taxi Stand",
           value: scopedStats.taxiStandCars,
           icon: CarTaxiFront,
           iconBg: "bg-violet-50 dark:bg-violet-500/10",
@@ -230,7 +230,7 @@ export default function PoolRidesPage() {
               <SelectContent>
                 <SelectItem value="all">All services</SelectItem>
                 <SelectItem value="POOL_RIDE">Pool Ride</SelectItem>
-                <SelectItem value="TAXI_STAND_CAR">Taxi Stand Car</SelectItem>
+                <SelectItem value="TAXI_STAND_CAR">Taxi Stand</SelectItem>
               </SelectContent>
             </Select>
             <Select value={rideStatusFilter} onValueChange={handleRideStatusFilterChange}>
