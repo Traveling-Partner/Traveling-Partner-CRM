@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Ride Management uses live GET /api/rides/{id}. Mock pool-rides must not render. */
+/** Ride Management uses live GET /api/rides/portal/getById/{id}. */
 export default function PoolRideDetailRedirectPage({
   params
 }: {

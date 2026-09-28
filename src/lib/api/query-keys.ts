@@ -135,6 +135,8 @@ export interface RidesListFilters {
   city: string;
   search: string;
   bookingReference: string;
+  rideType: string;
+  startedAt: string;
 }
 
 export interface DocumentsQueueFilters {
