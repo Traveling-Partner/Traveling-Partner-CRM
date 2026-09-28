@@ -236,8 +236,8 @@ export default function AdminRideDetailPage() {
             startLng={ride.startLng}
             endLat={ride.endLat}
             endLng={ride.endLng}
-            pickupLabel={ride.pickupAddress || "Pickup address unavailable"}
-            dropoffLabel={ride.dropoffAddress || "Drop-off address unavailable"}
+            pickupLabel={ride.pickupAddress || "—"}
+            dropoffLabel={ride.dropoffAddress || "—"}
           />
         </div>
 

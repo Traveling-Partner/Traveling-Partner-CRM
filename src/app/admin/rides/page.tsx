@@ -52,6 +52,8 @@ export default function AdminRidesPage() {
   const [bookingReference, setBookingReference] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [rideType, setRideType] = useState("");
+  const [startedAt, setStartedAt] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const resetPage = () => setPage(0);
@@ -62,7 +64,9 @@ export default function AdminRidesPage() {
     status: statusFilter,
     city: cityFilter,
     search,
-    bookingReference
+    bookingReference,
+    rideType,
+    startedAt
   });
 
   const rides = data?.content ?? [];
@@ -147,7 +151,7 @@ export default function AdminRidesPage() {
               {error.message}
             </p>
           ) : null}
-          <div className="grid gap-2.5 pb-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2.5 pb-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
               <Input
@@ -195,6 +199,22 @@ export default function AdminRidesPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Input
+              placeholder="Ride type"
+              value={rideType}
+              onChange={(e) => {
+                setRideType(e.target.value);
+                resetPage();
+              }}
+            />
+            <Input
+              type="date"
+              value={startedAt}
+              onChange={(e) => {
+                setStartedAt(e.target.value);
+                resetPage();
+              }}
+            />
           </div>
           {loading ? (
             <div className="space-y-2 py-3">
