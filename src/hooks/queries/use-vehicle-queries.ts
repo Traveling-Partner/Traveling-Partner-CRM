@@ -26,9 +26,8 @@ import {
 const OPTIONS_STALE_TIME_MS = 30 * 60 * 1000;
 const OPTIONS_GC_TIME_MS = 60 * 60 * 1000;
 
-/** UI uses 1-based page; API uses 0-based — convert here. */
 function toApiFilters(page: number, pageSize: number, search: string) {
-  return { page: Math.max(0, page - 1), pageSize, search };
+  return { page: Math.max(1, page), pageSize, search };
 }
 
 export function useVehicleTypesQuery(page: number, pageSize: number, search: string) {

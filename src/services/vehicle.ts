@@ -58,7 +58,7 @@ async function fetchEnvelopePage<T>(
 ): Promise<PaginatedResponse<T>> {
   const res = await fetcher<EnvelopePage<T>>(
     buildApiUrl(path, {
-      page: filters.page,
+      page: Math.max(1, filters.page),
       size: filters.pageSize,
       search: filters.search.trim()
     }),
@@ -107,7 +107,7 @@ async function fetchAllEnvelopePages<T>(
   label: string
 ): Promise<T[]> {
   const all: T[] = [];
-  let page = 0;
+  let page = 1;
   /** Large page: these walks are sequential, so a small size costs a round-trip each. */
   const pageSize = 100;
 
@@ -115,7 +115,7 @@ async function fetchAllEnvelopePages<T>(
     const res = await fetchEnvelopePage<T>(path, { page, pageSize, search: "" }, opts, label);
     all.push(...(res.content ?? []));
     const totalPages = Math.max(1, res.totalPages ?? 1);
-    if (!res.content?.length || page + 1 >= totalPages) break;
+    if (!res.content?.length || page >= totalPages) break;
     page += 1;
   }
 
