@@ -83,7 +83,7 @@ export default function AdminBlogPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [featuredFilter, setFeaturedFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching } = useBlogListQuery({
@@ -122,7 +122,7 @@ export default function AdminBlogPage() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(0);
+    setPage(1);
   };
 
   const openDeleteDialog = useCallback((row: BlogRow) => {
@@ -309,7 +309,7 @@ export default function AdminBlogPage() {
               value={statusFilter}
               onValueChange={(value) => {
                 setStatusFilter(value);
-                setPage(0);
+                setPage(1);
               }}
             >
               <SelectTrigger>
@@ -325,7 +325,7 @@ export default function AdminBlogPage() {
               value={featuredFilter}
               onValueChange={(value) => {
                 setFeaturedFilter(value);
-                setPage(0);
+                setPage(1);
               }}
             >
               <SelectTrigger>
@@ -341,7 +341,7 @@ export default function AdminBlogPage() {
               value={categoryFilter}
               onValueChange={(value) => {
                 setCategoryFilter(value);
-                setPage(0);
+                setPage(1);
               }}
             >
               <SelectTrigger>
@@ -380,11 +380,11 @@ export default function AdminBlogPage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={page + 1}
+            currentPage={page}
             totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
 

@@ -55,9 +55,9 @@ export default function AdminRidesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [rideType, setRideType] = useState("");
   const [startedAt, setStartedAt] = useState("");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const resetPage = () => setPage(0);
+  const resetPage = () => setPage(1);
 
   const { data, isLoading, isFetching, error } = useRidesListQuery({
     page,
@@ -237,11 +237,11 @@ export default function AdminRidesPage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={page + 1}
+            currentPage={page}
             totalPages={totalPages}
-            onPageChange={(newPage) => setPage(newPage - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
       </PageContainer>

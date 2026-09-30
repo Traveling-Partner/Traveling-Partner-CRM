@@ -33,7 +33,7 @@ export default function AdminAgentPerformancePage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useAgentsListQuery({
@@ -189,7 +189,7 @@ export default function AdminAgentPerformancePage() {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  setPage(0);
+                  setPage(1);
                 }}
                 className="pl-9"
               />
@@ -200,7 +200,7 @@ export default function AdminAgentPerformancePage() {
                 value={statusFilter}
                 onValueChange={(value) => {
                   setStatusFilter(value);
-                  setPage(0);
+                  setPage(1);
                 }}
               >
                 <SelectTrigger className="w-40">
@@ -232,11 +232,11 @@ export default function AdminAgentPerformancePage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={page + 1}
+            currentPage={page}
             totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
       </PageContainer>

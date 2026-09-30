@@ -55,7 +55,7 @@ export function HeaderAuditLogBell() {
 
   const { data, isLoading, refetch } = useAuditLogsQuery(
     {
-      page: 0,
+      page: 1,
       pageSize: 8,
       userType: "all",
       search: "",

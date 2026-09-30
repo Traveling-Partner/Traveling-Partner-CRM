@@ -43,7 +43,7 @@ function getSentDate(row: SubscriberNewsletterRow): string | null {
 export default function NewsletterSubscriberDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const [sentPage, setSentPage] = useState(0);
+  const [sentPage, setSentPage] = useState(1);
   const [sentPageSize, setSentPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useNewsletterSubscriberDetailQuery({
@@ -103,7 +103,6 @@ export default function NewsletterSubscriberDetailPage() {
   const newsletters = data?.newsletters ?? [];
   const totalElements = data?.totalElements ?? 0;
   const totalPages = data?.totalPages ?? 1;
-  const currentPage = data?.currentPage ?? sentPage;
 
   return (
     <AppShell title="Newsletter Subscribers">
@@ -193,11 +192,11 @@ export default function NewsletterSubscriberDetailPage() {
                 pageSize={sentPageSize}
                 onPageSizeChange={(size) => {
                   setSentPageSize(size);
-                  setSentPage(0);
+                  setSentPage(1);
                 }}
-                currentPage={currentPage + 1}
+                currentPage={sentPage}
                 totalPages={totalPages}
-                onPageChange={(nextPage) => setSentPage(nextPage - 1)}
+                onPageChange={setSentPage}
               />
             </>
           )}

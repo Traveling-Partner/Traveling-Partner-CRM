@@ -63,7 +63,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const [moduleFilter, setModuleFilter] = useState("");
   const [actionFilter, setActionFilter] = useState("");
   const [userId, setUserId] = useState("");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [highlightVisible, setHighlightVisible] = useState(Boolean(highlightId));
   const tableWrapRef = useRef<HTMLDivElement>(null);
@@ -71,7 +71,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   useEffect(() => {
     if (isDashboard || !urlSearch) return;
     setSearch(urlSearch);
-    setPage(0);
+    setPage(1);
   }, [urlSearch, isDashboard]);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const { data, isLoading, isFetching, error } = useAuditLogsQuery(
     isDashboard
       ? {
-          page: 0,
+          page: 1,
           pageSize: 10,
           userType: "all",
           search: "",
@@ -195,7 +195,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(0);
+                setPage(1);
               }}
               className="max-w-xs bg-background/90"
             />
@@ -203,7 +203,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
               value={userType}
               onValueChange={(value) => {
                 setUserType(value);
-                setPage(0);
+                setPage(1);
               }}
             >
               <SelectTrigger className="w-44 bg-background/90">
@@ -222,7 +222,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
               value={moduleFilter}
               onChange={(e) => {
                 setModuleFilter(e.target.value);
-                setPage(0);
+                setPage(1);
               }}
               className="w-40 bg-background/90"
               aria-label="Module"
@@ -232,7 +232,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
               value={actionFilter}
               onChange={(e) => {
                 setActionFilter(e.target.value);
-                setPage(0);
+                setPage(1);
               }}
               className="w-40 bg-background/90"
               aria-label="Action"
@@ -242,7 +242,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
               value={userId}
               onChange={(e) => {
                 setUserId(e.target.value);
-                setPage(0);
+                setPage(1);
               }}
               className="w-36 bg-background/90"
               aria-label="User ID"
@@ -256,7 +256,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
                 value={fromDate}
                 onChange={(e) => {
                   setFromDate(e.target.value);
-                  setPage(0);
+                  setPage(1);
                 }}
                 className="w-40 bg-background/90"
                 placeholder="Start date"
@@ -272,7 +272,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
                 value={toDate}
                 onChange={(e) => {
                   setToDate(e.target.value);
-                  setPage(0);
+                  setPage(1);
                 }}
                 className="w-40 bg-background/90"
                 placeholder="End date"
@@ -323,11 +323,11 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
           pageSize={pageSize}
           onPageSizeChange={(size) => {
             setPageSize(size);
-            setPage(0);
+            setPage(1);
           }}
-          currentPage={page + 1}
+          currentPage={page}
           totalPages={totalPages}
-          onPageChange={(p) => setPage(p - 1)}
+          onPageChange={setPage}
         />
       ) : null}
     </SectionCard>

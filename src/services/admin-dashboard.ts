@@ -559,7 +559,7 @@ export async function fetchAdminDashboardData(
     fetcher<unknown>(buildApiUrl("/users/ride-status-count"), requestInit),
     fetchAuditLogs(
       {
-        page: 0,
+        page: 1,
         pageSize: recentActivityLimit,
         userType: "all",
         search: "",

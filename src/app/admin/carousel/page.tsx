@@ -22,7 +22,7 @@ import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 export default function AdminCarouselListPage() {
   const { success, error: showError } = useToast();
 
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<BannerRow | null>(null);
@@ -49,7 +49,7 @@ export default function AdminCarouselListPage() {
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageRows = useMemo(
-    () => rows.slice(page * pageSize, page * pageSize + pageSize),
+    () => rows.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize),
     [rows, page, pageSize]
   );
 
@@ -163,11 +163,11 @@ export default function AdminCarouselListPage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={Math.min(page + 1, totalPages)}
+            currentPage={Math.min(page, totalPages)}
             totalPages={totalPages}
-            onPageChange={(nextPage) => setPage(nextPage - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
 

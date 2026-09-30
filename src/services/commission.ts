@@ -58,7 +58,7 @@ export async function fetchCommissionList(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<PaginatedResponse<CommissionApiRecord>> {
   const params = new URLSearchParams({
-    page: String(Math.max(0, filters.page - 1)),
+    page: String(Math.max(1, filters.page)),
     size: String(filters.pageSize),
     search: filters.search.trim()
   });

@@ -49,7 +49,7 @@ export async function fetchAuditLogs(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<PaginatedResponse<AuditLogRow>> {
   const url = buildApiUrl("/audit-logs/getAll", {
-    page: filters.page,
+    page: Math.max(1, filters.page),
     size: filters.pageSize,
     userType: filters.userType !== "all" ? filters.userType : undefined,
     search: filters.search.trim() || undefined,

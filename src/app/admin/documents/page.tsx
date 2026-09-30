@@ -139,7 +139,7 @@ export default function DocumentsQueuePage() {
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [documentTypeFilter, setDocumentTypeFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const queueQuery = useDocumentsQueueQuery({
@@ -156,7 +156,7 @@ export default function DocumentsQueuePage() {
   const queueRows = useMemo(() => queueQuery.data?.content ?? [], [queueQuery.data]);
   const totalPages = Math.max(queueQuery.data?.totalPages ?? 1, 1);
   const loading = queueQuery.isLoading || queueQuery.isFetching;
-  const resetPage = () => setPage(0);
+  const resetPage = () => setPage(1);
 
   const documentRows: DocumentQueueRow[] = useMemo(
     () =>
@@ -606,11 +606,11 @@ export default function DocumentsQueuePage() {
               pageSize={pageSize}
               onPageSizeChange={(size) => {
                 setPageSize(size);
-                setPage(0);
+                setPage(1);
               }}
-              currentPage={page + 1}
+              currentPage={page}
               totalPages={totalPages}
-              onPageChange={(newPage) => setPage(newPage - 1)}
+              onPageChange={setPage}
             />
           </>
         </SectionCard>
