@@ -1,23 +1,19 @@
 "use client";
 
-import { useMemo, useState, type ComponentType } from "react";
+import { useState, type ComponentType } from "react";
 import {
   ArrowRight,
   BadgeDollarSign,
-  Ban,
   Briefcase,
   Car,
   Contact,
-  Eye,
   FileText,
   FolderOpen,
   KeyRound,
   LayoutDashboard,
-  Pencil,
   Receipt,
   Route,
   Share2,
-  ShieldCheck,
   Siren,
   TrendingUp,
   Users
@@ -148,16 +144,6 @@ export default function AdminAccessManagementPage() {
   const permissions = matrix[roleId];
   const pendingRole = pendingRoleId ? roleLabel(pendingRoleId) : "";
 
-  const counts = useMemo(() => {
-    const values = Object.values(permissions);
-    return {
-      readWrite: values.filter((item) => item === "Read/Write").length,
-      write: values.filter((item) => item === "Write").length,
-      read: values.filter((item) => item === "Read").length,
-      none: values.filter((item) => item === "None").length
-    };
-  }, [permissions]);
-
   const setPermission = (moduleId: string, moduleLabel: string, value: AccessPermission) => {
     setMatrix((current) => ({
       ...current,
@@ -229,37 +215,6 @@ export default function AdminAccessManagementPage() {
             </div>
           </div>
         </section>
-
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <StatTile
-            label="Read / Write"
-            value={counts.readWrite}
-            hint="Full access"
-            icon={ShieldCheck}
-            accent="from-[#fce001]/80 to-[#fdb813]/80"
-          />
-          <StatTile
-            label="Write"
-            value={counts.write}
-            hint="Can change"
-            icon={Pencil}
-            accent="from-amber-400/70 to-amber-500/40"
-          />
-          <StatTile
-            label="Read"
-            value={counts.read}
-            hint="View only"
-            icon={Eye}
-            accent="from-sky-400/70 to-sky-500/40"
-          />
-          <StatTile
-            label="None"
-            value={counts.none}
-            hint="Hidden"
-            icon={Ban}
-            accent="from-slate-300/80 to-slate-400/40"
-          />
-        </div>
 
         <p className="px-1 text-sm text-muted-foreground">
           Editing{" "}
@@ -356,34 +311,6 @@ export default function AdminAccessManagementPage() {
         </div>
       </ConfirmDialog>
     </AppShell>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  accent
-}: {
-  label: string;
-  value: number;
-  hint: string;
-  icon: ComponentType<{ className?: string }>;
-  accent: string;
-}) {
-  return (
-    <div className="glass-panel relative overflow-hidden rounded-2xl px-4 py-3.5">
-      <div className={cn("absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r", accent)} />
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-      </div>
-      <p className="mt-2 font-heading text-2xl font-semibold tabular-nums tracking-tight">
-        {value}
-      </p>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p>
-    </div>
   );
 }
 
