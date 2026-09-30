@@ -36,7 +36,7 @@ export async function fetchNewsletterList(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<PaginatedResponse<NewsletterRow>> {
   const params = new URLSearchParams({
-    page: String(filters.page),
+    page: String(Math.max(1, filters.page)),
     size: String(filters.pageSize)
   });
   if (filters.status !== "all") {

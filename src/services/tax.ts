@@ -59,8 +59,7 @@ export async function fetchTaxList(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<PaginatedResponse<TaxApiRecord>> {
   const params = new URLSearchParams({
-    // UI is 1-based, API is 0-based
-    page: String(Math.max(0, filters.page - 1)),
+    page: String(Math.max(1, filters.page)),
     size: String(filters.pageSize),
     search: filters.search.trim()
   });

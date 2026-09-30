@@ -123,7 +123,7 @@ function buildRidesListUrl(filters: RidesListFilters): string {
   params.set("bookingReference", filters.bookingReference.trim());
   params.set("rideType", filters.rideType.trim());
   params.set("startedAt", filters.startedAt.trim());
-  params.set("page", String(filters.page + 1));
+  params.set("page", String(Math.max(1, filters.page)));
   params.set("size", String(filters.pageSize));
   return `${apiUrl("/rides/portal/getAll")}?${params.toString()}`;
 }

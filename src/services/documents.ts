@@ -140,7 +140,7 @@ export async function fetchDocumentsQueuePage(
   opts: RequestOpts
 ): Promise<DocumentsQueuePage> {
   const url = buildApiUrl("/users/documents", {
-    page: filters.page,
+    page: Math.max(1, filters.page),
     size: filters.pageSize,
     name: filters.name.trim() || undefined,
     phonenumber: filters.mobileNumber.trim() || undefined,

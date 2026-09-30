@@ -39,7 +39,7 @@ export default function AdminNewsletterPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching } = useNewsletterListQuery({
@@ -75,7 +75,7 @@ export default function AdminNewsletterPage() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(0);
+    setPage(1);
   };
 
   const openDeleteDialog = useCallback((row: NewsletterRow) => {
@@ -188,7 +188,7 @@ export default function AdminNewsletterPage() {
               value={statusFilter}
               onValueChange={(value) => {
                 setStatusFilter(value);
-                setPage(0);
+                setPage(1);
               }}
             >
               <SelectTrigger className="w-44">
@@ -220,11 +220,11 @@ export default function AdminNewsletterPage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={page + 1}
+            currentPage={page}
             totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
 

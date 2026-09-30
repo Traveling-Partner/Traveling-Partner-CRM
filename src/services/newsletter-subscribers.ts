@@ -84,7 +84,7 @@ function parseSubscriberNewslettersResponse(res: unknown): SubscriberNewsletters
     newsletters: Array.isArray(payload.newsletters)
       ? (payload.newsletters as SubscriberNewsletterRow[])
       : [],
-    currentPage: typeof payload.currentPage === "number" ? payload.currentPage : 0,
+    currentPage: typeof payload.currentPage === "number" ? payload.currentPage : 1,
     pageSize: typeof payload.pageSize === "number" ? payload.pageSize : 10,
     totalElements: typeof payload.totalElements === "number" ? payload.totalElements : 0,
     totalPages: typeof payload.totalPages === "number" ? payload.totalPages : 1,
@@ -98,7 +98,7 @@ export async function fetchNewsletterSubscribersList(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<PaginatedResponse<SubscriberListRow>> {
   const params = new URLSearchParams({
-    page: String(filters.page),
+    page: String(Math.max(1, filters.page)),
     size: String(filters.pageSize),
     status: filters.status === "all" ? "" : filters.status,
     search: filters.search.trim()
@@ -120,7 +120,7 @@ export async function fetchSubscriberNewsletters(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<SubscriberNewslettersDetail | null> {
   const params = new URLSearchParams({
-    page: String(filters.page),
+    page: String(Math.max(1, filters.page)),
     size: String(filters.pageSize)
   });
 

@@ -28,7 +28,7 @@ export default function AdminDriversPage() {
   const [cityFilter, setCityFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useDriversListQuery({
@@ -86,7 +86,7 @@ export default function AdminDriversPage() {
     }
   ];
 
-  const resetPage = () => setPage(0);
+  const resetPage = () => setPage(1);
 
   const columns: ColumnDef<DriverRow>[] = [
     {
@@ -319,11 +319,11 @@ export default function AdminDriversPage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={page + 1}
+            currentPage={page}
             totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
       </PageContainer>

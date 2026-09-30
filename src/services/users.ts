@@ -66,7 +66,7 @@ export async function fetchDriversList(
   opts: RequestOpts
 ): Promise<PaginatedResponse<DriverRow>> {
   const url = buildApiUrl("/users/drivers", {
-    page: filters.page,
+    page: Math.max(1, filters.page),
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
     name: filters.name.trim() || undefined,
@@ -150,7 +150,7 @@ export async function fetchPartnersList(
   opts: RequestOpts
 ): Promise<PaginatedResponse<PartnerRow>> {
   const url = buildApiUrl("/users/partners", {
-    page: filters.page,
+    page: Math.max(1, filters.page),
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
     name: filters.name.trim() || undefined,
@@ -166,7 +166,7 @@ export async function fetchAgentsList(
   opts: RequestOpts
 ): Promise<PaginatedResponse<AgentRow>> {
   const url = buildApiUrl("/users/sale-agents", {
-    page: filters.page,
+    page: Math.max(1, filters.page),
     size: filters.pageSize,
     status: filters.status === "all" ? undefined : filters.status,
     name: filters.name.trim() || undefined,

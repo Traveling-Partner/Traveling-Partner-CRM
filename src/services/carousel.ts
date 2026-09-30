@@ -131,11 +131,11 @@ export async function getCarouselPublishedIds(
   signal?: AbortSignal
 ): Promise<Set<number>> {
   const publishedIds = new Set<number>();
-  let page = 0;
+  let page = 1;
   const size = 50;
   let totalPages = 1;
 
-  while (page < totalPages) {
+  while (page <= totalPages) {
     const res = await fetcher<unknown>(apiUrl(`/banners/carousel?page=${page}&size=${size}`), {
       token,
       signal,

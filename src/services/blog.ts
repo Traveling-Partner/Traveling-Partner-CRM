@@ -173,10 +173,10 @@ export async function deleteBlog(id: number, token: string | null) {
 
 export async function getAllBlogCategories(token: string | null): Promise<BlogCategory[]> {
   const all: BlogCategory[] = [];
-  let page = 0;
+  let page = 1;
   let totalPages = 1;
 
-  while (page < totalPages) {
+  while (page <= totalPages) {
     const url = `${apiUrl("/blogCategory/getAll")}?page=${page}&size=10`;
     const res = await fetcher<unknown>(url, { token });
 

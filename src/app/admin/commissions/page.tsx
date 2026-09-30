@@ -37,7 +37,7 @@ export default function AdminCommissionsPage() {
   const { success } = useToast();
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const rows: Row[] = useMemo(
@@ -60,7 +60,7 @@ export default function AdminCommissionsPage() {
   );
 
   const paginated = useMemo(() => {
-    const start = page * pageSize;
+    const start = (page - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, page, pageSize]);
 
@@ -111,7 +111,7 @@ export default function AdminCommissionsPage() {
           }
         >
           <div className="flex flex-wrap gap-2 pb-4">
-            <Select value={monthFilter} onValueChange={(v) => { setMonthFilter(v); setPage(0); }}>
+            <Select value={monthFilter} onValueChange={(v) => { setMonthFilter(v); setPage(1); }}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Month" />
               </SelectTrigger>
@@ -124,7 +124,7 @@ export default function AdminCommissionsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -140,11 +140,11 @@ export default function AdminCommissionsPage() {
             pageSize={pageSize}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(0);
+              setPage(1);
             }}
-            currentPage={page + 1}
+            currentPage={page}
             totalPages={totalPages}
-            onPageChange={(p) => setPage(p - 1)}
+            onPageChange={setPage}
           />
         </SectionCard>
       </PageContainer>

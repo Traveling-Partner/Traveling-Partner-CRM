@@ -44,7 +44,7 @@ export default function NewsletterSubscribersPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useNewsletterSubscribersListQuery({
@@ -147,7 +147,7 @@ export default function NewsletterSubscribersPage() {
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
-                  setPage(0);
+                  setPage(1);
                 }}
                 className="pl-9"
               />
@@ -156,7 +156,7 @@ export default function NewsletterSubscribersPage() {
               value={statusFilter}
               onValueChange={(value) => {
                 setStatusFilter(value);
-                setPage(0);
+                setPage(1);
               }}
             >
               <SelectTrigger className="w-44">
@@ -197,11 +197,11 @@ export default function NewsletterSubscribersPage() {
               pageSize={pageSize}
               onPageSizeChange={(size) => {
                 setPageSize(size);
-                setPage(0);
+                setPage(1);
               }}
-              currentPage={page + 1}
+              currentPage={page}
               totalPages={totalPages}
-              onPageChange={(nextPage) => setPage(nextPage - 1)}
+              onPageChange={setPage}
             />
           )}
 

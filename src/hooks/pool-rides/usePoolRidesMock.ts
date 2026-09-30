@@ -81,7 +81,7 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
   const [dateFilter, setDateFilter] = useState("");
   const [sortField, setSortField] = useState<PoolRideSortField>("bookingDate");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
@@ -138,13 +138,13 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
   const totalPages = Math.max(1, Math.ceil(sortedRides.length / pageSize));
 
   useEffect(() => {
-    if (page >= totalPages) {
-      setPage(Math.max(0, totalPages - 1));
+    if (page > totalPages) {
+      setPage(Math.max(1, totalPages));
     }
   }, [page, totalPages]);
 
   const paginatedRides = useMemo(() => {
-    const start = page * pageSize;
+    const start = (page - 1) * pageSize;
     return sortedRides.slice(start, start + pageSize);
   }, [sortedRides, page, pageSize]);
 
@@ -156,7 +156,7 @@ export function usePoolRidesMock({ initialData }: UsePoolRidesMockOptions) {
     return types.sort();
   }, [rides]);
 
-  const resetPage = useCallback(() => setPage(0), []);
+  const resetPage = useCallback(() => setPage(1), []);
 
   const handleSearchChange = useCallback(
     (value: string) => {

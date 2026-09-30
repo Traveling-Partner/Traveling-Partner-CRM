@@ -45,7 +45,7 @@ export async function fetchBlogList(
   opts: { token: string; signal?: AbortSignal }
 ): Promise<PaginatedResponse<BlogRow>> {
   const params = new URLSearchParams({
-    page: String(filters.page),
+    page: String(Math.max(1, filters.page)),
     size: String(filters.pageSize),
     search: filters.search.trim()
   });

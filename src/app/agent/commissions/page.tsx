@@ -41,7 +41,7 @@ export default function AgentCommissionsPage() {
 
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const myCommissions = useMemo(
@@ -63,7 +63,7 @@ export default function AgentCommissionsPage() {
   }, [myCommissions, monthFilter, statusFilter]);
 
   const paginated = useMemo(() => {
-    const start = page * pageSize;
+    const start = (page - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, page, pageSize]);
 
@@ -139,7 +139,7 @@ export default function AgentCommissionsPage() {
                     value={monthFilter}
                     onValueChange={(v) => {
                       setMonthFilter(v);
-                      setPage(0);
+                      setPage(1);
                     }}
                   >
                     <SelectTrigger className="w-40">
@@ -161,7 +161,7 @@ export default function AgentCommissionsPage() {
                     value={statusFilter}
                     onValueChange={(v) => {
                       setStatusFilter(v);
-                      setPage(0);
+                      setPage(1);
                     }}
                   >
                     <SelectTrigger className="w-32">
@@ -187,11 +187,11 @@ export default function AgentCommissionsPage() {
                 pageSize={pageSize}
                 onPageSizeChange={(size) => {
                   setPageSize(size);
-                  setPage(0);
+                  setPage(1);
                 }}
-                currentPage={page + 1}
+                currentPage={page}
                 totalPages={totalPages}
-                onPageChange={(p) => setPage(p - 1)}
+                onPageChange={setPage}
               />
             </>
           )}
