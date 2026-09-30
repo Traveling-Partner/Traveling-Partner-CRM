@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
+import { EmptyState } from "@/components/common/EmptyState";
 import {
   Select,
   SelectContent,
@@ -19,57 +20,111 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
   ACCESS_MODULES,
-  ACCESS_ROLES,
-  ROLE_PERMISSIONS,
-  type AccessPermission,
-  type AccessRoleId
+  formatPermissionModule,
+  formatPermissionRoleName
 } from "@/mock-data/access-management";
+import {
+  usePermissionRolesQuery,
+  useRolePermissionsQuery,
+  useUpdateRolePermissionsMutation
+} from "@/hooks/queries/use-access-permissions";
+import type { PermissionEntry, PermissionLevel } from "@/services/permissions";
 
-function clonePermissions() {
-  return Object.fromEntries(
-    ACCESS_ROLES.map((role) => [role.id, { ...ROLE_PERMISSIONS[role.id] }])
-  ) as Record<AccessRoleId, Record<string, AccessPermission>>;
-}
-
-function flagsFromPermission(value: AccessPermission) {
+function flagsFromLevel(level: PermissionLevel) {
   return {
-    read: value === "Read" || value === "Read/Write",
-    write: value === "Write" || value === "Read/Write"
+    read: level === "READ",
+    write: level === "WRITE"
   };
 }
 
-function permissionFromFlags(read: boolean, write: boolean): AccessPermission {
-  if (read && write) return "Read/Write";
-  if (write) return "Write";
-  if (read) return "Read";
+function levelFromFlags(read: boolean, write: boolean): PermissionLevel {
+  if (write) return "WRITE";
+  if (read) return "READ";
+  return "NONE";
+}
+
+function levelLabel(level: PermissionLevel) {
+  if (level === "READ") return "Read";
+  if (level === "WRITE") return "Write";
   return "None";
 }
 
-function roleLabel(id: AccessRoleId) {
-  return ACCESS_ROLES.find((role) => role.id === id)?.label ?? id;
+function groupPermissionRows(permissions: PermissionEntry[]) {
+  const byModule = new Map(permissions.map((entry) => [entry.module, entry]));
+  const used = new Set<string>();
+
+  const groups = ACCESS_MODULES.map((section) => {
+    const items = section.children
+      .map((child) => {
+        const entry = byModule.get(child.id);
+        if (!entry) return null;
+        used.add(child.id);
+        return { ...entry, label: child.label };
+      })
+      .filter((item): item is PermissionEntry & { label: string } => item !== null);
+    return { id: section.id, label: section.label, items };
+  }).filter((group) => group.items.length > 0);
+
+  const leftover = permissions.filter((entry) => !used.has(entry.module));
+  if (leftover.length > 0) {
+    groups.push({
+      id: "other",
+      label: "Other",
+      items: leftover.map((entry) => ({
+        ...entry,
+        label: formatPermissionModule(entry.module)
+      }))
+    });
+  }
+
+  return groups;
 }
 
 export default function AdminAccessManagementPage() {
-  const { success } = useToast();
-  const [roleId, setRoleId] = useState<AccessRoleId>(ACCESS_ROLES[0].id);
-  const [matrix, setMatrix] = useState(clonePermissions);
+  const { success, error: showError } = useToast();
+  const [roleName, setRoleName] = useState("");
 
-  const selectedRole = ACCESS_ROLES.find((role) => role.id === roleId) ?? ACCESS_ROLES[0];
-  const permissions = matrix[roleId];
+  const rolesQuery = usePermissionRolesQuery();
+  const permissionsQuery = useRolePermissionsQuery(roleName);
+  const updateMutation = useUpdateRolePermissionsMutation();
 
-  const setPermission = (moduleId: string, moduleLabel: string, value: AccessPermission) => {
-    setMatrix((current) => ({
-      ...current,
-      [roleId]: {
-        ...current[roleId],
-        [moduleId]: value
-      }
-    }));
-    success(`${moduleLabel} set to ${value}.`);
+  const roles = rolesQuery.data ?? [];
+
+  useEffect(() => {
+    if (roles.length === 0) return;
+    if (!roleName || !roles.some((role) => role.name === roleName)) {
+      setRoleName(roles[0].name);
+    }
+  }, [roles, roleName]);
+
+  const selectedRole = roles.find((role) => role.name === roleName);
+  const permissions = permissionsQuery.data?.permissions ?? [];
+  const groups = useMemo(() => groupPermissionRows(permissions), [permissions]);
+  const busy = updateMutation.isPending || permissionsQuery.isFetching;
+
+  const setLevel = async (module: string, moduleLabel: string, level: PermissionLevel) => {
+    if (!roleName) return;
+    const nextPermissions = permissions.map((entry) =>
+      entry.module === module ? { module: entry.module, level } : entry
+    );
+    if (!nextPermissions.some((entry) => entry.module === module)) {
+      nextPermissions.push({ module, level });
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        role: roleName,
+        permissions: nextPermissions
+      });
+      success(`${moduleLabel} set to ${levelLabel(level)}.`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to update permissions.");
+    }
   };
 
   return (
@@ -82,7 +137,10 @@ export default function AdminAccessManagementPage() {
                 Access Management
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Permissions for {selectedRole.label}
+                Permissions for{" "}
+                {selectedRole
+                  ? formatPermissionRoleName(selectedRole.name)
+                  : "the selected role"}
               </p>
             </div>
             <div className="w-full sm:w-72">
@@ -90,21 +148,21 @@ export default function AdminAccessManagementPage() {
                 Role
               </label>
               <Select
-                value={roleId}
+                value={roleName || undefined}
                 onValueChange={(value) => {
-                  const next = value as AccessRoleId;
-                  if (next === roleId) return;
-                  setRoleId(next);
-                  success(`Role changed to ${roleLabel(next)}.`);
+                  if (value === roleName) return;
+                  setRoleName(value);
+                  success(`Role changed to ${formatPermissionRoleName(value)}.`);
                 }}
+                disabled={rolesQuery.isLoading || roles.length === 0}
               >
                 <SelectTrigger id="access-role" className="h-11 rounded-xl">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ACCESS_ROLES.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.label}
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {formatPermissionRoleName(role.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -112,29 +170,60 @@ export default function AdminAccessManagementPage() {
             </div>
           </header>
 
-          <div className="min-w-0">
-            <Table className="min-w-[36rem]">
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-12 pl-6 sm:pl-8">Page</TableHead>
-                  <TableHead className="h-12 w-28 text-center">Read</TableHead>
-                  <TableHead className="h-12 w-28 text-center">Write</TableHead>
-                  <TableHead className="h-12 w-32 pr-6 text-center sm:pr-8">None</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ACCESS_MODULES.map((module) => (
-                  <GroupRows
-                    key={module.id}
-                    label={module.label}
-                    items={module.children}
-                    permissions={permissions}
-                    onChange={setPermission}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {rolesQuery.error ? (
+            <p className="mx-6 my-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mx-8">
+              {rolesQuery.error.message}
+            </p>
+          ) : null}
+
+          {permissionsQuery.error ? (
+            <p className="mx-6 my-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mx-8">
+              {permissionsQuery.error.message}
+            </p>
+          ) : null}
+
+          {rolesQuery.isLoading || (Boolean(roleName) && permissionsQuery.isLoading) ? (
+            <div className="space-y-3 px-6 py-6 sm:px-8">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Skeleton key={index} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : roles.length === 0 ? (
+            <EmptyState
+              className="m-6 sm:m-8"
+              title="No roles found"
+              description="Roles for Access Management could not be loaded."
+            />
+          ) : permissions.length === 0 ? (
+            <EmptyState
+              className="m-6 sm:m-8"
+              title="No permissions found"
+              description="This role has no permission modules yet."
+            />
+          ) : (
+            <div className={cn("min-w-0", busy && "pointer-events-none opacity-70")}>
+              <Table className="min-w-[36rem]">
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-12 pl-6 sm:pl-8">Page</TableHead>
+                    <TableHead className="h-12 w-28 text-center">Read</TableHead>
+                    <TableHead className="h-12 w-28 text-center">Write</TableHead>
+                    <TableHead className="h-12 w-32 pr-6 text-center sm:pr-8">None</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groups.map((group) => (
+                    <GroupRows
+                      key={group.id}
+                      label={group.label}
+                      items={group.items}
+                      onChange={setLevel}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </section>
       </PageContainer>
     </AppShell>
@@ -144,13 +233,11 @@ export default function AdminAccessManagementPage() {
 function GroupRows({
   label,
   items,
-  permissions,
   onChange
 }: {
   label: string;
-  items: { id: string; label: string }[];
-  permissions: Record<string, AccessPermission>;
-  onChange: (moduleId: string, moduleLabel: string, value: AccessPermission) => void;
+  items: Array<PermissionEntry & { label: string }>;
+  onChange: (module: string, moduleLabel: string, level: PermissionLevel) => void;
 }) {
   return (
     <>
@@ -164,12 +251,12 @@ function GroupRows({
       </TableRow>
       {items.map((item) => (
         <PermissionRow
-          key={item.id}
-          id={item.id}
+          key={item.module}
+          module={item.module}
           label={item.label}
           nested
-          value={permissions[item.id]}
-          onChange={(value) => onChange(item.id, item.label, value)}
+          value={item.level}
+          onChange={(level) => onChange(item.module, item.label, level)}
         />
       ))}
     </>
@@ -177,20 +264,20 @@ function GroupRows({
 }
 
 function PermissionRow({
-  id,
+  module,
   label,
   value,
   onChange,
   nested
 }: {
-  id: string;
+  module: string;
   label: string;
-  value: AccessPermission;
-  onChange: (value: AccessPermission) => void;
+  value: PermissionLevel;
+  onChange: (level: PermissionLevel) => void;
   nested?: boolean;
 }) {
-  const { read, write } = flagsFromPermission(value);
-  const isNone = value === "None";
+  const { read, write } = flagsFromLevel(value);
+  const isNone = value === "NONE";
 
   return (
     <TableRow>
@@ -200,9 +287,9 @@ function PermissionRow({
       <TableCell className="text-center">
         <div className="flex justify-center">
           <Switch
-            id={`${id}-read`}
+            id={`${module}-read`}
             checked={read}
-            onCheckedChange={(checked) => onChange(permissionFromFlags(checked, write))}
+            onCheckedChange={(checked) => onChange(levelFromFlags(checked, false))}
             aria-label={`${label} read`}
           />
         </div>
@@ -210,9 +297,9 @@ function PermissionRow({
       <TableCell className="text-center">
         <div className="flex justify-center">
           <Switch
-            id={`${id}-write`}
+            id={`${module}-write`}
             checked={write}
-            onCheckedChange={(checked) => onChange(permissionFromFlags(read, checked))}
+            onCheckedChange={(checked) => onChange(levelFromFlags(false, checked))}
             aria-label={`${label} write`}
           />
         </div>
@@ -221,7 +308,7 @@ function PermissionRow({
         <button
           type="button"
           onClick={() => {
-            if (!isNone) onChange("None");
+            if (!isNone) onChange("NONE");
           }}
           className={cn(
             "inline-flex h-8 min-w-[4.5rem] items-center justify-center rounded-full px-3 text-xs font-semibold transition-all duration-150",

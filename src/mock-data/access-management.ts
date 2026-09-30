@@ -1,23 +1,7 @@
-/** Mock access matrix until backend permission APIs exist. */
-
-export type AccessPermission = "Read" | "Write" | "Read/Write" | "None";
-
-export const ACCESS_PERMISSIONS: AccessPermission[] = ["Read", "Write", "Read/Write", "None"];
-
-export type AccessRoleId =
-  | "finance-manager"
-  | "marketing-manager"
-  | "sales-agent"
-  | "compliance-officer"
-  | "safety-officer";
-
-export const ACCESS_ROLES: { id: AccessRoleId; label: string }[] = [
-  { id: "finance-manager", label: "Finance Manager" },
-  { id: "marketing-manager", label: "Marketing Manager" },
-  { id: "sales-agent", label: "Sales Agent" },
-  { id: "compliance-officer", label: "Compliance & Verification Officer" },
-  { id: "safety-officer", label: "Safety & Incident Officer" }
-];
+/**
+ * Display grouping only. Row data and `module` keys come from the permission APIs.
+ * Child `id` must match backend `module` (e.g. DASHBOARD, TAX).
+ */
 
 export type AccessLeafModule = {
   id: string;
@@ -35,155 +19,87 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
   {
     id: "dashboard-section",
     label: "Dashboard",
-    children: [{ id: "dashboard", label: "Dashboard" }]
+    children: [{ id: "DASHBOARD", label: "Dashboard" }]
   },
   {
     id: "user-management-section",
     label: "User Management",
     children: [
-      { id: "user-management", label: "User Management" },
-      { id: "driver", label: "Driver" },
-      { id: "partner", label: "Partner" },
-      { id: "employees-list", label: "Employees List" },
-      { id: "document", label: "Document" }
+      { id: "USER_MANAGEMENT", label: "User Management" },
+      { id: "DRIVER", label: "Driver" },
+      { id: "PARTNER", label: "Partner" },
+      { id: "EMPLOYEES_LIST", label: "Employees List" },
+      { id: "DOCUMENT", label: "Document" }
     ]
   },
   {
     id: "sos-management-section",
     label: "SOS Management",
-    children: [{ id: "sos-management", label: "SOS Management" }]
+    children: [{ id: "SOS_MANAGEMENT", label: "SOS Management" }]
   },
   {
     id: "ride-management",
     label: "Ride Management",
     children: [
-      { id: "rides", label: "Rides" },
-      { id: "safety-center", label: "Safety Center" },
-      { id: "sos-overview", label: "SOS Overview" },
-      { id: "emergency-list", label: "Emergency List" }
+      { id: "RIDES", label: "Rides" },
+      { id: "SAFETY_CENTER", label: "Safety Center" },
+      { id: "SOS_OVERVIEW", label: "SOS Overview" },
+      { id: "EMERGENCY_LIST", label: "Emergency List" }
     ]
   },
   {
     id: "commission-management-section",
     label: "Commission Management",
     children: [
-      { id: "commission-management", label: "Commission Management" },
-      { id: "agent-performance", label: "Agent Performance" }
+      { id: "COMMISSION_MANAGEMENT", label: "Commission Management" },
+      { id: "AGENT_PERFORMANCE", label: "Agent Performance" }
     ]
   },
   {
     id: "content-management",
     label: "Content Management",
     children: [
-      { id: "blogs", label: "Blogs" },
-      { id: "newsletter-list", label: "Newsletter List" },
-      { id: "newsletter-subscribers", label: "Newsletter Subscribers" }
+      { id: "BLOGS", label: "Blogs" },
+      { id: "NEWSLETTER_LIST", label: "Newsletter List" },
+      { id: "NEWSLETTER_SUBSCRIBERS", label: "Newsletter Subscribers" },
+      { id: "CAROUSEL", label: "Carousel" }
     ]
   },
   {
     id: "financial-management",
     label: "Financial Management",
     children: [
-      { id: "tax", label: "Tax" },
-      { id: "commission", label: "Commission" },
-      { id: "insurance", label: "Insurance" },
-      { id: "platform-fee", label: "Platform Fee" }
+      { id: "TAX", label: "Tax" },
+      { id: "COMMISSION", label: "Commission" },
+      { id: "INSURANCE", label: "Insurance" },
+      { id: "PLATFORM_FEE", label: "Platform Fee" }
     ]
   },
   {
     id: "vehicle-management",
     label: "Vehicle Management",
     children: [
-      { id: "vehicle-type", label: "Vehicle Type" },
-      { id: "vehicle-brands", label: "Vehicle Brands" },
-      { id: "vehicle-model", label: "Vehicle Model" },
-      { id: "vehicle-model-variant", label: "Vehicle Model Variant" }
+      { id: "VEHICLE_TYPE", label: "Vehicle Type" },
+      { id: "VEHICLE_BRANDS", label: "Vehicle Brands" },
+      { id: "VEHICLE_MODEL", label: "Vehicle Model" },
+      { id: "VEHICLE_MODEL_VARIANT", label: "Vehicle Model Variant" }
     ]
   },
   {
     id: "access-management-section",
     label: "Access Management",
-    children: [{ id: "access-management", label: "Access Management" }]
+    children: [{ id: "ACCESS_MANAGEMENT", label: "Access Management" }]
   }
 ];
 
-const LEAF_IDS = ACCESS_MODULES.flatMap((module) => module.children.map((child) => child.id));
-
-function permissions(
-  assigned: Partial<Record<string, AccessPermission>>
-): Record<string, AccessPermission> {
-  const next: Record<string, AccessPermission> = {};
-  for (const id of LEAF_IDS) {
-    next[id] = assigned[id] ?? "None";
-  }
-  return next;
+export function formatPermissionModule(module: string): string {
+  return module
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(" ");
 }
 
-/**
- * Ticket sample rows (Dashboard → Read, User Management → Write, …) are used
- * as the Sales Agent matrix. Other roles differ so the dropdown changes the view.
- */
-export const ROLE_PERMISSIONS: Record<AccessRoleId, Record<string, AccessPermission>> = {
-  "sales-agent": permissions({
-    dashboard: "Read",
-    "user-management": "Write",
-    driver: "Read",
-    partner: "Read",
-    "employees-list": "None",
-    document: "Write",
-    "sos-management": "Read/Write",
-    rides: "Read",
-    "safety-center": "None",
-    "sos-overview": "None",
-    "emergency-list": "None",
-    "commission-management": "Read",
-    "agent-performance": "None",
-    blogs: "None",
-    "newsletter-list": "None",
-    "newsletter-subscribers": "None",
-    tax: "None",
-    commission: "None",
-    insurance: "None",
-    "platform-fee": "None",
-    "vehicle-type": "None",
-    "vehicle-brands": "None",
-    "vehicle-model": "None",
-    "vehicle-model-variant": "None",
-    "access-management": "None"
-  }),
-  "finance-manager": permissions({
-    dashboard: "Read",
-    "commission-management": "Read/Write",
-    "agent-performance": "Read",
-    tax: "Write",
-    commission: "Write",
-    insurance: "Write",
-    "platform-fee": "Write"
-  }),
-  "marketing-manager": permissions({
-    dashboard: "Read",
-    blogs: "Write",
-    "newsletter-list": "Write",
-    "newsletter-subscribers": "Write"
-  }),
-  "compliance-officer": permissions({
-    dashboard: "Read",
-    "user-management": "Write",
-    driver: "Read",
-    partner: "Read",
-    document: "Write",
-    rides: "Read"
-  }),
-  "safety-officer": permissions({
-    dashboard: "Read",
-    "sos-management": "Read/Write",
-    rides: "Read",
-    "safety-center": "Read/Write",
-    "sos-overview": "Read/Write",
-    "emergency-list": "Read/Write"
-  })
-};
-
-export function getPermissionsForRole(roleId: AccessRoleId): Record<string, AccessPermission> {
-  return ROLE_PERMISSIONS[roleId];
+export function formatPermissionRoleName(name: string): string {
+  return formatPermissionModule(name);
 }
