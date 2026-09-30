@@ -49,6 +49,7 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      collisionPadding={8}
       {...props}
     >
       <SelectPrimitive.ScrollUpButton className="flex cursor-default items-center justify-center py-1">
@@ -56,9 +57,8 @@ const SelectContent = React.forwardRef<
       </SelectPrimitive.ScrollUpButton>
       <SelectPrimitive.Viewport
         className={cn(
-          "p-1",
-          position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+          "max-h-[min(16rem,var(--radix-select-content-available-height))] overflow-y-auto overscroll-contain p-1",
+          position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]"
         )}
       >
         {children}

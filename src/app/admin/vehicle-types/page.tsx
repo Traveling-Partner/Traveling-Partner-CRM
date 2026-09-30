@@ -489,13 +489,6 @@ export default function VehicleTypesPage() {
   return (
     <AppShell title="Vehicle types">
       <PageContainer>
-        <div className="px-1">
-          <h1 className="text-lg font-heading font-bold text-foreground sm:text-xl">Vehicle Management</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Manage all vehicles used in the ride-hailing ecosystem.
-          </p>
-        </div>
-
         <Tabs value={tab} onValueChange={(value) => setTab(value as TabValue)}>
           {/* <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-border/60 bg-muted/50 p-1">
             <TabsTrigger value="vehicleTypes">Vehicle Types</TabsTrigger>
