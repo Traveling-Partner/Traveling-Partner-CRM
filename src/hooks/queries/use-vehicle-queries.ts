@@ -26,8 +26,20 @@ import {
 const OPTIONS_STALE_TIME_MS = 30 * 60 * 1000;
 const OPTIONS_GC_TIME_MS = 60 * 60 * 1000;
 
-function toApiFilters(page: number, pageSize: number, search: string) {
-  return { page: Math.max(1, page), pageSize, search };
+function toApiFilters(
+  page: number,
+  pageSize: number,
+  search: string,
+  extra?: { vehicleTypeId?: number; brandId?: number; modelYearId?: number }
+) {
+  return {
+    page: Math.max(1, page),
+    pageSize,
+    search,
+    vehicleTypeId: extra?.vehicleTypeId,
+    brandId: extra?.brandId,
+    modelYearId: extra?.modelYearId
+  };
 }
 
 export function useVehicleTypesQuery(page: number, pageSize: number, search: string) {
@@ -44,11 +56,17 @@ export function useVehicleTypesQuery(page: number, pageSize: number, search: str
   });
 }
 
-export function useVehicleModelsQuery(page: number, pageSize: number, search: string) {
+export function useVehicleModelsQuery(
+  page: number,
+  pageSize: number,
+  search: string,
+  vehicleTypeId?: number,
+  brandId?: number
+) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleModelsListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch),
-    [page, pageSize, debouncedSearch]
+    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId, brandId }),
+    [page, pageSize, debouncedSearch, vehicleTypeId, brandId]
   );
 
   return usePaginatedQuery({
@@ -58,11 +76,18 @@ export function useVehicleModelsQuery(page: number, pageSize: number, search: st
   });
 }
 
-export function useVehicleColorsQuery(page: number, pageSize: number, search: string) {
+export function useVehicleColorsQuery(
+  page: number,
+  pageSize: number,
+  search: string,
+  vehicleTypeId?: number,
+  brandId?: number,
+  modelYearId?: number
+) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleColorsListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch),
-    [page, pageSize, debouncedSearch]
+    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId, brandId, modelYearId }),
+    [page, pageSize, debouncedSearch, vehicleTypeId, brandId, modelYearId]
   );
 
   return usePaginatedQuery({
@@ -72,11 +97,16 @@ export function useVehicleColorsQuery(page: number, pageSize: number, search: st
   });
 }
 
-export function useVehicleBrandsQuery(page: number, pageSize: number, search: string) {
+export function useVehicleBrandsQuery(
+  page: number,
+  pageSize: number,
+  search: string,
+  vehicleTypeId?: number
+) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleBrandsListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch),
-    [page, pageSize, debouncedSearch]
+    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId }),
+    [page, pageSize, debouncedSearch, vehicleTypeId]
   );
 
   return usePaginatedQuery({

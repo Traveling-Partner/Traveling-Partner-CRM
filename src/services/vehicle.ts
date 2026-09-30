@@ -52,7 +52,14 @@ function readOpts(opts: RequestOpts, label: string) {
 
 async function fetchEnvelopePage<T>(
   path: string,
-  filters: { page: number; pageSize: number; search: string },
+  filters: {
+    page: number;
+    pageSize: number;
+    search: string;
+    vehicleTypeId?: number;
+    brandId?: number;
+    modelYearId?: number;
+  },
   opts: RequestOpts,
   label: string
 ): Promise<PaginatedResponse<T>> {
@@ -60,7 +67,10 @@ async function fetchEnvelopePage<T>(
     buildApiUrl(path, {
       page: Math.max(1, filters.page),
       size: filters.pageSize,
-      search: filters.search.trim()
+      search: filters.search.trim(),
+      vehicleTypeId: filters.vehicleTypeId,
+      brandId: filters.brandId,
+      modelYearId: filters.modelYearId
     }),
     readOpts(opts, label)
   );

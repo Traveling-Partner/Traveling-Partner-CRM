@@ -39,6 +39,7 @@ export function VehicleBrandsSection() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
   const [editingId, setEditingId] = useState<number | string | null>(null);
@@ -47,7 +48,8 @@ export function VehicleBrandsSection() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const brandsQuery = useVehicleBrandsQuery(page, pageSize, search);
+  const vehicleTypeId = typeFilter === "all" ? undefined : Number(typeFilter);
+  const brandsQuery = useVehicleBrandsQuery(page, pageSize, search, vehicleTypeId);
   const typesQuery = useVehicleTypeOptionsQuery();
 
   const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
@@ -152,6 +154,25 @@ export function VehicleBrandsSection() {
                 className="pl-9"
               />
             </div>
+            <Select
+              value={typeFilter}
+              onValueChange={(value) => {
+                setTypeFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[13rem]">
+                <SelectValue placeholder="Vehicle type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All vehicle types</SelectItem>
+                {vehicleTypes.map((type) => (
+                  <SelectItem key={String(type.id)} value={String(type.id)}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <ManagementTable
             isLoading={loading}
