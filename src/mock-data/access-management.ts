@@ -2,6 +2,8 @@
 
 export type AccessPermission = "Read" | "Write" | "Read/Write" | "None";
 
+export const ACCESS_PERMISSIONS: AccessPermission[] = ["Read", "Write", "Read/Write", "None"];
+
 export type AccessRoleId =
   | "finance-manager"
   | "marketing-manager"
