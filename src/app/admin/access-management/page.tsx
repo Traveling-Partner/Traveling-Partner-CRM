@@ -123,25 +123,15 @@ export default function AdminAccessManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {ACCESS_MODULES.map((module) =>
-                  module.children ? (
-                    <GroupRows
-                      key={module.id}
-                      label={module.label}
-                      items={module.children}
-                      permissions={permissions}
-                      onChange={setPermission}
-                    />
-                  ) : (
-                    <PermissionRow
-                      key={module.id}
-                      id={module.id}
-                      label={module.label}
-                      value={permissions[module.id]}
-                      onChange={(value) => setPermission(module.id, module.label, value)}
-                    />
-                  )
-                )}
+                {ACCESS_MODULES.map((module) => (
+                  <GroupRows
+                    key={module.id}
+                    label={module.label}
+                    items={module.children}
+                    permissions={permissions}
+                    onChange={setPermission}
+                  />
+                ))}
               </TableBody>
             </Table>
           </div>

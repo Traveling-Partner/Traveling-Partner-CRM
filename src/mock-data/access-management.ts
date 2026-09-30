@@ -24,20 +24,35 @@ export type AccessLeafModule = {
   label: string;
 };
 
-export type AccessModuleNode =
-  | { id: string; label: string; children?: undefined }
-  | { id: string; label: string; children: AccessLeafModule[] };
+export type AccessModuleNode = {
+  id: string;
+  label: string;
+  children: AccessLeafModule[];
+};
 
-/** Modules from the ticket — groups nest their screens. */
+/** Every page sits under its section heading. */
 export const ACCESS_MODULES: AccessModuleNode[] = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "user-management", label: "User Management" },
-  { id: "driver", label: "Driver" },
-  { id: "partner", label: "Partner" },
-  { id: "employees-list", label: "Employees List" },
-  { id: "document", label: "Document" },
-  { id: "driver-partner-management", label: "Driver/Partner Management" },
-  { id: "sos-management", label: "SOS Management" },
+  {
+    id: "dashboard-section",
+    label: "Dashboard",
+    children: [{ id: "dashboard", label: "Dashboard" }]
+  },
+  {
+    id: "user-management-section",
+    label: "User Management",
+    children: [
+      { id: "user-management", label: "User Management" },
+      { id: "driver", label: "Driver" },
+      { id: "partner", label: "Partner" },
+      { id: "employees-list", label: "Employees List" },
+      { id: "document", label: "Document" }
+    ]
+  },
+  {
+    id: "sos-management-section",
+    label: "SOS Management",
+    children: [{ id: "sos-management", label: "SOS Management" }]
+  },
   {
     id: "ride-management",
     label: "Ride Management",
@@ -48,8 +63,14 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
       { id: "emergency-list", label: "Emergency List" }
     ]
   },
-  { id: "commission-management", label: "Commission Management" },
-  { id: "agent-performance", label: "Agent Performance" },
+  {
+    id: "commission-management-section",
+    label: "Commission Management",
+    children: [
+      { id: "commission-management", label: "Commission Management" },
+      { id: "agent-performance", label: "Agent Performance" }
+    ]
+  },
   {
     id: "content-management",
     label: "Content Management",
@@ -79,12 +100,14 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
       { id: "vehicle-model-variant", label: "Vehicle Model Variant" }
     ]
   },
-  { id: "access-management", label: "Access Management" }
+  {
+    id: "access-management-section",
+    label: "Access Management",
+    children: [{ id: "access-management", label: "Access Management" }]
+  }
 ];
 
-const LEAF_IDS = ACCESS_MODULES.flatMap((module) =>
-  module.children ? module.children.map((child) => child.id) : [module.id]
-);
+const LEAF_IDS = ACCESS_MODULES.flatMap((module) => module.children.map((child) => child.id));
 
 function permissions(
   assigned: Partial<Record<string, AccessPermission>>
@@ -108,7 +131,6 @@ export const ROLE_PERMISSIONS: Record<AccessRoleId, Record<string, AccessPermiss
     partner: "Read",
     "employees-list": "None",
     document: "Write",
-    "driver-partner-management": "Read/Write",
     "sos-management": "Read/Write",
     rides: "Read",
     "safety-center": "None",
@@ -150,7 +172,6 @@ export const ROLE_PERMISSIONS: Record<AccessRoleId, Record<string, AccessPermiss
     driver: "Read",
     partner: "Read",
     document: "Write",
-    "driver-partner-management": "Read/Write",
     rides: "Read"
   }),
   "safety-officer": permissions({
