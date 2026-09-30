@@ -181,6 +181,21 @@ export interface VehicleListFiltersBase {
   search: string;
 }
 
+export interface VehicleBrandsListFilters extends VehicleListFiltersBase {
+  vehicleTypeId?: number;
+}
+
+export interface VehicleModelsListFilters extends VehicleListFiltersBase {
+  vehicleTypeId?: number;
+  brandId?: number;
+}
+
+export interface VehicleColorsListFilters extends VehicleListFiltersBase {
+  vehicleTypeId?: number;
+  brandId?: number;
+  modelYearId?: number;
+}
+
 export interface TaxListFilters {
   page: number;
   pageSize: number;
@@ -235,6 +250,3 @@ export interface AuditLogsFilters {
 }
 
 export type VehicleTypesListFilters = VehicleListFiltersBase;
-export type VehicleModelsListFilters = VehicleListFiltersBase;
-export type VehicleColorsListFilters = VehicleListFiltersBase;
-export type VehicleBrandsListFilters = VehicleListFiltersBase;

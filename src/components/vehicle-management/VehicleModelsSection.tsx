@@ -39,6 +39,8 @@ export function VehicleModelsSection() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
   const [editingId, setEditingId] = useState<number | string | null>(null);
@@ -47,7 +49,9 @@ export function VehicleModelsSection() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const modelsQuery = useVehicleModelsQuery(page, pageSize, search);
+  const vehicleTypeId = typeFilter === "all" ? undefined : Number(typeFilter);
+  const brandId = brandFilter === "all" ? undefined : Number(brandFilter);
+  const modelsQuery = useVehicleModelsQuery(page, pageSize, search, vehicleTypeId, brandId);
   const typesQuery = useVehicleTypeOptionsQuery();
   const brandsQuery = useVehicleBrandOptionsQuery();
 
@@ -66,6 +70,9 @@ export function VehicleModelsSection() {
   const brandsForType = vehicleBrands.filter(
     (brand) => Number(brand.vehicleTypeId) === Number(selectedTypeId)
   );
+  const brandsForFilter = vehicleTypeId
+    ? vehicleBrands.filter((brand) => Number(brand.vehicleTypeId) === vehicleTypeId)
+    : vehicleBrands;
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["vehicle", "models"] });
@@ -161,6 +168,45 @@ export function VehicleModelsSection() {
                 className="pl-9"
               />
             </div>
+            <Select
+              value={typeFilter}
+              onValueChange={(value) => {
+                setTypeFilter(value);
+                setBrandFilter("all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[13rem]">
+                <SelectValue placeholder="Vehicle type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All vehicle types</SelectItem>
+                {vehicleTypes.map((type) => (
+                  <SelectItem key={String(type.id)} value={String(type.id)}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={brandFilter}
+              onValueChange={(value) => {
+                setBrandFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[13rem]">
+                <SelectValue placeholder="Brand" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All brands</SelectItem>
+                {brandsForFilter.map((brand) => (
+                  <SelectItem key={String(brand.id)} value={String(brand.id)}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <ManagementTable
             isLoading={loading}
