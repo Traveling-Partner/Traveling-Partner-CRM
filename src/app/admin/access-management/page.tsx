@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ComponentType } from "react";
 import {
+  ArrowRight,
   BadgeDollarSign,
   Ban,
   Briefcase,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
   Select,
   SelectContent,
@@ -30,10 +32,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
   ACCESS_MODULES,
-  ACCESS_PERMISSIONS,
   ACCESS_ROLES,
   ROLE_PERMISSIONS,
   type AccessPermission,
@@ -58,27 +62,11 @@ const MODULE_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   "access-management": KeyRound
 };
 
-const PERMISSION_PILL: Record<
-  AccessPermission,
-  { selected: string; label: string }
-> = {
-  None: {
-    selected: "bg-slate-800 text-white shadow-sm dark:bg-slate-200 dark:text-slate-900",
-    label: "None"
-  },
-  Read: {
-    selected: "bg-sky-500 text-white shadow-sm shadow-sky-500/25",
-    label: "Read"
-  },
-  Write: {
-    selected: "bg-amber-500 text-white shadow-sm shadow-amber-500/25",
-    label: "Write"
-  },
-  "Read/Write": {
-    selected:
-      "bg-gradient-to-r from-[#fce001] to-[#fdb813] text-slate-900 shadow-sm shadow-yellow-500/30",
-    label: "R/W"
-  }
+const STATUS_STYLES: Record<AccessPermission, string> = {
+  Read: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
+  Write: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  "Read/Write": "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+  None: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
 };
 
 function clonePermissions() {
@@ -87,50 +75,78 @@ function clonePermissions() {
   ) as Record<AccessRoleId, Record<string, AccessPermission>>;
 }
 
-function PermissionControl({
+function flagsFromPermission(value: AccessPermission) {
+  return {
+    read: value === "Read" || value === "Read/Write",
+    write: value === "Write" || value === "Read/Write"
+  };
+}
+
+function permissionFromFlags(read: boolean, write: boolean): AccessPermission {
+  if (read && write) return "Read/Write";
+  if (write) return "Write";
+  if (read) return "Read";
+  return "None";
+}
+
+function roleLabel(id: AccessRoleId) {
+  return ACCESS_ROLES.find((role) => role.id === id)?.label ?? id;
+}
+
+function PermissionSwitches({
+  id,
   value,
   onChange
 }: {
+  id: string;
   value: AccessPermission;
   onChange: (value: AccessPermission) => void;
 }) {
+  const { read, write } = flagsFromPermission(value);
+
   return (
-    <div
-      role="radiogroup"
-      aria-label="Permission"
-      className="inline-flex w-full min-w-[14.5rem] rounded-full border border-border/70 bg-muted/40 p-0.5 sm:w-auto"
-    >
-      {ACCESS_PERMISSIONS.map((option) => {
-        const selected = value === option;
-        return (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(option)}
-            className={cn(
-              "flex-1 rounded-full px-2.5 py-1.5 text-[11px] font-semibold tracking-wide transition-all duration-150 sm:flex-none sm:px-3",
-              selected
-                ? PERMISSION_PILL[option].selected
-                : "text-muted-foreground hover:bg-background/80 hover:text-foreground"
-            )}
-          >
-            <span className="sm:hidden">{PERMISSION_PILL[option].label}</span>
-            <span className="hidden sm:inline">{option}</span>
-          </button>
-        );
-      })}
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="flex items-center gap-2.5">
+        <Switch
+          id={`${id}-read`}
+          checked={read}
+          onCheckedChange={(checked) => onChange(permissionFromFlags(checked, write))}
+        />
+        <Label htmlFor={`${id}-read`} className="cursor-pointer text-sm font-medium">
+          Read
+        </Label>
+      </div>
+      <div className="flex items-center gap-2.5">
+        <Switch
+          id={`${id}-write`}
+          checked={write}
+          onCheckedChange={(checked) => onChange(permissionFromFlags(read, checked))}
+        />
+        <Label htmlFor={`${id}-write`} className="cursor-pointer text-sm font-medium">
+          Write
+        </Label>
+      </div>
+      <span
+        className={cn(
+          "inline-flex min-w-[5.25rem] items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+          STATUS_STYLES[value]
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }
 
 export default function AdminAccessManagementPage() {
+  const { success } = useToast();
   const [roleId, setRoleId] = useState<AccessRoleId>(ACCESS_ROLES[0].id);
+  const [pendingRoleId, setPendingRoleId] = useState<AccessRoleId | null>(null);
   const [matrix, setMatrix] = useState(clonePermissions);
 
   const selectedRole = ACCESS_ROLES.find((role) => role.id === roleId) ?? ACCESS_ROLES[0];
   const permissions = matrix[roleId];
+  const pendingRole = pendingRoleId ? roleLabel(pendingRoleId) : "";
 
   const counts = useMemo(() => {
     const values = Object.values(permissions);
@@ -142,7 +158,7 @@ export default function AdminAccessManagementPage() {
     };
   }, [permissions]);
 
-  const setPermission = (moduleId: string, value: AccessPermission) => {
+  const setPermission = (moduleId: string, moduleLabel: string, value: AccessPermission) => {
     setMatrix((current) => ({
       ...current,
       [roleId]: {
@@ -150,6 +166,15 @@ export default function AdminAccessManagementPage() {
         [moduleId]: value
       }
     }));
+    success(`${moduleLabel} set to ${value}.`);
+  };
+
+  const confirmRoleChange = () => {
+    if (!pendingRoleId) return;
+    const nextLabel = roleLabel(pendingRoleId);
+    setRoleId(pendingRoleId);
+    setPendingRoleId(null);
+    success(`Role changed to ${nextLabel}.`);
   };
 
   return (
@@ -179,7 +204,14 @@ export default function AdminAccessManagementPage() {
               <label htmlFor="access-role" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Role
               </label>
-              <Select value={roleId} onValueChange={(value) => setRoleId(value as AccessRoleId)}>
+              <Select
+                value={roleId}
+                onValueChange={(value) => {
+                  const next = value as AccessRoleId;
+                  if (next === roleId) return;
+                  setPendingRoleId(next);
+                }}
+              >
                 <SelectTrigger
                   id="access-role"
                   className="h-11 rounded-xl border-border/80 bg-background/80 font-medium"
@@ -251,10 +283,11 @@ export default function AdminAccessManagementPage() {
                 return (
                   <PermissionRow
                     key={module.id}
+                    id={module.id}
                     icon={Icon}
                     label={module.label}
                     value={permissions[module.id]}
-                    onChange={(value) => setPermission(module.id, value)}
+                    onChange={(value) => setPermission(module.id, module.label, value)}
                   />
                 );
               })}
@@ -281,9 +314,10 @@ export default function AdminAccessManagementPage() {
                   {children.map((child) => (
                     <PermissionRow
                       key={child.id}
+                      id={child.id}
                       label={child.label}
                       value={permissions[child.id]}
-                      onChange={(value) => setPermission(child.id, value)}
+                      onChange={(value) => setPermission(child.id, child.label, value)}
                     />
                   ))}
                 </ul>
@@ -292,6 +326,35 @@ export default function AdminAccessManagementPage() {
           })}
         </div>
       </PageContainer>
+
+      <ConfirmDialog
+        open={pendingRoleId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRoleId(null);
+        }}
+        title="Change role?"
+        description="This will show and edit permissions for a different role."
+        confirmLabel="Change role"
+        cancelLabel="Keep current"
+        icon={<Users className="h-4 w-4" />}
+        onConfirm={confirmRoleChange}
+      >
+        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              From
+            </p>
+            <p className="truncate text-sm font-semibold">{selectedRole.label}</p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1 text-right">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              To
+            </p>
+            <p className="truncate text-sm font-semibold">{pendingRole}</p>
+          </div>
+        </div>
+      </ConfirmDialog>
     </AppShell>
   );
 }
@@ -325,11 +388,13 @@ function StatTile({
 }
 
 function PermissionRow({
+  id,
   label,
   value,
   onChange,
   icon: Icon
 }: {
+  id: string;
   label: string;
   value: AccessPermission;
   onChange: (value: AccessPermission) => void;
@@ -347,7 +412,7 @@ function PermissionRow({
         )}
         <span className="truncate text-sm font-medium">{label}</span>
       </div>
-      <PermissionControl value={value} onChange={onChange} />
+      <PermissionSwitches id={id} value={value} onChange={onChange} />
     </li>
   );
 }
