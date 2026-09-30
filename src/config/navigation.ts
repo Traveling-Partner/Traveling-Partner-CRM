@@ -23,7 +23,8 @@ import {
   TrendingUp,
   ShieldAlert,
   Siren,
-  Phone
+  Phone,
+  KeyRound
 } from "lucide-react";
 import { ROLES, type AppRole } from "@/lib/roles";
 
@@ -155,7 +156,8 @@ export const adminNav: SidebarEntry[] = [
   commissionManagementGroup,
   contentManagementGroup,
   financialManagementGroup,
-  vehicleManagementGroup
+  vehicleManagementGroup,
+  { label: "Access Management", href: "/admin/access-management", icon: KeyRound }
 ];
 
 /**

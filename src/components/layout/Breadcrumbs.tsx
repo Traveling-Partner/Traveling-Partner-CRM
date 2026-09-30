@@ -53,7 +53,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   notifications: "Notifications",
   safety: "Safety Center",
   incidents: "SOS Incidents",
-  services: "Emergency Services"
+  services: "Emergency Services",
+  "access-management": "Access Management"
 };
 
 const GROUP_BY_SEGMENT: Record<string, string> = {
