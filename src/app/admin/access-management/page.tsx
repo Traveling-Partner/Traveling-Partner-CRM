@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -87,25 +87,22 @@ function groupPermissionRows(permissions: PermissionEntry[]) {
 
 export default function AdminAccessManagementPage() {
   const { success, error: showError } = useToast();
-  const [roleName, setRoleName] = useState("");
+  const [pickedRole, setPickedRole] = useState<string | null>(null);
 
   const rolesQuery = usePermissionRolesQuery();
+  const roles = rolesQuery.data ?? [];
+  const roleName =
+    (pickedRole && roles.some((role) => role.name === pickedRole)
+      ? pickedRole
+      : roles[0]?.name) ?? "";
+
   const permissionsQuery = useRolePermissionsQuery(roleName);
   const updateMutation = useUpdateRolePermissionsMutation();
-
-  const roles = rolesQuery.data ?? [];
-
-  useEffect(() => {
-    if (roles.length === 0) return;
-    if (!roleName || !roles.some((role) => role.name === roleName)) {
-      setRoleName(roles[0].name);
-    }
-  }, [roles, roleName]);
 
   const selectedRole = roles.find((role) => role.name === roleName);
   const permissions = permissionsQuery.data?.permissions ?? [];
   const groups = useMemo(() => groupPermissionRows(permissions), [permissions]);
-  const busy = updateMutation.isPending || permissionsQuery.isFetching;
+  const busy = updateMutation.isPending;
 
   const setLevel = async (module: string, moduleLabel: string, level: PermissionLevel) => {
     if (!roleName) return;
@@ -151,7 +148,7 @@ export default function AdminAccessManagementPage() {
                 value={roleName || undefined}
                 onValueChange={(value) => {
                   if (value === roleName) return;
-                  setRoleName(value);
+                  setPickedRole(value);
                   success(`Role changed to ${formatPermissionRoleName(value)}.`);
                 }}
                 disabled={rolesQuery.isLoading || roles.length === 0}

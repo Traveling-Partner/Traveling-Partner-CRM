@@ -1,5 +1,6 @@
 "use client";
 
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { useApiMutation, useApiQuery } from "@/hooks/api";
 import { queryKeys } from "@/lib/api/query-keys";
 import {
@@ -14,6 +15,8 @@ import {
 export function usePermissionRolesQuery() {
   return useApiQuery<PermissionRole[]>({
     queryKey: queryKeys.permissions.roles(),
+    staleTime: Infinity,
+    refetchOnMount: false,
     queryFn: ({ token, signal }) => fetchPermissionRoles({ token, signal })
   });
 }
@@ -22,13 +25,19 @@ export function useRolePermissionsQuery(role: string) {
   return useApiQuery<RolePermissionsData>({
     queryKey: queryKeys.permissions.byRole(role),
     enabled: Boolean(role),
+    staleTime: Infinity,
+    refetchOnMount: false,
+    placeholderData: keepPreviousData,
     queryFn: ({ token, signal }) => fetchRolePermissions(role, { token, signal })
   });
 }
 
 export function useUpdateRolePermissionsMutation() {
+  const queryClient = useQueryClient();
   return useApiMutation<RolePermissionsData, RolePermissionsUpdatePayload>({
     mutationFn: ({ token, variables }) => updateRolePermissions(variables, token),
-    invalidateKeys: [queryKeys.permissions.all]
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(queryKeys.permissions.byRole(variables.role), data);
+    }
   });
 }
