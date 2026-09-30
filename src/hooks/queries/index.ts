@@ -27,6 +27,11 @@ export {
   useAddSosCaseNoteMutation
 } from "@/hooks/queries/use-sos-incidents";
 export {
+  usePermissionRolesQuery,
+  useRolePermissionsQuery,
+  useUpdateRolePermissionsMutation
+} from "@/hooks/queries/use-access-permissions";
+export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
   useVehicleColorsQuery,

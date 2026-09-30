@@ -95,6 +95,11 @@ export const queryKeys = {
   insurance: {
     all: ["insurance"] as const,
     list: (filters: InsuranceListFilters) => ["insurance", "list", filters] as const
+  },
+  permissions: {
+    all: ["permissions"] as const,
+    roles: () => ["permissions", "roles"] as const,
+    byRole: (role: string) => ["permissions", "role", role] as const
   }
 } as const;
 
