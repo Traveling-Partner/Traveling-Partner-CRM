@@ -87,10 +87,11 @@ const LEAF_IDS = ACCESS_MODULES.flatMap((module) =>
 function permissions(
   assigned: Partial<Record<string, AccessPermission>>
 ): Record<string, AccessPermission> {
-  return {
-    ...Object.fromEntries(LEAF_IDS.map((id) => [id, "None" as AccessPermission])),
-    ...assigned
-  };
+  const next: Record<string, AccessPermission> = {};
+  for (const id of LEAF_IDS) {
+    next[id] = assigned[id] ?? "None";
+  }
+  return next;
 }
 
 /**
