@@ -101,7 +101,8 @@ export const queryKeys = {
   permissions: {
     all: ["permissions"] as const,
     roles: () => ["permissions", "roles"] as const,
-    byRole: (role: string) => ["permissions", "role", role] as const
+    byRole: (role: string) => ["permissions", "role", role] as const,
+    me: (userId: string) => ["permissions", "me", userId] as const
   },
   portalUsers: {
     all: ["portalUsers"] as const,

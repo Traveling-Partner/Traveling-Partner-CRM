@@ -38,6 +38,7 @@ export {
   useRolePermissionsQuery,
   useUpdateRolePermissionsMutation
 } from "@/hooks/queries/use-access-permissions";
+export { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
