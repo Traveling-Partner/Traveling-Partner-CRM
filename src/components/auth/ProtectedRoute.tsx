@@ -50,7 +50,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const token = useAppSelector((state) => state.auth.token);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const authInitialized = useAppSelector((state) => state.auth.authInitialized);
-  const { gate } = useUserPermissionsQuery();
+  const { gate, isPending: permissionsPending } = useUserPermissionsQuery();
 
   useEffect(() => {
     setHydrated(true);
@@ -89,7 +89,19 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
     const normalizedDecodedRole = normalizeRole(decoded.role);
     const normalizedAllowedRoles = allowedRoles?.map((role) => normalizeRole(role));
-    if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(normalizedDecodedRole)) {
+    const roleAllowed =
+      !normalizedAllowedRoles || normalizedAllowedRoles.includes(normalizedDecodedRole);
+
+    if (!roleAllowed) {
+      if (permissionsPending) return;
+      if (gate && isHrefAllowed(pathname, gate)) {
+        return;
+      }
+      if (gate) {
+        const fallback = firstAllowedHref(user.role, gate) ?? "/403";
+        if (fallback !== pathname) router.replace(fallback);
+        return;
+      }
       router.replace("/403");
       return;
     }
@@ -114,7 +126,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     token,
     allowedRoles,
     dispatch,
-    gate
+    gate,
+    permissionsPending
   ]);
 
   if (!hydrated || !authInitialized) {
