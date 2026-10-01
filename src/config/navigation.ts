@@ -208,6 +208,8 @@ export function getNavForRole(role: AppRole | string | null | undefined): Sideba
       return marketingManagerNav;
     case ROLES.MANAGER:
       return managerNav;
+    case ROLES.FINANCE_MANAGER:
+      return adminNav;
     default:
       return agentNav;
   }

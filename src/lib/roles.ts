@@ -8,6 +8,7 @@ export const ROLES = {
   AGENT: "AGENT",
   SALES_MANAGER: "SALES_MANAGER",
   MARKETING_MANAGER: "MARKETING_MANAGER",
+  FINANCE_MANAGER: "FINANCE_MANAGER",
   MANAGER: "MANAGER"
 } as const;
 
@@ -18,6 +19,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   AGENT: "Sales Agent",
   SALES_MANAGER: "Sales Manager",
   MARKETING_MANAGER: "Marketing Manager",
+  FINANCE_MANAGER: "Finance Manager",
   MANAGER: "Manager"
 };
 
@@ -26,6 +28,7 @@ export const ROLE_DASHBOARDS: Record<AppRole, string> = {
   AGENT: "/agent/dashboard",
   SALES_MANAGER: "/sales-manager/dashboard",
   MARKETING_MANAGER: "/marketing-manager/dashboard",
+  FINANCE_MANAGER: "/admin/dashboard",
   MANAGER: "/manager/dashboard"
 };
 
@@ -34,6 +37,7 @@ export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
   AGENT: "/agent",
   SALES_MANAGER: "/sales-manager",
   MARKETING_MANAGER: "/marketing-manager",
+  FINANCE_MANAGER: "/admin",
   MANAGER: "/manager"
 };
 
@@ -112,10 +116,18 @@ export function isAppRole(value: string): value is AppRole {
 
 export function getAllowedRolesForPath(pathname: string): AppRole[] | undefined {
   const shared = getSharedAdminRolesForPath(pathname);
-  if (shared) return shared;
+  if (shared) {
+    return shared.includes(ROLES.FINANCE_MANAGER)
+      ? shared
+      : [...shared, ROLES.FINANCE_MANAGER];
+  }
 
   const match = ROUTE_PREFIX_CHECKS.find(({ prefix }) => pathname.startsWith(prefix));
-  return match?.roles;
+  if (!match) return undefined;
+  if (match.prefix === "/admin" && !match.roles.includes(ROLES.FINANCE_MANAGER)) {
+    return [...match.roles, ROLES.FINANCE_MANAGER];
+  }
+  return match.roles;
 }
 
 export function getRolePrefixForPath(pathname: string): string | null {

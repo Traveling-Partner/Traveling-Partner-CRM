@@ -36,6 +36,9 @@ export function normalizeRole(role: string | null | undefined): Role {
     return ROLES.MARKETING_MANAGER;
   }
   if (r === "MANAGER" || r === "GENERAL_MANAGER") return ROLES.MANAGER;
+  if (r === "FINANCE_MANAGER" || r === "FINANCEMANAGER" || r === "FINANCE") {
+    return ROLES.FINANCE_MANAGER;
+  }
 
   return r as Role;
 }
@@ -94,6 +97,11 @@ export function getRedirectForRoleOnProtectedRoute(
 ): string | null {
   const normalizedRole = toAppRole(role);
   if (!normalizedRole) return null;
+
+  // Finance Manager uses assigned /admin pages — no separate workspace.
+  if (normalizedRole === ROLES.FINANCE_MANAGER && isAdminRoute(pathname)) {
+    return null;
+  }
 
   // Shared existing Admin pages reused by other roles
   const sharedRoles = getSharedAdminRolesForPath(pathname);
