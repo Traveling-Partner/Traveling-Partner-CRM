@@ -68,17 +68,23 @@ function parseRole(value: unknown): PermissionRole | null {
   };
 }
 
+function parsePermissionList(value: unknown): PermissionEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(parsePermissionEntry)
+    .filter((entry): entry is PermissionEntry => entry !== null);
+}
+
+/** Accepts `{ role, permissions }` or a raw permissions array. */
 function parseRolePermissions(value: unknown): RolePermissionsData {
+  if (Array.isArray(value)) {
+    return { role: "", permissions: parsePermissionList(value) };
+  }
   const payload =
     value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-  const permissions = Array.isArray(payload.permissions)
-    ? payload.permissions
-        .map(parsePermissionEntry)
-        .filter((entry): entry is PermissionEntry => entry !== null)
-    : [];
   return {
     role: typeof payload.role === "string" ? payload.role : "",
-    permissions
+    permissions: parsePermissionList(payload.permissions)
   };
 }
 
@@ -119,7 +125,7 @@ export async function fetchRolePermissions(
 
 /**
  * GET /api/user/permission — logged-in employee's modules.
- * Same `data` shape as role permissions: `{ role, permissions }` or a permissions array.
+ * `data` may be `{ role, permissions }` or a permissions array.
  */
 export async function fetchUserPermissions(opts: {
   token: string;
@@ -131,9 +137,6 @@ export async function fetchUserPermissions(opts: {
     debugLabel: "permissions:me"
   });
   const envelope = assertSuccess(res);
-  if (Array.isArray(envelope.data)) {
-    return parseRolePermissions({ permissions: envelope.data });
-  }
   return parseRolePermissions(envelope.data);
 }
 
