@@ -7,7 +7,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { fetcher } from "@/lib/fetcher";
 import { useAppSelector } from "@/store/hooks";
 import { apiUrl } from "@/lib/api-base";
 import { AppShell } from "@/components/layout/AppShell";
@@ -26,19 +25,28 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
+import { usePortalUserDetailQuery, useUpdatePortalUserMutation } from "@/hooks/queries/use-portal-users";
+import {
+  PORTAL_USER_ROLES,
+  formatPortalRole,
+  primaryRole,
+  type PortalUserRole
+} from "@/services/portal-users";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   email: z.string().trim().email("Valid email required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
-  gender: z.enum(["Male", "Female", "Other", "MALE", "FEMALE", "OTHER"], { required_error: "Gender is required" }),
-  status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"]),
+  role: z.enum(PORTAL_USER_ROLES, { required_error: "Role is required" }),
+  city: z.string().trim().min(2, "City is required"),
+  gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
   cnicFront: z.string().trim().url("Valid CNIC front image URL required"),
   cnicBack: z.string().trim().url("Valid CNIC back image URL required")
 });
 
 type FormValues = z.infer<typeof schema>;
+
 interface UploadResponse {
   success: boolean;
   statusCode: number;
@@ -46,30 +54,26 @@ interface UploadResponse {
   data: string;
 }
 
-interface AgentDetailResponse {
-  id: number;
-  email: string | null;
-  mobileNumber: string | null;
-  name: string | null;
-  gender?: string | null;
-  cnicNumber?: string | null;
-  cnicFront?: string | null;
-  cnicBack?: string | null;
-  status: string | null;
+function normalizeGender(value: string | null): FormValues["gender"] {
+  const gender = (value || "").toUpperCase();
+  if (gender === "FEMALE") return "Female";
+  if (gender === "OTHER") return "Other";
+  return "Male";
 }
 
-interface ApiEnvelope<T> {
-  data?: T;
+function normalizeRole(userRole: string): PortalUserRole {
+  return PORTAL_USER_ROLES.includes(userRole as PortalUserRole)
+    ? (userRole as PortalUserRole)
+    : "SALES_AGENT";
 }
 
-export default function AdminEditAgentPage() {
+export default function AdminEditEmployeePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { success, error } = useToast();
   const token = useAppSelector((state) => state.auth.token);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const { data: employee, isLoading, isError } = usePortalUserDetailQuery(params.id);
+  const updateMutation = useUpdatePortalUserMutation(params.id);
 
   const { register, handleSubmit, control, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -77,8 +81,9 @@ export default function AdminEditAgentPage() {
       name: "",
       email: "",
       mobileNumber: "",
+      role: "SALES_AGENT",
+      city: "",
       gender: "Male",
-      status: "PENDING",
       cnicNumber: "",
       cnicFront: "",
       cnicBack: ""
@@ -86,6 +91,21 @@ export default function AdminEditAgentPage() {
   });
   const [frontUploading, setFrontUploading] = useState(false);
   const [backUploading, setBackUploading] = useState(false);
+
+  useEffect(() => {
+    if (!employee) return;
+    reset({
+      name: employee.name || "",
+      email: employee.email || "",
+      mobileNumber: employee.mobileNumber || "",
+      role: normalizeRole(primaryRole(employee)),
+      city: employee.city || "",
+      gender: normalizeGender(employee.gender),
+      cnicNumber: employee.cnicNumber || "",
+      cnicFront: employee.cnicFront || "",
+      cnicBack: employee.cnicBack || ""
+    });
+  }, [employee, reset]);
 
   const uploadCnicImage = async (file: File): Promise<string> => {
     const storageToken =
@@ -107,91 +127,29 @@ export default function AdminEditAgentPage() {
     return json.data;
   };
 
-  useEffect(() => {
-    let active = true;
-    const loadAgent = async () => {
-      setLoading(true);
-      try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/users/sale-agents/${params.id}`;
-        const response = await fetcher<AgentDetailResponse | ApiEnvelope<AgentDetailResponse>>(url, { token });
-        const payload =
-          response && typeof response === "object" && "data" in response && response.data
-            ? response.data
-            : (response as AgentDetailResponse);
-
-        if (!active || !payload) return;
-
-        const normalizedGender = (() => {
-          const g = (payload.gender || "").toUpperCase();
-          if (g === "MALE") return "Male";
-          if (g === "FEMALE") return "Female";
-          if (g === "OTHER") return "Other";
-          return "Male";
-        })();
-
-        const normalizedStatus = (() => {
-          const s = (payload.status || "").toUpperCase();
-          if (s === "ACTIVE" || s === "INACTIVE" || s === "BLOCKED" || s === "PENDING" || s === "APPROVED") {
-            return s as FormValues["status"];
-          }
-          return "PENDING";
-        })();
-
-        reset({
-          name: payload.name || "",
-          email: payload.email || "",
-          mobileNumber: payload.mobileNumber || "",
-          gender: normalizedGender,
-          status: normalizedStatus,
-          cnicNumber: payload.cnicNumber || "",
-          cnicFront: payload.cnicFront || "",
-          cnicBack: payload.cnicBack || ""
-        });
-        setNotFound(false);
-      } catch {
-        if (active) setNotFound(true);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    void loadAgent();
-    return () => {
-      active = false;
-    };
-  }, [params.id, reset, token]);
-
   const onSubmit = async (values: FormValues) => {
-    setSaving(true);
     try {
-      await fetcher(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/sales-agent/update/${params.id}`,
-        {
-          method: "PUT",
-          token,
-          body: JSON.stringify({
-            email: values.email,
-            mobileNumber: values.mobileNumber,
-            name: values.name,
-            gender: values.gender,
-            cnicNumber: values.cnicNumber,
-            cnicFront: values.cnicFront,
-            cnicBack: values.cnicBack,
-            status: values.status
-          })
-        }
-      );
-      success("Agent updated successfully.");
+      await updateMutation.mutateAsync({
+        email: values.email,
+        mobileNumber: values.mobileNumber,
+        name: values.name,
+        role: values.role,
+        city: values.city,
+        gender: values.gender,
+        cnicNumber: values.cnicNumber,
+        cnicFront: values.cnicFront,
+        cnicBack: values.cnicBack
+      });
+      success("Employee updated.");
       router.push(`/admin/agents/${params.id}`);
     } catch (err) {
-      error(err instanceof Error ? err.message : "Failed to update agent.");
-    } finally {
-      setSaving(false);
+      error(err instanceof Error ? err.message : "Failed to update employee.");
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <AppShell title="Edit Agent">
+      <AppShell title="Edit employee">
         <PageContainer>
           <div className="flex items-center justify-center py-20">
             <TPLoader variant="inline" size={120} label="Loading…" />
@@ -201,14 +159,14 @@ export default function AdminEditAgentPage() {
     );
   }
 
-  if (notFound) {
+  if (isError || !employee) {
     return (
-      <AppShell title="Edit Agent">
+      <AppShell title="Edit employee">
         <PageContainer>
           <EmptyState
-            title="Agent not found"
-            description="This agent does not exist."
-            actionLabel="Back to agents"
+            title="Employee not found"
+            description="This employee does not exist."
+            actionLabel="Back to employees"
             onActionClick={() => router.push("/admin/agents")}
           />
         </PageContainer>
@@ -217,24 +175,44 @@ export default function AdminEditAgentPage() {
   }
 
   return (
-    <AppShell title="Edit Agent">
+    <AppShell title="Edit employee">
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/admin/agents/${params.id}`} className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
-              Back to agent
+              Back to employee
             </Link>
           </Button>
         </div>
         <SectionCard
-          title="Edit sales agent"
-          description="Update the agent details and save."
+          title="Edit employee"
+          description="Update employee details and role."
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                 <Input id="name" {...register("name")} placeholder="e.g., Zaeem Khan" />
+              </FormField>
+              <FormField label="Role" required error={errors.role}>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PORTAL_USER_ROLES.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {formatPortalRole(item)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -245,7 +223,7 @@ export default function AdminEditAgentPage() {
                   inputMode="email"
                   autoComplete="email"
                   {...register("email")}
-                  placeholder="agent@example.com"
+                  placeholder="employee@example.com"
                 />
               </FormField>
               <FormField label="Mobile Number" htmlFor="mobileNumber" required error={errors.mobileNumber}>
@@ -253,10 +231,31 @@ export default function AdminEditAgentPage() {
               </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="CNIC Number" htmlFor="cnicNumber" required error={errors.cnicNumber}>
-                <Input id="cnicNumber" {...register("cnicNumber")} placeholder="4310212345674" maxLength={13} />
+              <FormField label="City" htmlFor="city" required error={errors.city}>
+                <Input id="city" {...register("city")} placeholder="Lahore" />
+              </FormField>
+              <FormField label="Gender" required error={errors.gender}>
+                <Controller
+                  name="gender"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </FormField>
             </div>
+            <FormField label="CNIC Number" htmlFor="cnicNumber" required error={errors.cnicNumber}>
+              <Input id="cnicNumber" {...register("cnicNumber")} placeholder="4310212345674" maxLength={13} />
+            </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="CNIC Front" required error={errors.cnicFront}>
                 <div className="space-y-2">
@@ -329,48 +328,8 @@ export default function AdminEditAgentPage() {
                 </div>
               </FormField>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Gender" required error={errors.gender}>
-                <Controller
-                  name="gender"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-              <FormField label="Status" required error={errors.status}>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="BLOCKED">Blocked</SelectItem>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="APPROVED">Approved</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-            </div>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Updating…" : "Update agent"}
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? "Updating…" : "Update employee"}
             </Button>
           </form>
         </SectionCard>

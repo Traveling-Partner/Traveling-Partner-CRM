@@ -70,7 +70,7 @@ export const userManagementGroup: SidebarGroup = {
   items: [
     { label: "Drivers", href: "/admin/drivers", icon: Users },
     { label: "Partners", href: "/admin/partners", icon: Briefcase },
-    { label: "Agents", href: "/admin/agents", icon: UserCircle2 },
+    { label: "Employees List", href: "/admin/agents", icon: UserCircle2 },
     { label: "Documents", href: "/admin/documents", icon: FileText }
   ]
 };
