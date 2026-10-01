@@ -10,19 +10,14 @@ import {
   type VehicleTypesListFilters
 } from "@/lib/api/query-keys";
 import {
-  fetchAllVehicleBrands,
-  fetchAllVehicleModels,
-  fetchAllVehicleTypes,
   fetchVehicleBrands,
   fetchVehicleColors,
   fetchVehicleModels,
   fetchVehicleTypes
 } from "@/services/vehicle";
 
-/**
- * Dropdown/reference lists change rarely and every fetch walks all API pages,
- * so they stay fresh well past the default window instead of refetching per visit.
- */
+/** One getAll page for dropdowns — same APIs, no multi-page walk. */
+const OPTIONS_PAGE_SIZE = 100;
 const OPTIONS_STALE_TIME_MS = 30 * 60 * 1000;
 const OPTIONS_GC_TIME_MS = 60 * 60 * 1000;
 
@@ -116,32 +111,60 @@ export function useVehicleBrandsQuery(
   });
 }
 
-/** Every vehicle type across API pages — for Add/Edit dropdowns. */
-export function useVehicleTypeOptionsQuery() {
+/** Types dropdown — one GET /vehicleTypes/portal/getAll. */
+export function useVehicleTypeOptionsQuery(enabled = true) {
   return useApiQuery({
     queryKey: queryKeys.vehicle.typeOptions(),
     staleTime: OPTIONS_STALE_TIME_MS,
     gcTime: OPTIONS_GC_TIME_MS,
-    queryFn: ({ token, signal }) => fetchAllVehicleTypes({ token, signal })
+    refetchOnMount: false,
+    enabled,
+    queryFn: async ({ token, signal }) => {
+      const page = await fetchVehicleTypes(
+        { page: 1, pageSize: OPTIONS_PAGE_SIZE, search: "" },
+        { token, signal }
+      );
+      return page.content ?? [];
+    }
   });
 }
 
-/** Every brand across API pages — for Add/Edit dropdowns. */
-export function useVehicleBrandOptionsQuery() {
+/** Brands dropdown — one GET /brands/portal/getAll. */
+export function useVehicleBrandOptionsQuery(vehicleTypeId?: number, enabled = true) {
   return useApiQuery({
-    queryKey: queryKeys.vehicle.brandOptions(),
+    queryKey: queryKeys.vehicle.brandOptions(vehicleTypeId),
     staleTime: OPTIONS_STALE_TIME_MS,
     gcTime: OPTIONS_GC_TIME_MS,
-    queryFn: ({ token, signal }) => fetchAllVehicleBrands({ token, signal })
+    refetchOnMount: false,
+    enabled,
+    queryFn: async ({ token, signal }) => {
+      const page = await fetchVehicleBrands(
+        { page: 1, pageSize: OPTIONS_PAGE_SIZE, search: "", vehicleTypeId },
+        { token, signal }
+      );
+      return page.content ?? [];
+    }
   });
 }
 
-/** Every model across API pages — for Add/Edit dropdowns. */
-export function useVehicleModelOptionsQuery() {
+/** Models dropdown — one GET /modelYears/portal/getAll. */
+export function useVehicleModelOptionsQuery(
+  vehicleTypeId?: number,
+  brandId?: number,
+  enabled = true
+) {
   return useApiQuery({
-    queryKey: queryKeys.vehicle.modelOptions(),
+    queryKey: queryKeys.vehicle.modelOptions(vehicleTypeId, brandId),
     staleTime: OPTIONS_STALE_TIME_MS,
     gcTime: OPTIONS_GC_TIME_MS,
-    queryFn: ({ token, signal }) => fetchAllVehicleModels({ token, signal })
+    refetchOnMount: false,
+    enabled,
+    queryFn: async ({ token, signal }) => {
+      const page = await fetchVehicleModels(
+        { page: 1, pageSize: OPTIONS_PAGE_SIZE, search: "", vehicleTypeId, brandId },
+        { token, signal }
+      );
+      return page.content ?? [];
+    }
   });
 }
