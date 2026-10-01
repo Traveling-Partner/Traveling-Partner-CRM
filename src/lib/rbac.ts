@@ -23,6 +23,7 @@ export function normalizeRole(role: string | null | undefined): Role {
   const r = String(role ?? "")
     .trim()
     .toUpperCase()
+    .replace(/^ROLE_/, "")
     .replace(/[-\s]/g, "_");
 
   if (r === "ADMIN") return ROLES.ADMIN;
@@ -73,8 +74,10 @@ export function isManagerRoute(pathname: string): boolean {
 
 export function getDefaultRouteForRole(role: Role): string {
   const appRole = toAppRole(role);
+  if (appRole === ROLES.AGENT) return AGENT_DASHBOARD_ROUTE;
   if (appRole) return ROLE_DASHBOARDS[appRole];
-  return AGENT_DASHBOARD_ROUTE;
+  // New portal employee roles use assigned admin pages, not the agent workspace.
+  return ADMIN_DASHBOARD_ROUTE;
 }
 
 function getRouteOwnerRole(pathname: string): AppRole | null {

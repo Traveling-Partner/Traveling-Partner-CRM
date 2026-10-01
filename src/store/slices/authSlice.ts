@@ -52,8 +52,8 @@ export const loginUserThunk = createAsyncThunk(
       }
 
       const user: AuthUser = {
-        id: String(decoded.id),
-        role: normalizeRole(decoded.role),
+        id: String(data.id ?? decoded.id),
+        role: normalizeRole(data.role || decoded.role),
         name: data.name ?? "",
         email: data.email ?? "",
         mobileNumber: decoded.mobileNumber,

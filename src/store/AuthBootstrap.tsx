@@ -36,7 +36,7 @@ export function AuthBootstrap() {
       const user = persistedUser
         ? {
             id: String(persistedUser.id ?? decoded.id),
-            role: normalizeRole(String(persistedUser.role ?? decoded.role)),
+            role: normalizeRole(String(persistedUser.role || decoded.role)),
             name: String(persistedUser.name ?? ""),
             email: String(persistedUser.email ?? ""),
             mobileNumber: String(persistedUser.mobileNumber ?? decoded.mobileNumber ?? "")
