@@ -4,7 +4,6 @@ import { useTheme } from "next-themes";
 import { Menu, MoonStar, SunMedium, ChevronDown } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
-import { HeaderAuditLogBell } from "@/components/layout/HeaderAuditLogBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +13,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { ROLE_LABELS, ROLES } from "@/lib/roles";
+import { ROLE_LABELS } from "@/lib/roles";
 import { toAppRole } from "@/lib/rbac";
 
 interface HeaderProps {
@@ -26,9 +25,6 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuthStore();
   const displayName = user?.name?.trim() || user?.mobileNumber || "User";
-  const appRole = toAppRole(user?.role);
-  const showAuditBell = appRole === ROLES.ADMIN;
-
   const isDark = theme === "dark";
 
   return (
@@ -54,7 +50,6 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        {showAuditBell ? <HeaderAuditLogBell /> : null}
         <Button
           variant="ghost"
           size="icon"
