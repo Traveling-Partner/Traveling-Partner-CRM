@@ -211,6 +211,6 @@ export function getNavForRole(role: AppRole | string | null | undefined): Sideba
     case ROLES.FINANCE_MANAGER:
       return adminNav;
     default:
-      return agentNav;
+      return adminNav;
   }
 }

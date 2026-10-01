@@ -8,8 +8,12 @@ import { decodeToken } from "@/lib/decodeToken";
 import {
   LOGIN_ROUTE,
   normalizeRole,
-  getRedirectForRoleOnProtectedRoute
+  getDefaultRouteForRole,
+  getRedirectForRoleOnProtectedRoute,
+  isAdminRoute,
+  isAgentRoute
 } from "@/lib/rbac";
+import { ROLES } from "@/lib/roles";
 import { firstAllowedHref, isHrefAllowed } from "@/lib/page-permissions";
 import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 import TPLoader from "@/components/TPLoader";
@@ -20,7 +24,6 @@ interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
 
-/** How long the redirect may spin before the user gets something to act on. */
 const REDIRECT_FALLBACK_MS = 8000;
 
 function SessionExpiredScreen() {
@@ -50,13 +53,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const token = useAppSelector((state) => state.auth.token);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const authInitialized = useAppSelector((state) => state.auth.authInitialized);
-  const { gate, isPending: permissionsPending } = useUserPermissionsQuery();
+  const { gate, isPending: permissionsPending, isFetching: permissionsFetching } =
+    useUserPermissionsQuery();
+  const waitingForPermissions = permissionsPending || (permissionsFetching && !gate);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
-  // A redirect that never lands would otherwise spin forever with no way out
   useEffect(() => {
     if (!hydrated || !authInitialized) return;
     if (isAuthenticated && user) {
@@ -87,34 +91,37 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       return;
     }
 
-    const normalizedDecodedRole = normalizeRole(decoded.role);
-    const normalizedAllowedRoles = allowedRoles?.map((role) => normalizeRole(role));
+    const role = normalizeRole(user.role || decoded.role);
+    const home = getDefaultRouteForRole(role);
+
+    if (isAgentRoute(pathname) && role !== ROLES.AGENT && role !== ROLES.ADMIN) {
+      if (home !== pathname) router.replace(home);
+      return;
+    }
+
+    if (waitingForPermissions) return;
+
+    if (gate) {
+      if (!isHrefAllowed(pathname, gate)) {
+        const fallback = firstAllowedHref(role, gate) ?? home;
+        if (fallback !== pathname) router.replace(fallback);
+      }
+      return;
+    }
+
+    const normalizedAllowedRoles = allowedRoles?.map((item) => normalizeRole(item));
     const roleAllowed =
-      !normalizedAllowedRoles || normalizedAllowedRoles.includes(normalizedDecodedRole);
+      !normalizedAllowedRoles || normalizedAllowedRoles.includes(role);
 
     if (!roleAllowed) {
-      if (permissionsPending) return;
-      if (gate && isHrefAllowed(pathname, gate)) {
-        return;
-      }
-      if (gate) {
-        const fallback = firstAllowedHref(user.role, gate) ?? "/403";
-        if (fallback !== pathname) router.replace(fallback);
-        return;
-      }
-      router.replace("/403");
+      if (isAdminRoute(pathname) && role !== ROLES.AGENT) return;
+      if (home !== pathname) router.replace(home);
       return;
     }
 
     const redirect = getRedirectForRoleOnProtectedRoute(user.role, pathname);
     if (redirect && redirect !== pathname) {
       router.replace(redirect);
-      return;
-    }
-
-    if (gate && !isHrefAllowed(pathname, gate)) {
-      const fallback = firstAllowedHref(user.role, gate) ?? "/403";
-      if (fallback !== pathname) router.replace(fallback);
     }
   }, [
     hydrated,
@@ -127,7 +134,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     allowedRoles,
     dispatch,
     gate,
-    permissionsPending
+    waitingForPermissions
   ]);
 
   if (!hydrated || !authInitialized) {
@@ -136,6 +143,13 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!isAuthenticated || !user) {
     return redirectStalled ? <SessionExpiredScreen /> : <TPLoader variant="fullscreen" />;
+  }
+
+  const role = normalizeRole(user.role);
+  const roleAllowed =
+    !allowedRoles?.length || allowedRoles.some((item) => normalizeRole(item) === role);
+  if (!roleAllowed && waitingForPermissions) {
+    return <TPLoader variant="fullscreen" />;
   }
 
   return <>{children}</>;
