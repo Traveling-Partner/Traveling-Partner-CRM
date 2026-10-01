@@ -4,6 +4,13 @@ export { useDriverStatusCountsQuery } from "@/hooks/queries/use-driver-status-co
 export { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
 export { usePartnerStatusCountsQuery } from "@/hooks/queries/use-partner-status-counts-query";
 export { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
+export {
+  usePortalUsersListQuery,
+  usePortalUserDetailQuery,
+  useCreatePortalUserMutation,
+  useUpdatePortalUserMutation,
+  useDeletePortalUserMutation
+} from "@/hooks/queries/use-portal-users";
 export { useAgentStatusCountsQuery } from "@/hooks/queries/use-agent-status-counts-query";
 export { useCarouselBannersQuery } from "@/hooks/queries/use-carousel-banners-query";
 export { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";

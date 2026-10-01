@@ -102,6 +102,12 @@ export const queryKeys = {
     all: ["permissions"] as const,
     roles: () => ["permissions", "roles"] as const,
     byRole: (role: string) => ["permissions", "role", role] as const
+  },
+  portalUsers: {
+    all: ["portalUsers"] as const,
+    lists: () => ["portalUsers", "list"] as const,
+    list: (filters: PortalUsersListFilters) => ["portalUsers", "list", filters] as const,
+    detail: (id: string | number) => ["portalUsers", "detail", String(id)] as const
   }
 } as const;
 
@@ -257,3 +263,10 @@ export interface AuditLogsFilters {
 }
 
 export type VehicleTypesListFilters = VehicleListFiltersBase;
+
+export interface PortalUsersListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+  role: string;
+}
