@@ -118,6 +118,26 @@ export async function fetchRolePermissions(
 }
 
 /**
+ * GET /api/user/permission — logged-in employee's modules.
+ * Same `data` shape as role permissions: `{ role, permissions }` or a permissions array.
+ */
+export async function fetchUserPermissions(opts: {
+  token: string;
+  signal?: AbortSignal;
+}): Promise<RolePermissionsData> {
+  const res = await fetcher<unknown>(apiUrl("/user/permission"), {
+    token: opts.token,
+    signal: opts.signal,
+    debugLabel: "permissions:me"
+  });
+  const envelope = assertSuccess(res);
+  if (Array.isArray(envelope.data)) {
+    return parseRolePermissions({ permissions: envelope.data });
+  }
+  return parseRolePermissions(envelope.data);
+}
+
+/**
  * PUT /api/permission/role
  * Body: `{ role, permissions: [{ module, level }] }`
  * `data` is `{ role, permissions }` (full module list).

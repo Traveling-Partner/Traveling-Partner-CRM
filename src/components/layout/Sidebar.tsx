@@ -23,6 +23,8 @@ import {
   type SidebarSection
 } from "@/config/navigation";
 import { getDefaultRouteForRole } from "@/lib/rbac";
+import { filterNavByPermissions, firstAllowedHref } from "@/lib/page-permissions";
+import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 
 function isLinkActive(pathname: string, href: string, siblings?: SidebarLink[]) {
   if (pathname === href) return true;
@@ -282,8 +284,11 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const homeHref = getDefaultRouteForRole(user?.role ?? "AGENT");
-  const navItems = useMemo(() => getNavForRole(user?.role), [user?.role]);
+  const { gate } = useUserPermissionsQuery();
+  const roleNav = useMemo(() => getNavForRole(user?.role), [user?.role]);
+  const navItems = useMemo(() => filterNavByPermissions(roleNav, gate), [roleNav, gate]);
+  const homeHref =
+    firstAllowedHref(user?.role, gate) ?? getDefaultRouteForRole(user?.role ?? "AGENT");
   const effectiveCollapsed = collapsed && !mobileOpen;
   const showLogo = !effectiveCollapsed;
 

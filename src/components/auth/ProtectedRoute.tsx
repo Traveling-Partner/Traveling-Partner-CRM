@@ -10,6 +10,8 @@ import {
   normalizeRole,
   getRedirectForRoleOnProtectedRoute
 } from "@/lib/rbac";
+import { firstAllowedHref, isHrefAllowed } from "@/lib/page-permissions";
+import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 import TPLoader from "@/components/TPLoader";
 import { Button } from "@/components/ui/button";
 
@@ -48,6 +50,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const token = useAppSelector((state) => state.auth.token);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const authInitialized = useAppSelector((state) => state.auth.authInitialized);
+  const { gate } = useUserPermissionsQuery();
 
   useEffect(() => {
     setHydrated(true);
@@ -94,6 +97,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     const redirect = getRedirectForRoleOnProtectedRoute(user.role, pathname);
     if (redirect && redirect !== pathname) {
       router.replace(redirect);
+      return;
+    }
+
+    if (gate && !isHrefAllowed(pathname, gate)) {
+      const fallback = firstAllowedHref(user.role, gate) ?? "/403";
+      if (fallback !== pathname) router.replace(fallback);
     }
   }, [
     hydrated,
@@ -104,7 +113,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     router,
     token,
     allowedRoles,
-    dispatch
+    dispatch,
+    gate
   ]);
 
   if (!hydrated || !authInitialized) {
