@@ -1,3 +1,5 @@
+import { assertWriteAllowed } from "@/lib/write-guard";
+
 interface FetcherOptions extends RequestInit {
   token?: string | null;
   /**
@@ -135,6 +137,7 @@ export async function fetcher<T = unknown>(
     ...rest
   } = options;
   const method = (rest.method ?? "GET").toUpperCase();
+  assertWriteAllowed(method, endpoint);
   const key = getDedupeKey(method, endpoint);
   /**
    * Share in-flight GETs even when callers pass `dedupe: false` + AbortSignal.

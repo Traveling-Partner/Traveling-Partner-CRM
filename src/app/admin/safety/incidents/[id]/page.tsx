@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Phone, Siren } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
+import { usePageAccess } from "@/hooks/use-page-access";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -59,6 +61,7 @@ export default function AdminSafetyIncidentDetailPage() {
   const params = useParams();
   const id = String(params?.id ?? "");
   const { success, error: showError } = useToast();
+  const { canWrite } = usePageAccess();
 
   const [comment, setComment] = useState("");
 
@@ -421,8 +424,12 @@ export default function AdminSafetyIncidentDetailPage() {
           )}
           <SosCaseNotesPanel
             notes={incident.caseNotes}
-            disabled={isClosed}
-            disabledHint="This case is closed, so new notes can no longer be added."
+            disabled={isClosed || !canWrite}
+            disabledHint={
+              !canWrite
+                ? "You have view-only access on this page."
+                : "This case is closed, so new notes can no longer be added."
+            }
             authors={{
               RIDER: trip?.riderName ?? undefined,
               PARTNER: trip?.driverName ?? undefined,
@@ -462,6 +469,7 @@ export default function AdminSafetyIncidentDetailPage() {
               </div>
             </dl>
           ) : (
+            <WriteOnly>
             <div className="space-y-3">
               <Textarea
                 placeholder="Resolution comment (saved with resolve / false alarm)"
@@ -496,6 +504,7 @@ export default function AdminSafetyIncidentDetailPage() {
                 </Button>
               </div>
             </div>
+            </WriteOnly>
           )}
         </SectionCard>
       </PageContainer>

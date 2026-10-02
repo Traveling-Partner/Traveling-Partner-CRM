@@ -15,7 +15,7 @@ export function usePageAccess(pathname?: string) {
 
   return {
     level,
-    canView: !enforce || level === "READ" || level === "WRITE",
-    canWrite: !enforce || level === "WRITE"
+    canView: !enforce || level === null || level === "READ" || level === "WRITE",
+    canWrite: !enforce || level === null || level === "WRITE"
   };
 }

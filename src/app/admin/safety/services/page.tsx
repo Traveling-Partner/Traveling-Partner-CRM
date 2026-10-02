@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Phone, Plus, Search } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
@@ -114,25 +115,27 @@ export default function AdminSafetyServicesPage() {
             <Phone className="mr-1 h-3.5 w-3.5" />
             Call
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setEditing(row.original);
-              setDialogOpen(true);
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            Delete
-          </Button>
+          <WriteOnly>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setEditing(row.original);
+                setDialogOpen(true);
+              }}
+            >
+              Edit
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              Delete
+            </Button>
+          </WriteOnly>
         </div>
       )
     }
@@ -145,16 +148,18 @@ export default function AdminSafetyServicesPage() {
           title="SOS services directory"
           description="Emergency helpline numbers by state — police, ambulance, fire, roadside."
           headerAction={
-            <Button
-              type="button"
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add service
-            </Button>
+            <WriteOnly>
+              <Button
+                type="button"
+                onClick={() => {
+                  setEditing(null);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add service
+              </Button>
+            </WriteOnly>
           }
         >
           <div className="mb-4 flex flex-wrap gap-2">
