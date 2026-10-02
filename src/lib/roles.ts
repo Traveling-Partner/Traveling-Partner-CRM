@@ -9,7 +9,9 @@ export const ROLES = {
   SALES_MANAGER: "SALES_MANAGER",
   MARKETING_MANAGER: "MARKETING_MANAGER",
   FINANCE_MANAGER: "FINANCE_MANAGER",
-  MANAGER: "MANAGER"
+  MANAGER: "MANAGER",
+  SAFETY_INCIDENT_OFFICER: "SAFETY_INCIDENT_OFFICER",
+  COMPLIANCE_VERIFICATION_OFFICER: "COMPLIANCE_VERIFICATION_OFFICER"
 } as const;
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];
@@ -20,7 +22,9 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   SALES_MANAGER: "Sales Manager",
   MARKETING_MANAGER: "Marketing Manager",
   FINANCE_MANAGER: "Finance Manager",
-  MANAGER: "Manager"
+  MANAGER: "Manager",
+  SAFETY_INCIDENT_OFFICER: "Safety Incident Officer",
+  COMPLIANCE_VERIFICATION_OFFICER: "Compliance Verification Officer"
 };
 
 export const ROLE_DASHBOARDS: Record<AppRole, string> = {
@@ -29,7 +33,9 @@ export const ROLE_DASHBOARDS: Record<AppRole, string> = {
   SALES_MANAGER: "/sales-manager/dashboard",
   MARKETING_MANAGER: "/admin/dashboard",
   FINANCE_MANAGER: "/admin/dashboard",
-  MANAGER: "/admin/dashboard"
+  MANAGER: "/admin/dashboard",
+  SAFETY_INCIDENT_OFFICER: "/admin/dashboard",
+  COMPLIANCE_VERIFICATION_OFFICER: "/admin/dashboard"
 };
 
 export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
@@ -38,7 +44,9 @@ export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
   SALES_MANAGER: "/sales-manager",
   MARKETING_MANAGER: "/marketing-manager",
   FINANCE_MANAGER: "/admin",
-  MANAGER: "/manager"
+  MANAGER: "/manager",
+  SAFETY_INCIDENT_OFFICER: "/admin",
+  COMPLIANCE_VERIFICATION_OFFICER: "/admin"
 };
 
 /**
@@ -119,7 +127,9 @@ export function getAllowedRolesForPath(pathname: string): AppRole[] | undefined 
   const portalRoles: AppRole[] = [
     ROLES.FINANCE_MANAGER,
     ROLES.MARKETING_MANAGER,
-    ROLES.MANAGER
+    ROLES.MANAGER,
+    ROLES.SAFETY_INCIDENT_OFFICER,
+    ROLES.COMPLIANCE_VERIFICATION_OFFICER
   ];
   if (shared) {
     return portalRoles.reduce(
