@@ -16,18 +16,9 @@ import {
 } from "@/services/portal-users";
 import { usePermissionRolesQuery } from "@/hooks/queries/use-access-permissions";
 
-/** Portal-users API rejects ADMIN / MANAGER as a role filter. */
-const SKIP_EMPLOYEE_ROLES = new Set(["ADMIN", "MANAGER"]);
-
 export function useEmployeeRolesQuery() {
   const query = usePermissionRolesQuery();
-  const roles = useMemo(
-    () =>
-      (query.data ?? []).filter(
-        (role) => !SKIP_EMPLOYEE_ROLES.has(role.name.trim().toUpperCase())
-      ),
-    [query.data]
-  );
+  const roles = query.data ?? [];
   return { ...query, roles };
 }
 
