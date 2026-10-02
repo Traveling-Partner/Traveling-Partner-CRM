@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useApiQuery } from "@/hooks/api";
 import { queryKeys } from "@/lib/api/query-keys";
-import { toPagePermissionGate } from "@/lib/page-permissions";
+import { EMPTY_PAGE_GATE, toPagePermissionGate } from "@/lib/page-permissions";
 import { fetchUserPermissions, type RolePermissionsData } from "@/services/permissions";
 import { normalizeRole } from "@/lib/rbac";
 import { ROLES } from "@/lib/roles";
@@ -33,10 +33,12 @@ export function useUserPermissionsQuery() {
     dispatch(setAuthRole(role));
   }, [dispatch, query.isSuccess, query.data?.role]);
 
-  const gate = useMemo(
-    () => (isAdmin || !query.isSuccess ? null : toPagePermissionGate(query.data)),
-    [isAdmin, query.isSuccess, query.data]
-  );
+  const gate = useMemo(() => {
+    if (isAdmin) return null;
+    if (query.isSuccess) return toPagePermissionGate(query.data);
+    if (query.isError) return EMPTY_PAGE_GATE;
+    return null;
+  }, [isAdmin, query.isSuccess, query.isError, query.data]);
 
-  return { ...query, gate };
+  return { ...query, gate, isAdmin };
 }

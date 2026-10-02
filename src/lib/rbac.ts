@@ -40,15 +40,6 @@ export function normalizeRole(role: string | null | undefined): Role {
   if (r === "FINANCE_MANAGER" || r === "FINANCEMANAGER" || r === "FINANCE") {
     return ROLES.FINANCE_MANAGER;
   }
-  if (r === "SAFETY_INCIDENT_OFFICER" || r === "SAFETYINCIDENTOFFICER") {
-    return ROLES.SAFETY_INCIDENT_OFFICER;
-  }
-  if (
-    r === "COMPLIANCE_VERIFICATION_OFFICER" ||
-    r === "COMPLIANCEVERIFICATIONOFFICER"
-  ) {
-    return ROLES.COMPLIANCE_VERIFICATION_OFFICER;
-  }
 
   return r as Role;
 }
@@ -58,9 +49,7 @@ const SPECIFIC_PORTAL_ROLES: AppRole[] = [
   ROLES.MANAGER,
   ROLES.FINANCE_MANAGER,
   ROLES.MARKETING_MANAGER,
-  ROLES.SALES_MANAGER,
-  ROLES.SAFETY_INCIDENT_OFFICER,
-  ROLES.COMPLIANCE_VERIFICATION_OFFICER
+  ROLES.SALES_MANAGER
 ];
 
 const APP_USER_ROLES = new Set(["DRIVER", "PARTNER", "USER"]);
@@ -162,9 +151,7 @@ export function getRedirectForRoleOnProtectedRoute(
   if (
     (normalizedRole === ROLES.FINANCE_MANAGER ||
       normalizedRole === ROLES.MARKETING_MANAGER ||
-      normalizedRole === ROLES.MANAGER ||
-      normalizedRole === ROLES.SAFETY_INCIDENT_OFFICER ||
-      normalizedRole === ROLES.COMPLIANCE_VERIFICATION_OFFICER) &&
+      normalizedRole === ROLES.MANAGER) &&
     isAdminRoute(pathname)
   ) {
     return null;

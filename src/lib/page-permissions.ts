@@ -39,13 +39,17 @@ export type PagePermissionGate = {
   levels: ReadonlyMap<string, PermissionLevel>;
 };
 
+export const EMPTY_PAGE_GATE: PagePermissionGate = {
+  allowed: new Set(),
+  levels: new Map()
+};
+
 export function toPagePermissionGate(
   data: RolePermissionsData | undefined
-): PagePermissionGate | null {
-  if (!data?.permissions.length) return null;
+): PagePermissionGate {
   const levels = new Map<string, PermissionLevel>();
   const allowed = new Set<string>();
-  for (const entry of data.permissions) {
+  for (const entry of data?.permissions ?? []) {
     levels.set(entry.module, entry.level);
     if (entry.level !== "NONE") allowed.add(entry.module);
   }
