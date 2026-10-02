@@ -14,6 +14,7 @@ import { EntityModal } from "@/components/vehicle-management/EntityModal";
 import { ImageUploadField } from "@/components/vehicle-management/ImageUploadField";
 import { VehicleDeleteDialog } from "@/components/vehicle-management/VehicleDeleteDialog";
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,10 +125,12 @@ export function VehicleTypesSection() {
               All ride categories with operational defaults.
             </p>
           </div>
-          <Button onClick={openAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Vehicle Type
-          </Button>
+          <WriteOnly>
+            <Button onClick={openAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Vehicle Type
+            </Button>
+          </WriteOnly>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -181,6 +184,7 @@ export function VehicleTypesSection() {
                         {type.status ?? "—"}
                       </span>
                     </div>
+                    <WriteOnly>
                     <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                       <Button
                         size="icon"
@@ -199,6 +203,7 @@ export function VehicleTypesSection() {
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
+                    </WriteOnly>
                   </div>
                 </div>
               ))}

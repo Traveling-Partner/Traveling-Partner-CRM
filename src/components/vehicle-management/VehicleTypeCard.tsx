@@ -1,5 +1,8 @@
+"use client";
+
 import { Pencil, Trash2, Users, BriefcaseBusiness } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 
 interface VehicleTypeCardProps {
   name: string;
@@ -35,6 +38,7 @@ export function VehicleTypeCard({
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <WriteOnly>
         <div className="absolute right-3 top-3 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
           <Button
             type="button"
@@ -57,6 +61,7 @@ export function VehicleTypeCard({
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
+        </WriteOnly>
       </div>
       <div className="space-y-3 p-4">
         <div className="flex items-center justify-between gap-2">

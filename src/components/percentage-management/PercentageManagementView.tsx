@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { FormField } from "@/components/common/FormField";
@@ -210,10 +211,12 @@ export function PercentageManagementView({
           title={sectionTitle}
           description={sectionDescription}
           headerAction={
-            <Button onClick={openCreateModal}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
+            <WriteOnly>
+              <Button onClick={openCreateModal}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New
+              </Button>
+            </WriteOnly>
           }
         >
           <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -273,6 +276,7 @@ export function PercentageManagementView({
                   render: (item: PercentageManagementItem) => {
                     const statusBusy = statusUpdatingId === item.id;
                     return (
+                      <WriteOnly>
                       <div className="flex items-center gap-1">
                         <div
                           className="inline-flex rounded-md border border-border/60 bg-muted/20 p-0.5"
@@ -321,6 +325,7 @@ export function PercentageManagementView({
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
+                      </WriteOnly>
                     );
                   }
                 }

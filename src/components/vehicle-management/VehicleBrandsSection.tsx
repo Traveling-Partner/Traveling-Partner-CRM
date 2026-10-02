@@ -15,6 +15,7 @@ import { ImageUploadField } from "@/components/vehicle-management/ImageUploadFie
 import { ManagementTable } from "@/components/vehicle-management/ManagementTable";
 import { VehicleDeleteDialog } from "@/components/vehicle-management/VehicleDeleteDialog";
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -135,10 +136,12 @@ export function VehicleBrandsSection() {
               Manage vehicle brands mapped to vehicle types.
             </p>
           </div>
-          <Button onClick={openAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Brand
-          </Button>
+          <WriteOnly>
+            <Button onClick={openAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Brand
+            </Button>
+          </WriteOnly>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -219,6 +222,7 @@ export function VehicleBrandsSection() {
                 header: "Actions",
                 className: "w-[140px]",
                 render: (item: VehicleBrand) => (
+                  <WriteOnly>
                   <div className="flex items-center gap-2">
                     <Button
                       size="icon"
@@ -237,6 +241,7 @@ export function VehicleBrandsSection() {
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
+                  </WriteOnly>
                 )
               }
             ]}

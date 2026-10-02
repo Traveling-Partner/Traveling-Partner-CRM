@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { usePageAccess } from "@/hooks/use-page-access";
 import { cn } from "@/lib/utils";
 import {
   ACCESS_MODULES,
@@ -59,14 +60,15 @@ function groupPermissionRows(permissions: PermissionEntry[]) {
   const used = new Set<string>();
 
   const groups = ACCESS_MODULES.map((section) => {
-    const items = section.children
-      .map((child) => {
-        const entry = byModule.get(child.id);
-        if (!entry) return null;
-        used.add(child.id);
-        return { ...entry, label: child.label };
-      })
-      .filter((item): item is PermissionEntry & { label: string } => item !== null);
+    const items = section.children.map((child) => {
+      used.add(child.id);
+      const entry = byModule.get(child.id);
+      return {
+        module: child.id,
+        level: entry?.level ?? "NONE",
+        label: child.label
+      };
+    });
     return { id: section.id, label: section.label, items };
   }).filter((group) => group.items.length > 0);
 
@@ -103,6 +105,7 @@ export default function AdminAccessManagementPage() {
   const permissions = permissionsQuery.data?.permissions ?? [];
   const groups = useMemo(() => groupPermissionRows(permissions), [permissions]);
   const busy = updateMutation.isPending;
+  const { canWrite } = usePageAccess();
 
   const setLevel = async (module: string, moduleLabel: string, level: PermissionLevel) => {
     if (!roleName) return;
@@ -198,7 +201,7 @@ export default function AdminAccessManagementPage() {
               description="This role has no permission modules yet."
             />
           ) : (
-            <div className={cn("min-w-0", busy && "pointer-events-none opacity-70")}>
+            <div className={cn("min-w-0", (busy || !canWrite) && "pointer-events-none opacity-70")}>
               <Table className="min-w-[36rem]">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">

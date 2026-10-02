@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { WriteLock } from "@/components/auth/WriteOnly";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,7 @@ export function AppShell({ children, title, allowedRoles, wideContent }: AppShel
 
   return (
     <ProtectedRoute allowedRoles={routeRoles}>
+      <WriteLock />
       <div className="app-mesh-bg min-h-screen">
         <aside
           className={cn(
