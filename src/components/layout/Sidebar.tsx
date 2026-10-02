@@ -283,11 +283,11 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { gate } = useUserPermissionsQuery();
-  const navItems = useMemo(
-    () => filterNavByPermissions(navForPermissions(user?.role, gate), gate),
-    [user?.role, gate]
-  );
+  const { gate, isAdmin } = useUserPermissionsQuery();
+  const navItems = useMemo(() => {
+    if (!isAdmin && !gate) return [];
+    return filterNavByPermissions(navForPermissions(user?.role, gate), gate);
+  }, [isAdmin, user?.role, gate]);
   const homeHref =
     firstAllowedHref(user?.role, gate) ?? getDefaultRouteForRole(user?.role ?? "AGENT");
   const effectiveCollapsed = collapsed && !mobileOpen;
