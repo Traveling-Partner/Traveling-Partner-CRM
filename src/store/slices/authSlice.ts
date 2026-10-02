@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loginUser } from "@/services/auth";
 import { decodeToken } from "@/lib/decodeToken";
-import { normalizeRole } from "@/lib/rbac";
+import { normalizeRole, pickResolvedRole, rolesFromUnknown } from "@/lib/rbac";
 
 export type Role = string;
 
@@ -53,7 +53,11 @@ export const loginUserThunk = createAsyncThunk(
 
       const user: AuthUser = {
         id: String(data.id ?? decoded.id),
-        role: normalizeRole(data.role || decoded.role),
+        role: pickResolvedRole([
+          ...rolesFromUnknown(data.role),
+          ...rolesFromUnknown(data.roles),
+          decoded.role
+        ]),
         name: data.name ?? "",
         email: data.email ?? "",
         mobileNumber: decoded.mobileNumber,
@@ -107,6 +111,15 @@ const authSlice = createSlice({
     },
     markAuthInitialized: (state) => {
       state.authInitialized = true;
+    },
+    setAuthRole: (state, action: PayloadAction<string>) => {
+      if (!state.user) return;
+      const role = normalizeRole(action.payload);
+      if (!role || state.user.role === role) return;
+      state.user.role = role;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(state.user));
+      }
     }
   },
   extraReducers: (builder) => {
@@ -129,6 +142,12 @@ const authSlice = createSlice({
   }
 });
 
-export const { restoreAuth, logout, clearAuthError, setForcePasswordChange, markAuthInitialized } =
-  authSlice.actions;
+export const {
+  restoreAuth,
+  logout,
+  clearAuthError,
+  setForcePasswordChange,
+  markAuthInitialized,
+  setAuthRole
+} = authSlice.actions;
 export default authSlice.reducer;

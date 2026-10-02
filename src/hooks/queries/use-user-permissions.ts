@@ -1,16 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
-import { useAppSelector } from "@/store/hooks";
+import { useEffect, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useApiQuery } from "@/hooks/api";
 import { queryKeys } from "@/lib/api/query-keys";
 import { toPagePermissionGate } from "@/lib/page-permissions";
 import { fetchUserPermissions, type RolePermissionsData } from "@/services/permissions";
 import { normalizeRole } from "@/lib/rbac";
 import { ROLES } from "@/lib/roles";
+import { setAuthRole } from "@/store/slices/authSlice";
 
 /** One GET /user/permission per logged-in user. Admin is never filtered. */
 export function useUserPermissionsQuery() {
+  const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.auth.user?.id);
   const isAdmin = normalizeRole(useAppSelector((state) => state.auth.user?.role)) === ROLES.ADMIN;
 
@@ -22,6 +24,12 @@ export function useUserPermissionsQuery() {
     retry: false,
     queryFn: ({ token, signal }) => fetchUserPermissions({ token, signal })
   });
+
+  useEffect(() => {
+    const role = query.data?.role?.trim();
+    if (!query.isSuccess || !role) return;
+    dispatch(setAuthRole(role));
+  }, [dispatch, query.isSuccess, query.data?.role]);
 
   const gate = useMemo(
     () => (isAdmin || !query.isSuccess ? null : toPagePermissionGate(query.data)),

@@ -26,6 +26,7 @@ interface LoginResponse {
     email: string | null;
     id: number;
     role: string;
+    roles?: string[];
     token: string;
   };
 }

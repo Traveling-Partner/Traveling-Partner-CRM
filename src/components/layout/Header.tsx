@@ -25,6 +25,8 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuthStore();
   const displayName = user?.name?.trim() || user?.mobileNumber || "User";
+  const appRole = toAppRole(user?.role);
+  const roleLabel = appRole ? ROLE_LABELS[appRole] : user?.role?.replace(/_/g, " ") || "User";
   const isDark = theme === "dark";
 
   return (
@@ -81,7 +83,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
                   {displayName}
                 </span>
                 <span className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">
-                  {ROLE_LABELS[toAppRole(user?.role) ?? "AGENT"] ?? user?.role ?? "User"}
+                  {roleLabel}
                 </span>
               </div>
               <ChevronDown className="ml-0.5 h-3.5 w-3.5 opacity-50" />
