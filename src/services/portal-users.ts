@@ -2,17 +2,6 @@ import { apiUrl } from "@/lib/api-base";
 import { fetcher } from "@/lib/fetcher";
 import type { PaginatedResponse } from "@/lib/api/types";
 
-/** Roles accepted by portal-users create/update. No extra roles API. */
-export const PORTAL_USER_ROLES = [
-  "SALES_AGENT",
-  "FINANCE_MANAGER",
-  "MARKETING_MANAGER",
-  "MANAGER",
-  "ADMIN"
-] as const;
-
-export type PortalUserRole = (typeof PORTAL_USER_ROLES)[number];
-
 export interface PortalUser {
   id: number;
   email: string | null;

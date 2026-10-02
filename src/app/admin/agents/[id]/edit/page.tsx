@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,19 +25,18 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { usePortalUserDetailQuery, useUpdatePortalUserMutation } from "@/hooks/queries/use-portal-users";
 import {
-  PORTAL_USER_ROLES,
-  formatPortalRole,
-  primaryRole,
-  type PortalUserRole
-} from "@/services/portal-users";
+  useEmployeeRolesQuery,
+  usePortalUserDetailQuery,
+  useUpdatePortalUserMutation
+} from "@/hooks/queries/use-portal-users";
+import { formatPortalRole, primaryRole } from "@/services/portal-users";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   email: z.string().trim().email("Valid email required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
-  role: z.enum(PORTAL_USER_ROLES, { required_error: "Role is required" }),
+  role: z.string().trim().min(1, "Role is required"),
   city: z.string().trim().min(2, "City is required"),
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
@@ -61,12 +60,6 @@ function normalizeGender(value: string | null): FormValues["gender"] {
   return "Male";
 }
 
-function normalizeRole(userRole: string): PortalUserRole {
-  return PORTAL_USER_ROLES.includes(userRole as PortalUserRole)
-    ? (userRole as PortalUserRole)
-    : "SALES_AGENT";
-}
-
 export default function AdminEditEmployeePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -74,6 +67,7 @@ export default function AdminEditEmployeePage() {
   const token = useAppSelector((state) => state.auth.token);
   const { data: employee, isLoading, isError } = usePortalUserDetailQuery(params.id);
   const updateMutation = useUpdatePortalUserMutation(params.id);
+  const rolesQuery = useEmployeeRolesQuery();
 
   const { register, handleSubmit, control, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -81,7 +75,7 @@ export default function AdminEditEmployeePage() {
       name: "",
       email: "",
       mobileNumber: "",
-      role: "SALES_AGENT",
+      role: "",
       city: "",
       gender: "Male",
       cnicNumber: "",
@@ -91,6 +85,13 @@ export default function AdminEditEmployeePage() {
   });
   const [frontUploading, setFrontUploading] = useState(false);
   const [backUploading, setBackUploading] = useState(false);
+  const currentRole = employee ? primaryRole(employee) : "";
+  const roleOptions = useMemo(() => {
+    if (currentRole && !rolesQuery.roles.some((item) => item.name === currentRole)) {
+      return [{ id: -1, name: currentRole, slug: currentRole }, ...rolesQuery.roles];
+    }
+    return rolesQuery.roles;
+  }, [currentRole, rolesQuery.roles]);
 
   useEffect(() => {
     if (!employee) return;
@@ -98,7 +99,7 @@ export default function AdminEditEmployeePage() {
       name: employee.name || "",
       email: employee.email || "",
       mobileNumber: employee.mobileNumber || "",
-      role: normalizeRole(primaryRole(employee)),
+      role: primaryRole(employee),
       city: employee.city || "",
       gender: normalizeGender(employee.gender),
       cnicNumber: employee.cnicNumber || "",
@@ -204,9 +205,9 @@ export default function AdminEditEmployeePage() {
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {PORTAL_USER_ROLES.map((item) => (
-                          <SelectItem key={item} value={item}>
-                            {formatPortalRole(item)}
+                        {roleOptions.map((item) => (
+                          <SelectItem key={item.name} value={item.name}>
+                            {formatPortalRole(item.name)}
                           </SelectItem>
                         ))}
                       </SelectContent>

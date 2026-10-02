@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,15 +23,15 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { useCreatePortalUserMutation } from "@/hooks/queries/use-portal-users";
-import { PORTAL_USER_ROLES, formatPortalRole } from "@/services/portal-users";
+import { useCreatePortalUserMutation, useEmployeeRolesQuery } from "@/hooks/queries/use-portal-users";
+import { formatPortalRole } from "@/services/portal-users";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   email: z.string().trim().email("Valid email required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
   password: z.string().min(6, "Password is required"),
-  role: z.enum(PORTAL_USER_ROLES, { required_error: "Role is required" }),
+  role: z.string().trim().min(1, "Role is required"),
   city: z.string().trim().min(2, "City is required"),
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
@@ -53,15 +53,16 @@ export default function AdminCreateEmployeePage() {
   const { success, error } = useToast();
   const token = useAppSelector((state) => state.auth.token);
   const createMutation = useCreatePortalUserMutation();
+  const rolesQuery = useEmployeeRolesQuery();
 
-  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
       email: "",
       mobileNumber: "",
       password: "",
-      role: "SALES_AGENT",
+      role: "",
       city: "",
       gender: "Male",
       cnicNumber: "",
@@ -72,6 +73,12 @@ export default function AdminCreateEmployeePage() {
 
   const [frontUploading, setFrontUploading] = useState(false);
   const [backUploading, setBackUploading] = useState(false);
+  const selectedRole = watch("role");
+
+  useEffect(() => {
+    if (selectedRole || !rolesQuery.roles[0]) return;
+    setValue("role", rolesQuery.roles[0].name);
+  }, [rolesQuery.roles, selectedRole, setValue]);
 
   const uploadCnicImage = async (file: File): Promise<string> => {
     const storageToken =
@@ -144,9 +151,9 @@ export default function AdminCreateEmployeePage() {
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {PORTAL_USER_ROLES.map((item) => (
-                          <SelectItem key={item} value={item}>
-                            {formatPortalRole(item)}
+                        {rolesQuery.roles.map((item) => (
+                          <SelectItem key={item.name} value={item.name}>
+                            {formatPortalRole(item.name)}
                           </SelectItem>
                         ))}
                       </SelectContent>

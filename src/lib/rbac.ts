@@ -44,6 +44,48 @@ export function normalizeRole(role: string | null | undefined): Role {
   return r as Role;
 }
 
+/** Prefer the assigned employee role over a generic AGENT/SALES_AGENT claim. */
+const SPECIFIC_PORTAL_ROLES: AppRole[] = [
+  ROLES.MANAGER,
+  ROLES.FINANCE_MANAGER,
+  ROLES.MARKETING_MANAGER,
+  ROLES.SALES_MANAGER
+];
+
+export function pickResolvedRole(
+  candidates: Array<string | null | undefined>
+): Role {
+  const unique = [
+    ...new Set(candidates.map((value) => normalizeRole(value)).filter(Boolean))
+  ];
+  if (!unique.length) return "";
+  for (const role of SPECIFIC_PORTAL_ROLES) {
+    if (unique.includes(role)) return role;
+  }
+  if (unique.includes(ROLES.ADMIN)) return ROLES.ADMIN;
+  if (unique.includes(ROLES.AGENT)) return ROLES.AGENT;
+  return unique[0];
+}
+
+export function rolesFromUnknown(value: unknown): string[] {
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  if (!Array.isArray(value)) return [];
+  const roles: string[] = [];
+  for (const item of value) {
+    if (typeof item === "string" && item.trim()) {
+      roles.push(item.trim());
+      continue;
+    }
+    if (item && typeof item === "object") {
+      const authority = (item as { authority?: unknown }).authority;
+      if (typeof authority === "string" && authority.trim()) {
+        roles.push(authority.trim());
+      }
+    }
+  }
+  return roles;
+}
+
 export function toAppRole(role: Role | string | null | undefined): AppRole | null {
   const normalized = normalizeRole(role);
   return isAppRole(normalized) ? normalized : null;
@@ -101,8 +143,13 @@ export function getRedirectForRoleOnProtectedRoute(
   const normalizedRole = toAppRole(role);
   if (!normalizedRole) return null;
 
-  // Finance Manager uses assigned /admin pages — no separate workspace.
-  if (normalizedRole === ROLES.FINANCE_MANAGER && isAdminRoute(pathname)) {
+  // Portal employees use assigned /admin pages — not the old role workspaces.
+  if (
+    (normalizedRole === ROLES.FINANCE_MANAGER ||
+      normalizedRole === ROLES.MARKETING_MANAGER ||
+      normalizedRole === ROLES.MANAGER) &&
+    isAdminRoute(pathname)
+  ) {
     return null;
   }
 
