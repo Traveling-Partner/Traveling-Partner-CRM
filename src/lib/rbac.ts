@@ -40,6 +40,15 @@ export function normalizeRole(role: string | null | undefined): Role {
   if (r === "FINANCE_MANAGER" || r === "FINANCEMANAGER" || r === "FINANCE") {
     return ROLES.FINANCE_MANAGER;
   }
+  if (r === "SAFETY_INCIDENT_OFFICER" || r === "SAFETYINCIDENTOFFICER") {
+    return ROLES.SAFETY_INCIDENT_OFFICER;
+  }
+  if (
+    r === "COMPLIANCE_VERIFICATION_OFFICER" ||
+    r === "COMPLIANCEVERIFICATIONOFFICER"
+  ) {
+    return ROLES.COMPLIANCE_VERIFICATION_OFFICER;
+  }
 
   return r as Role;
 }
@@ -49,8 +58,12 @@ const SPECIFIC_PORTAL_ROLES: AppRole[] = [
   ROLES.MANAGER,
   ROLES.FINANCE_MANAGER,
   ROLES.MARKETING_MANAGER,
-  ROLES.SALES_MANAGER
+  ROLES.SALES_MANAGER,
+  ROLES.SAFETY_INCIDENT_OFFICER,
+  ROLES.COMPLIANCE_VERIFICATION_OFFICER
 ];
+
+const APP_USER_ROLES = new Set(["DRIVER", "PARTNER", "USER"]);
 
 export function pickResolvedRole(
   candidates: Array<string | null | undefined>
@@ -58,13 +71,15 @@ export function pickResolvedRole(
   const unique = [
     ...new Set(candidates.map((value) => normalizeRole(value)).filter(Boolean))
   ];
-  if (!unique.length) return "";
+  const portal = unique.filter((role) => !APP_USER_ROLES.has(role));
+  const pool = portal.length ? portal : unique;
+  if (!pool.length) return "";
   for (const role of SPECIFIC_PORTAL_ROLES) {
-    if (unique.includes(role)) return role;
+    if (pool.includes(role)) return role;
   }
-  if (unique.includes(ROLES.ADMIN)) return ROLES.ADMIN;
-  if (unique.includes(ROLES.AGENT)) return ROLES.AGENT;
-  return unique[0];
+  if (pool.includes(ROLES.ADMIN)) return ROLES.ADMIN;
+  if (pool.includes(ROLES.AGENT)) return ROLES.AGENT;
+  return pool[0];
 }
 
 export function rolesFromUnknown(value: unknown): string[] {
@@ -147,7 +162,9 @@ export function getRedirectForRoleOnProtectedRoute(
   if (
     (normalizedRole === ROLES.FINANCE_MANAGER ||
       normalizedRole === ROLES.MARKETING_MANAGER ||
-      normalizedRole === ROLES.MANAGER) &&
+      normalizedRole === ROLES.MANAGER ||
+      normalizedRole === ROLES.SAFETY_INCIDENT_OFFICER ||
+      normalizedRole === ROLES.COMPLIANCE_VERIFICATION_OFFICER) &&
     isAdminRoute(pathname)
   ) {
     return null;

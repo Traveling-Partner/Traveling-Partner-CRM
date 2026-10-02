@@ -34,6 +34,9 @@ import {
   BadgeDollarSign
 } from "lucide-react";
 import { useHasMounted } from "@/hooks/use-has-mounted";
+import { useAppSelector } from "@/store/hooks";
+import { normalizeRole } from "@/lib/rbac";
+import { ROLES } from "@/lib/roles";
 
 function prettyStatus(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -56,6 +59,8 @@ function periodDelta(values: number[]) {
 
 export default function AdminDashboardPage() {
   const mounted = useHasMounted();
+  const isAdmin =
+    normalizeRole(useAppSelector((state) => state.auth.user?.role)) === ROLES.ADMIN;
   const { data, loading: isLoading, error } = useAdminDashboardQuery();
   const {
     counts,
@@ -354,9 +359,11 @@ export default function AdminDashboardPage() {
           />
         </ChartCard>
 
-        <Suspense fallback={<Skeleton className="h-64 w-full rounded-[1.75rem]" />}>
-          <AuditLogsSection variant="dashboard" />
-        </Suspense>
+        {isAdmin ? (
+          <Suspense fallback={<Skeleton className="h-64 w-full rounded-[1.75rem]" />}>
+            <AuditLogsSection variant="dashboard" />
+          </Suspense>
+        ) : null}
       </PageContainer>
       )}
     </AppShell>

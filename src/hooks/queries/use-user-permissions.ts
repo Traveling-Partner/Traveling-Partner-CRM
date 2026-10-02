@@ -28,6 +28,8 @@ export function useUserPermissionsQuery() {
   useEffect(() => {
     const role = query.data?.role?.trim();
     if (!query.isSuccess || !role) return;
+    const normalized = normalizeRole(role);
+    if (normalized === "DRIVER" || normalized === "PARTNER") return;
     dispatch(setAuthRole(role));
   }, [dispatch, query.isSuccess, query.data?.role]);
 
