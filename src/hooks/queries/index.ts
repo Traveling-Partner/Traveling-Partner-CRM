@@ -11,11 +11,9 @@ export {
   useUpdatePortalUserMutation,
   useDeletePortalUserMutation
 } from "@/hooks/queries/use-portal-users";
-export { useAgentStatusCountsQuery } from "@/hooks/queries/use-agent-status-counts-query";
 export { useCarouselBannersQuery } from "@/hooks/queries/use-carousel-banners-query";
 export { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";
 export { usePartnerDetailQuery } from "@/hooks/queries/use-partner-detail-query";
-export { useAgentDetailQuery } from "@/hooks/queries/use-agent-detail-query";
 export { useDocumentsQueueQuery } from "@/hooks/queries/use-documents-queue-query";
 export { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 export { useBlogListQuery } from "@/hooks/queries/use-blog-list-query";
