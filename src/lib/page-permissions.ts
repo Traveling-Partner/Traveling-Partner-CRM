@@ -1,10 +1,12 @@
 import {
+  adminNav,
   getNavForRole,
   isSidebarGroup,
   isSidebarSection,
   type SidebarEntry
 } from "@/config/navigation";
-import type { RolePermissionsData } from "@/services/permissions";
+import { normalizeRole } from "@/lib/rbac";
+import type { PermissionLevel, RolePermissionsData } from "@/services/permissions";
 
 /** Longest path first so `/admin/safety/services` is not treated as `/admin/safety`. */
 const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
@@ -34,19 +36,20 @@ const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
 
 export type PagePermissionGate = {
   allowed: ReadonlySet<string>;
-  known: ReadonlySet<string>;
+  levels: ReadonlyMap<string, PermissionLevel>;
 };
 
 export function toPagePermissionGate(
   data: RolePermissionsData | undefined
 ): PagePermissionGate | null {
   if (!data?.permissions.length) return null;
-  const known = new Set(data.permissions.map((entry) => entry.module));
-  const allowed = new Set(
-    data.permissions.filter((entry) => entry.level !== "NONE").map((entry) => entry.module)
-  );
-  if (allowed.size === 0) return null;
-  return { allowed, known };
+  const levels = new Map<string, PermissionLevel>();
+  const allowed = new Set<string>();
+  for (const entry of data.permissions) {
+    levels.set(entry.module, entry.level);
+    if (entry.level !== "NONE") allowed.add(entry.module);
+  }
+  return { allowed, levels };
 }
 
 function modulesForPath(pathname: string): string[] {
@@ -56,14 +59,39 @@ function modulesForPath(pathname: string): string[] {
   return match?.modules ?? [];
 }
 
-/** Unmapped routes (role dashboards, agent pages) stay visible. */
+export function getLevelForPath(
+  pathname: string,
+  gate: PagePermissionGate | null
+): PermissionLevel | null {
+  if (!gate) return null;
+  const modules = modulesForPath(pathname);
+  if (!modules.length) return null;
+  let best: PermissionLevel = "NONE";
+  for (const module of modules) {
+    const level = gate.levels.get(module) ?? "NONE";
+    if (level === "WRITE") return "WRITE";
+    if (level === "READ") best = "READ";
+  }
+  return best;
+}
+
+/** Mapped admin pages must be READ or WRITE. Unmentioned modules are hidden. */
 export function isHrefAllowed(href: string, gate: PagePermissionGate | null): boolean {
   if (!gate) return true;
   const modules = modulesForPath(href);
   if (!modules.length) return true;
-  const mentioned = modules.filter((module) => gate.known.has(module));
-  if (!mentioned.length) return true;
-  return mentioned.some((module) => gate.allowed.has(module));
+  return modules.some((module) => gate.allowed.has(module));
+}
+
+export function isMutationPath(pathname: string): boolean {
+  return /\/(create|edit)(\/|$)/.test(pathname);
+}
+
+export function navForPermissions(
+  role: string | null | undefined,
+  gate: PagePermissionGate | null
+): SidebarEntry[] {
+  return gate ? adminNav : getNavForRole(normalizeRole(role));
 }
 
 export function filterNavByPermissions(
@@ -106,5 +134,5 @@ export function firstAllowedHref(
     }
     return null;
   };
-  return walk(filterNavByPermissions(getNavForRole(role), gate));
+  return walk(filterNavByPermissions(navForPermissions(role, gate), gate));
 }

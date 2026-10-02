@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
@@ -273,14 +274,16 @@ export default function AdminBlogPage() {
         id: "delete",
         header: "Delete",
         cell: ({ row }) => (
-          <Button
-            variant="destructive"
-            size="sm"
-            className="shrink-0"
-            onClick={() => openDeleteDialog(row.original)}
-          >
-            Delete
-          </Button>
+          <WriteOnly>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="shrink-0"
+              onClick={() => openDeleteDialog(row.original)}
+            >
+              Delete
+            </Button>
+          </WriteOnly>
         )
       }
     ],
@@ -294,9 +297,11 @@ export default function AdminBlogPage() {
           title="Blog management"
           description="Create and manage blog posts. Preview opens in new tab."
           headerAction={
-            <Button asChild>
-              <Link href="/admin/blog/create">Create post</Link>
-            </Button>
+            <WriteOnly>
+              <Button asChild>
+                <Link href="/admin/blog/create">Create post</Link>
+              </Button>
+            </WriteOnly>
           }
         >
           <div className="grid gap-2.5 pb-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -27,6 +27,7 @@ import {
   KeyRound
 } from "lucide-react";
 import { ROLES, type AppRole } from "@/lib/roles";
+import { normalizeRole } from "@/lib/rbac";
 
 export type SidebarLink = {
   label: string;
@@ -197,7 +198,7 @@ export const managerNav: SidebarEntry[] = [
 ];
 
 export function getNavForRole(role: AppRole | string | null | undefined): SidebarEntry[] {
-  switch (role) {
+  switch (normalizeRole(role)) {
     case ROLES.ADMIN:
       return adminNav;
     case ROLES.AGENT:

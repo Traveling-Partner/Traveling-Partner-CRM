@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, Eye, FileText, Pencil, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -165,12 +166,14 @@ export default function AdminPartnerDetailPage() {
             </Link>
           </Button>
           {partner ? (
-            <Button size="sm" asChild>
-              <Link href={`/admin/partners/${params.id}/edit`} className="gap-1.5">
-                <Pencil className="h-4 w-4" />
-                Edit partner
-              </Link>
-            </Button>
+            <WriteOnly>
+              <Button size="sm" asChild>
+                <Link href={`/admin/partners/${params.id}/edit`} className="gap-1.5">
+                  <Pencil className="h-4 w-4" />
+                  Edit partner
+                </Link>
+              </Button>
+            </WriteOnly>
           ) : null}
         </div>
         <div className="grid gap-4">
@@ -232,14 +235,16 @@ export default function AdminPartnerDetailPage() {
               </div>
             )}
             {!loading && partner ? (
-              <div className="mt-4 flex justify-end">
-                <Button
-                  variant={isBlocked ? "default" : "destructive"}
-                  onClick={() => setStatusConfirmOpen(true)}
-                >
-                  {isBlocked ? "Unblock" : "Block"}
-                </Button>
-              </div>
+              <WriteOnly>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    variant={isBlocked ? "default" : "destructive"}
+                    onClick={() => setStatusConfirmOpen(true)}
+                  >
+                    {isBlocked ? "Unblock" : "Block"}
+                  </Button>
+                </div>
+              </WriteOnly>
             ) : null}
           </SectionCard>
         </div>
@@ -312,6 +317,7 @@ export default function AdminPartnerDetailPage() {
                           {selectedDocument.type.replaceAll("_", " ")}
                         </p>
                       </div>
+                      <WriteOnly>
                       <div className="flex shrink-0 gap-2">
                         <Button
                           size="sm"
@@ -335,6 +341,7 @@ export default function AdminPartnerDetailPage() {
                           Reject CNIC
                         </Button>
                       </div>
+                      </WriteOnly>
                     </div>
                     <div className="grid gap-3 p-3 md:grid-cols-2">
                       <div>

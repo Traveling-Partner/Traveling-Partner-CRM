@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Download, Eye, FileText, Search, Filter } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
@@ -458,7 +459,8 @@ export default function DocumentsQueuePage() {
               >
                 Preview →
               </Button>
-              <Select
+              <WriteOnly>
+                <Select
                   key={`doc-action-${entry.rowId}-${tableActionMenuVersion}`}
                   onValueChange={(value) => {
                     if (value === "APPROVE" || value === "REJECT") {
@@ -479,6 +481,7 @@ export default function DocumentsQueuePage() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </WriteOnly>
             </div>
           );
         }
@@ -786,6 +789,7 @@ export default function DocumentsQueuePage() {
                       </div>
                     </div>
                   </div>
+                  <WriteOnly>
                   <div className="flex items-center justify-end gap-2 border-t border-border/60 px-3 py-2">
                       <Button
                         size="sm"
@@ -803,6 +807,7 @@ export default function DocumentsQueuePage() {
                         Reject
                       </Button>
                     </div>
+                  </WriteOnly>
                 </div>
               </div>
           </DialogContent>

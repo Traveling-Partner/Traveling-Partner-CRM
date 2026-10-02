@@ -18,6 +18,7 @@ import {
   usePortalUserDetailQuery
 } from "@/hooks/queries/use-portal-users";
 import { formatPortalRole, primaryRole } from "@/services/portal-users";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -85,23 +86,25 @@ export default function AdminEmployeeDetailPage() {
               Back to employees
             </Link>
           </Button>
-          <div className="flex items-center gap-2">
-            <Button size="sm" asChild>
-              <Link href={`/admin/agents/${params.id}/edit`} className="gap-1.5">
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Link>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-destructive"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </Button>
-          </div>
+          <WriteOnly>
+            <div className="flex items-center gap-2">
+              <Button size="sm" asChild>
+                <Link href={`/admin/agents/${params.id}/edit`} className="gap-1.5">
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            </div>
+          </WriteOnly>
         </div>
 
         <SectionCard title="Employee details">

@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
@@ -109,14 +110,16 @@ export default function AdminCarouselListPage() {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/admin/carousel/${row.original.id}`}>Edit</Link>
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => openDelete(row.original)}>
-              Delete
-            </Button>
-          </div>
+          <WriteOnly>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/admin/carousel/${row.original.id}`}>Edit</Link>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => openDelete(row.original)}>
+                Delete
+              </Button>
+            </div>
+          </WriteOnly>
         )
       }
     ],
@@ -130,9 +133,11 @@ export default function AdminCarouselListPage() {
           title="App home carousel banners"
           description="Manage promotional slides for the app home screen."
           headerAction={
-            <Button asChild>
-              <Link href="/admin/carousel/create">Create Banner</Link>
-            </Button>
+            <WriteOnly>
+              <Button asChild>
+                <Link href="/admin/carousel/create">Create Banner</Link>
+              </Button>
+            </WriteOnly>
           }
         >
           {loadError ? (
