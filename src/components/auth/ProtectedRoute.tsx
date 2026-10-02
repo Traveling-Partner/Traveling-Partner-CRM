@@ -14,7 +14,12 @@ import {
   isAgentRoute
 } from "@/lib/rbac";
 import { ROLES } from "@/lib/roles";
-import { firstAllowedHref, isHrefAllowed } from "@/lib/page-permissions";
+import {
+  firstAllowedHref,
+  getLevelForPath,
+  isHrefAllowed,
+  isMutationPath
+} from "@/lib/page-permissions";
 import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 import TPLoader from "@/components/TPLoader";
 import { Button } from "@/components/ui/button";
@@ -103,6 +108,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
     if (gate) {
       if (!isHrefAllowed(pathname, gate)) {
+        const fallback = firstAllowedHref(role, gate) ?? home;
+        if (fallback !== pathname) router.replace(fallback);
+        return;
+      }
+      if (isMutationPath(pathname) && getLevelForPath(pathname, gate) !== "WRITE") {
         const fallback = firstAllowedHref(role, gate) ?? home;
         if (fallback !== pathname) router.replace(fallback);
       }

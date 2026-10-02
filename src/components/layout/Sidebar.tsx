@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
-  getNavForRole,
   isSidebarGroup,
   isSidebarSection,
   type SidebarEntry,
@@ -23,7 +22,7 @@ import {
   type SidebarSection
 } from "@/config/navigation";
 import { getDefaultRouteForRole } from "@/lib/rbac";
-import { filterNavByPermissions, firstAllowedHref } from "@/lib/page-permissions";
+import { filterNavByPermissions, firstAllowedHref, navForPermissions } from "@/lib/page-permissions";
 import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 
 function isLinkActive(pathname: string, href: string, siblings?: SidebarLink[]) {
@@ -285,8 +284,10 @@ export function Sidebar({
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { gate } = useUserPermissionsQuery();
-  const roleNav = useMemo(() => getNavForRole(user?.role), [user?.role]);
-  const navItems = useMemo(() => filterNavByPermissions(roleNav, gate), [roleNav, gate]);
+  const navItems = useMemo(
+    () => filterNavByPermissions(navForPermissions(user?.role, gate), gate),
+    [user?.role, gate]
+  );
   const homeHref =
     firstAllowedHref(user?.role, gate) ?? getDefaultRouteForRole(user?.role ?? "AGENT");
   const effectiveCollapsed = collapsed && !mobileOpen;

@@ -29,6 +29,7 @@ import {
   type PortalUser
 } from "@/services/portal-users";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 
 export default function AdminEmployeesPage() {
   const router = useRouter();
@@ -122,9 +123,11 @@ export default function AdminEmployeesPage() {
           title="Employees"
           description="Create and manage portal employees by role."
           headerAction={
-            <Button onClick={() => router.push("/admin/agents/create")}>
-              Create employee
-            </Button>
+            <WriteOnly>
+              <Button onClick={() => router.push("/admin/agents/create")}>
+                Create employee
+              </Button>
+            </WriteOnly>
           }
         >
           {error ? (

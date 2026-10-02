@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { WriteOnly } from "@/components/auth/WriteOnly";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
@@ -152,13 +153,15 @@ export default function AdminNewsletterPage() {
         id: "delete",
         header: "Delete",
         cell: ({ row }) => (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => openDeleteDialog(row.original)}
-          >
-            Delete
-          </Button>
+          <WriteOnly>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => openDeleteDialog(row.original)}
+            >
+              Delete
+            </Button>
+          </WriteOnly>
         )
       }
     ],
@@ -172,9 +175,11 @@ export default function AdminNewsletterPage() {
           title="Newsletter management"
           description="Create and manage newsletters. Preview opens in admin."
           headerAction={
-            <Button asChild>
-              <Link href="/admin/newsletter/create">Create newsletter</Link>
-            </Button>
+            <WriteOnly>
+              <Button asChild>
+                <Link href="/admin/newsletter/create">Create newsletter</Link>
+              </Button>
+            </WriteOnly>
           }
         >
           <div className="flex flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between">
