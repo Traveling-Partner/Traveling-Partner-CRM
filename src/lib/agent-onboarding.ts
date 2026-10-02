@@ -2,7 +2,7 @@
  * UI-only performance enrichment for agent pages.
  *
  * Does NOT call APIs or modify services/hooks in src/services or src/hooks/queries.
- * Real agent list/detail still comes from useAgentsListQuery / useAgentDetailQuery.
+ * Real agent list still comes from useAgentsListQuery.
  * Functions here only add demo stats (drivers, passengers, commissions) until backend endpoints exist.
  */
 import {
