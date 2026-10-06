@@ -18,7 +18,6 @@ export function useRidesListQuery(params: {
   const debouncedCity = useDebouncedValue(params.city);
   const debouncedSearch = useDebouncedValue(params.search);
   const debouncedBookingReference = useDebouncedValue(params.bookingReference);
-  const debouncedRideType = useDebouncedValue(params.rideType);
 
   const filters = useMemo<RidesListFilters>(
     () => ({
@@ -28,7 +27,7 @@ export function useRidesListQuery(params: {
       city: debouncedCity,
       search: debouncedSearch,
       bookingReference: debouncedBookingReference,
-      rideType: debouncedRideType,
+      rideType: params.rideType,
       startedAt: params.startedAt
     }),
     [
@@ -38,7 +37,7 @@ export function useRidesListQuery(params: {
       debouncedCity,
       debouncedSearch,
       debouncedBookingReference,
-      debouncedRideType,
+      params.rideType,
       params.startedAt
     ]
   );

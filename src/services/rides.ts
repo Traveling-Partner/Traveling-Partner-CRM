@@ -18,6 +18,11 @@ export const RIDE_STATUSES = [
 
 export type RideStatus = (typeof RIDE_STATUSES)[number];
 
+/** Values accepted by GET /rides/portal/getAll?rideType= */
+export const RIDE_TYPES = ["TAXI_STAND", "POOL_RIDE", "DELIVERY", "LOGISTIC", "TRIP"] as const;
+
+export type RideType = (typeof RIDE_TYPES)[number];
+
 export interface RideRow {
   id: number;
   bookingReference: string | null;
@@ -121,7 +126,7 @@ function buildRidesListUrl(filters: RidesListFilters): string {
   params.set("city", filters.city.trim());
   params.set("search", filters.search.trim());
   params.set("bookingReference", filters.bookingReference.trim());
-  params.set("rideType", filters.rideType.trim());
+  params.set("rideType", filters.rideType === "all" ? "" : filters.rideType.trim());
   params.set("startedAt", filters.startedAt.trim());
   params.set("page", String(Math.max(1, filters.page)));
   params.set("size", String(filters.pageSize));
