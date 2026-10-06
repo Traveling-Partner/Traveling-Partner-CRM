@@ -92,7 +92,7 @@ function AdminRidesList() {
         header: "Booking",
         cell: ({ row }) =>
           row.original.bookingReference ? (
-            <span className="font-mono text-xs font-medium">{row.original.bookingReference}</span>
+            <span className="whitespace-nowrap font-mono text-sm font-medium">{row.original.bookingReference}</span>
           ) : (
             <MissingData />
           )

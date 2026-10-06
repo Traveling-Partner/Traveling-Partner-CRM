@@ -31,6 +31,7 @@ import {
   type ApiDocStatus
 } from "@/lib/documents-utils";
 import { queryKeys } from "@/lib/api/query-keys";
+import { showCnic, showPhone } from "@/lib/format-ids";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import {
   documentStatusesFromQueueRows,
@@ -407,7 +408,7 @@ export default function DocumentsQueuePage() {
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{driverName}</p>
-                <p className="text-sm text-muted-foreground">{driver.mobileNumber || "—"}</p>
+                <p className="whitespace-nowrap text-sm text-muted-foreground">{showPhone(driver.mobileNumber)}</p>
               </div>
               <span className="shrink-0 rounded-md bg-slate-800 px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-white">
                 {roleLabel}
@@ -427,8 +428,8 @@ export default function DocumentsQueuePage() {
         id: "cnicNumber",
         header: "CNIC",
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {row.original.driver.cnicNumber || "—"}
+          <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
+            {showCnic(row.original.driver.cnicNumber)}
           </span>
         )
       },

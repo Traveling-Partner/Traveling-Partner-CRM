@@ -23,6 +23,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { updateUserStatus } from "@/services/users";
 import { updatePartnerCnicStatus } from "@/services/documents";
 import { normalizeApiDocStatus, type ApiDocStatus } from "@/lib/documents-utils";
+import { showCnic, showPhone } from "@/lib/format-ids";
 
 interface PartnerDocument {
   id: "id-document";
@@ -212,7 +213,7 @@ export default function AdminPartnerDetailPage() {
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
-                  <p className="mt-0.5 font-heading font-medium">{partner?.mobileNumber || "—"}</p>
+                  <p className="mt-0.5 whitespace-nowrap font-heading font-medium">{showPhone(partner?.mobileNumber)}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</p>
@@ -224,7 +225,7 @@ export default function AdminPartnerDetailPage() {
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">CNIC number</p>
-                  <p className="mt-0.5 font-heading font-medium tabular-nums">{partner?.basicInformation?.cnicNumber || "—"}</p>
+                  <p className="mt-0.5 whitespace-nowrap font-heading font-medium tabular-nums">{showCnic(partner?.basicInformation?.cnicNumber)}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>

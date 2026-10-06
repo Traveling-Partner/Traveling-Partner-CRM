@@ -17,6 +17,7 @@ import {
   useDeletePortalUserMutation,
   usePortalUserDetailQuery
 } from "@/hooks/queries/use-portal-users";
+import { showCnic, showPhone } from "@/lib/format-ids";
 import { formatPortalRole, primaryRole } from "@/services/portal-users";
 import { WriteOnly } from "@/components/auth/WriteOnly";
 
@@ -112,10 +113,10 @@ export default function AdminEmployeeDetailPage() {
             <Field label="Name" value={employee.name || "—"} />
             <Field label="Role" value={role ? formatPortalRole(role) : "—"} />
             <Field label="Email" value={employee.email || "—"} />
-            <Field label="Phone" value={employee.mobileNumber || "—"} />
+            <Field label="Phone" value={showPhone(employee.mobileNumber)} />
             <Field label="City" value={employee.city || "—"} />
             <Field label="Gender" value={employee.gender || "—"} />
-            <Field label="CNIC" value={employee.cnicNumber || "—"} />
+            <Field label="CNIC" value={showCnic(employee.cnicNumber)} />
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Status</p>
               <div className="mt-1">

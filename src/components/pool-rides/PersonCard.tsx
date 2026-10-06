@@ -1,4 +1,5 @@
 import { Mail, Phone, Star, User } from "lucide-react";
+import { showPhone } from "@/lib/format-ids";
 import { cn } from "@/lib/utils";
 
 interface PersonCardProps {
@@ -79,7 +80,7 @@ export function PersonCard({
           <div className="mt-2 space-y-1">
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Phone className="h-3.5 w-3.5 shrink-0" />
-              {phone}
+              {showPhone(phone, phone)}
             </p>
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Mail className="h-3.5 w-3.5 shrink-0" />

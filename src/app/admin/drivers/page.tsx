@@ -20,6 +20,7 @@ import { Search, Filter, UserCircle, Clock, CheckCircle2, Ban, XCircle } from "l
 import { cn } from "@/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { showCnic, showPhone } from "@/lib/format-ids";
 
 function AdminDriversList() {
   const router = useRouter();
@@ -123,7 +124,7 @@ function AdminDriversList() {
             </span>
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-              <p className="text-[11px] text-muted-foreground">{d.mobileNumber}</p>
+              <p className="whitespace-nowrap text-sm text-muted-foreground">{showPhone(d.mobileNumber)}</p>
             </div>
           </div>
         );
@@ -163,7 +164,7 @@ function AdminDriversList() {
       accessorKey: "cnicNumber",
       header: "CNIC",
       cell: ({ row }) => (
-        <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
+        <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">{showCnic(row.original.cnicNumber)}</span>
       )
     },
     {

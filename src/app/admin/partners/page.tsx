@@ -23,6 +23,7 @@ import { Search, Filter, UserCircle, Clock, CheckCircle2, Ban, XCircle } from "l
 import { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
 import { usePartnerStatusCountsQuery } from "@/hooks/queries/use-partner-status-counts-query";
 import type { PartnerRow } from "@/services/users";
+import { showCnic, showPhone } from "@/lib/format-ids";
 import { cn } from "@/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
@@ -117,7 +118,7 @@ export default function AdminPartnersPage() {
             </span>
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-              <p className="text-[11px] text-muted-foreground">{row.original.mobileNumber || "—"}</p>
+              <p className="whitespace-nowrap text-sm text-muted-foreground">{showPhone(row.original.mobileNumber)}</p>
             </div>
           </div>
         );
@@ -157,7 +158,7 @@ export default function AdminPartnersPage() {
       accessorKey: "cnicNumber",
       header: "CNIC",
       cell: ({ row }) => (
-        <span className="text-[13px] text-muted-foreground tabular-nums">{row.original.cnicNumber || "—"}</span>
+        <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">{showCnic(row.original.cnicNumber)}</span>
       )
     },
     {

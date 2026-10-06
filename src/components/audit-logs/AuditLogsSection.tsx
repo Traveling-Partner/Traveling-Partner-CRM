@@ -23,6 +23,7 @@ import {
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { useAuditLogsQuery } from "@/hooks/queries/use-audit-logs-query";
 import type { AuditLogRow } from "@/services/audit-logs";
+import { showPhone } from "@/lib/format-ids";
 import { cn } from "@/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
@@ -150,7 +151,9 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
     const mobile: ColumnDef<AuditLogRow> = {
       accessorKey: "mobileNumber",
       header: "Mobile",
-      cell: ({ row }) => row.original.mobileNumber?.trim() || "—"
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap tabular-nums">{showPhone(row.original.mobileNumber)}</span>
+      )
     };
     const timestamp: ColumnDef<AuditLogRow> = {
       accessorKey: "createdAt",

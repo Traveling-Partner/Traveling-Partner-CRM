@@ -27,6 +27,7 @@ import {
   formatAgentDate,
   type AgentPerformanceRow
 } from "@/lib/agent-onboarding";
+import { showPhone } from "@/lib/format-ids";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
 export default function AdminAgentPerformancePage() {
@@ -76,7 +77,7 @@ export default function AdminAgentPerformancePage() {
       header: "Phone",
       cell: ({ row }) => (
         <span className="text-[13px] text-muted-foreground whitespace-nowrap">
-          {row.original.mobileNumber || "—"}
+          {showPhone(row.original.mobileNumber)}
         </span>
       )
     },

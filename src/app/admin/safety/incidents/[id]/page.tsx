@@ -29,6 +29,7 @@ import {
   useUpdateSosIncidentStatusMutation
 } from "@/hooks/queries/use-sos-incidents";
 import type { SosIncidentStatusAction } from "@/services/sos-incidents";
+import { showPhone } from "@/lib/format-ids";
 import { cn } from "@/lib/utils";
 
 function formatEnum(value: string | null | undefined): string {
@@ -222,7 +223,7 @@ export default function AdminSafetyIncidentDetailPage() {
                   <dd className="font-medium">
                     {trip.riderName ?? "—"}
                     <span className="block text-xs text-muted-foreground">
-                      {trip.riderPhone ?? "No phone"}
+                      {trip.riderPhone ? showPhone(trip.riderPhone) : "No phone"}
                     </span>
                   </dd>
                 </div>
@@ -231,7 +232,7 @@ export default function AdminSafetyIncidentDetailPage() {
                   <dd className="font-medium">
                     {trip.driverName ?? "—"}
                     <span className="block text-xs text-muted-foreground">
-                      {trip.driverPhone ?? "No phone"}
+                      {trip.driverPhone ? showPhone(trip.driverPhone) : "No phone"}
                     </span>
                   </dd>
                 </div>
@@ -347,8 +348,8 @@ export default function AdminSafetyIncidentDetailPage() {
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{c.name}</p>
-                      <p className="truncate font-mono text-xs tabular-nums text-muted-foreground">
-                        {c.phone}
+                      <p className="whitespace-nowrap font-mono text-sm tabular-nums text-muted-foreground">
+                        {showPhone(c.phone, c.phone)}
                       </p>
                       <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
                         {[formatEnum(c.relation), formatEnum(c.userRole)]

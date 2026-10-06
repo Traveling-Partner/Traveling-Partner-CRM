@@ -31,6 +31,7 @@ import { RideRouteMap } from "@/components/rides/RideRouteMap";
 import TPLoader from "@/components/TPLoader";
 import { MissingData, MISSING_DATA_LABEL } from "@/components/common/MissingData";
 import { useRideDetailQuery } from "@/hooks/queries/use-ride-detail-query";
+import { formatPhone } from "@/lib/format-ids";
 import type { RideDetail } from "@/services/rides";
 import type { ReactNode } from "react";
 
@@ -186,7 +187,7 @@ export default function AdminRideDetailPage() {
               </h1>
               <p className="max-w-xl text-sm text-white/70">
                 Booking{" "}
-                <span className="font-mono text-amber-200/90">
+                <span className="whitespace-nowrap font-mono text-amber-200/90">
                   {text(ride.bookingReference)}
                 </span>
                 {" · "}
@@ -297,7 +298,7 @@ export default function AdminRideDetailPage() {
                 <p className="mt-2 font-heading text-lg font-semibold">{text(ride.passengerName)}</p>
                 <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-3.5 w-3.5 shrink-0" />
-                  {text(ride.passengerPhone)}
+                  {text(formatPhone(ride.passengerPhone))}
                 </p>
               </div>
               <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -354,7 +355,7 @@ export default function AdminRideDetailPage() {
                     Driver
                   </p>
                   <p className="font-heading font-semibold">{text(ride.driverName)}</p>
-                  <p className="text-sm text-muted-foreground">{text(ride.driverPhone)}</p>
+                  <p className="whitespace-nowrap text-sm text-muted-foreground">{text(formatPhone(ride.driverPhone))}</p>
                   {ride.driverId != null ? (
                     <Button variant="link" className="h-auto px-0 pt-1 text-xs" asChild>
                       <Link href={`/admin/drivers/${ride.driverId}`}>Open driver profile</Link>
