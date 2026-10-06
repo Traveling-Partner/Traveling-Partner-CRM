@@ -402,14 +402,14 @@ export default function DocumentsQueuePage() {
           const roleLabel = row.original.role === "PARTNER" ? "Partner" : "Driver";
           return (
             <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-200 text-[11px] font-bold text-amber-700 dark:from-amber-800 dark:to-amber-900 dark:text-amber-300">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-800 text-xs font-bold text-white">
                 {initials || "?"}
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{driverName}</p>
-                <p className="text-[11px] text-muted-foreground">{driver.mobileNumber || "—"}</p>
+                <p className="text-sm text-muted-foreground">{driver.mobileNumber || "—"}</p>
               </div>
-              <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="shrink-0 rounded-md bg-slate-800 px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-white">
                 {roleLabel}
               </span>
             </div>
@@ -420,14 +420,14 @@ export default function DocumentsQueuePage() {
         accessorKey: "label",
         header: "Document",
         cell: ({ row }) => (
-          <span className="text-[13px] font-medium text-foreground">{row.original.label}</span>
+          <span className="text-sm font-medium text-foreground">{row.original.label}</span>
         )
       },
       {
         id: "cnicNumber",
         header: "CNIC",
         cell: ({ row }) => (
-          <span className="text-[13px] text-muted-foreground tabular-nums">
+          <span className="text-sm text-muted-foreground tabular-nums">
             {row.original.driver.cnicNumber || "—"}
           </span>
         )
@@ -436,7 +436,7 @@ export default function DocumentsQueuePage() {
         id: "email",
         header: "Email",
         cell: ({ row }) => (
-          <span className="text-[13px] text-muted-foreground">{row.original.driver.email || "—"}</span>
+          <span className="text-sm text-muted-foreground">{row.original.driver.email || "—"}</span>
         )
       },
       {
