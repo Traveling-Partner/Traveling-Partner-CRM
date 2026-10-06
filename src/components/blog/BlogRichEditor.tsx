@@ -178,7 +178,7 @@ export function BlogRichEditor({
         class:
           "blog-prose tiptap focus-visible:outline-none text-slate-900 dark:text-slate-50",
         spellcheck: "true",
-        style: "min-height:420px;color:#0f172a;"
+        style: "min-height:420px;"
       },
       handlePaste: (_view, event) => {
         const items = event.clipboardData?.items;
