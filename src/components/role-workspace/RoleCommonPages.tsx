@@ -7,6 +7,7 @@ import { SectionCard } from "@/components/common/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { showPhone } from "@/lib/format-ids";
 import { ROLE_LABELS } from "@/lib/roles";
 import { toAppRole } from "@/lib/rbac";
 
@@ -29,7 +30,7 @@ export function RoleProfilePage({ title }: { title: string }) {
             </div>
             <div className="space-y-1.5">
               <Label>Mobile</Label>
-              <Input value={user?.mobileNumber || "—"} readOnly />
+              <Input value={showPhone(user?.mobileNumber)} readOnly />
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>

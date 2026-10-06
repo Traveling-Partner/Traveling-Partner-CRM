@@ -22,6 +22,7 @@ import {
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { Search } from "lucide-react";
 import { useEmployeeRolesQuery, usePortalUsersListQuery } from "@/hooks/queries/use-portal-users";
+import { showPhone } from "@/lib/format-ids";
 import { formatPortalRole, primaryRole, type PortalUser } from "@/services/portal-users";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import { WriteOnly } from "@/components/auth/WriteOnly";
@@ -88,7 +89,7 @@ export default function AdminEmployeesPage() {
       accessorKey: "mobileNumber",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-[13px] text-muted-foreground">{row.original.mobileNumber || "—"}</span>
+        <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">{showPhone(row.original.mobileNumber)}</span>
       )
     },
     {

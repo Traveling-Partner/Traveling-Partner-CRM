@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuthStore } from "@/store/auth.store";
 import { drivers } from "@/mock-data/drivers";
 import { partners } from "@/mock-data/partners";
+import { showPhone } from "@/lib/format-ids";
 import type { Driver } from "@/types/domain";
 import type { Partner } from "@/types/domain";
 
@@ -35,7 +36,7 @@ export default function AgentListingsPage() {
         <div className="space-y-0.5">
           <p className="text-sm font-medium">{row.original.name}</p>
           <p className="text-xs text-muted-foreground">
-            {row.original.phone}
+            {showPhone(row.original.phone)}
           </p>
         </div>
       )

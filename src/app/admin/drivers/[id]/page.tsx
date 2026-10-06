@@ -21,6 +21,7 @@ import { useDriverDetailQuery } from "@/hooks/queries/use-driver-detail-query";
 import { useDriverDocumentsQuery } from "@/hooks/queries/use-driver-documents-query";
 import { queryKeys } from "@/lib/api/query-keys";
 import { normalizeApiDocStatus, type ApiDocStatus } from "@/lib/documents-utils";
+import { showCnic, showPhone } from "@/lib/format-ids";
 import { updateUserStatus } from "@/services/users";
 import {
   updateDriverDocumentStatus,
@@ -279,7 +280,7 @@ export default function AdminDriverDetailPage() {
                 </div>
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Phone</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{driver?.mobileNumber || "—"}</p>
+                  <p className="mt-0.5 whitespace-nowrap text-sm font-medium text-foreground">{showPhone(driver?.mobileNumber)}</p>
                 </div>
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Gender</p>
@@ -301,7 +302,7 @@ export default function AdminDriverDetailPage() {
                 </div>
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CNIC number</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground tabular-nums">{driver?.basicInformation?.cnicNumber || "—"}</p>
+                  <p className="mt-0.5 whitespace-nowrap text-sm font-medium tabular-nums text-foreground">{showCnic(driver?.basicInformation?.cnicNumber)}</p>
                 </div>
                 <div className="rounded-lg border border-border/40 bg-muted/10 px-3 py-2.5 transition-colors hover:bg-muted/20">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</p>

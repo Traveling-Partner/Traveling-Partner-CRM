@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { showPhone } from "@/lib/format-ids";
 import type { AuditLogRow } from "@/services/audit-logs";
 
 function formatTimestamp(value: string | null | undefined): string {
@@ -82,7 +83,7 @@ export function AuditLogDetailDialog({ log, onOpenChange }: AuditLogDetailDialog
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Mobile
                 </dt>
-                <dd className="mt-0.5 font-medium">{log.mobileNumber?.trim() || "—"}</dd>
+                <dd className="mt-0.5 whitespace-nowrap font-medium tabular-nums">{showPhone(log.mobileNumber)}</dd>
               </div>
               {log.module ? (
                 <div className="rounded-lg border border-border/50 px-3 py-2">

@@ -7,6 +7,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { extractNumericEntityId } from "@/lib/agent-onboarding";
+import { showPhone } from "@/lib/format-ids";
 import type { Driver, Partner } from "@/types/domain";
 
 export const agentDriverColumns: ColumnDef<Driver>[] = [
@@ -16,7 +17,7 @@ export const agentDriverColumns: ColumnDef<Driver>[] = [
     cell: ({ row }) => (
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{row.original.name}</p>
-        <p className="text-xs text-muted-foreground">{row.original.phone}</p>
+        <p className="whitespace-nowrap text-sm text-muted-foreground">{showPhone(row.original.phone)}</p>
       </div>
     )
   },

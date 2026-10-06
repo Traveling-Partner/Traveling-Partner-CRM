@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { formatPhone } from "@/lib/format-ids";
 import { ROLE_LABELS } from "@/lib/roles";
 import { toAppRole } from "@/lib/rbac";
 
@@ -53,7 +54,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const profile = profileQuery.data;
   const personName = storedName || readableName(profile?.name);
   const displayName = personName || "User";
-  const phone = user?.mobileNumber?.trim() || profile?.mobileNumber?.trim() || "";
+  const phone = formatPhone(user?.mobileNumber || profile?.mobileNumber) ?? "";
   const appRole = toAppRole(user?.role);
   const roleLabel = appRole ? ROLE_LABELS[appRole] : user?.role?.replace(/_/g, " ") || "User";
   const isDark = theme === "dark";
@@ -133,7 +134,7 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="flex flex-col items-start gap-0.5 py-2 text-xs">
               <span className="font-semibold text-foreground">{displayName}</span>
-              {phone ? <span className="text-muted-foreground">{phone}</span> : null}
+              {phone ? <span className="whitespace-nowrap text-muted-foreground">{phone}</span> : null}
               {user?.email ? <span className="text-muted-foreground">{user.email}</span> : null}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
