@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
     maximumFractionDigits: 0
   }).format(fareTrendTotal);
   const demoBadge = (
-    <span className="rounded-full bg-slate-900/6 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground dark:bg-white/10">
+    <span className="rounded-full bg-slate-900/6 px-2.5 py-1 text-xs font-semibold text-muted-foreground dark:bg-white/10">
       Demo data
     </span>
   );
@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
           title="Rides trend"
           description="Daily ride volume over the last 14 days"
           badge={
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
               <TrendingUp className="h-3 w-3" />
               14 days
             </span>
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
               <span className="font-heading text-sm font-semibold tabular-nums">
                 {isLoading ? "—" : fareTotalLabel}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-[11px] font-semibold text-slate-900">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#5c4308] px-2.5 py-1 text-xs font-semibold text-white">
                 <TrendingUp className="h-3 w-3" />
                 14 days
               </span>

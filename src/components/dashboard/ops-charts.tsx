@@ -29,9 +29,9 @@ import {
   chartMargin,
   CITY_COLORS,
   DOCUMENT_COLORS,
+  DOCUMENT_CARD_COLORS,
   FUNNEL_COLORS,
-  gridProps,
-  onChartColor
+  gridProps
 } from "@/components/dashboard/chart-theme";
 import { cn } from "@/lib/utils";
 import type {
@@ -346,10 +346,10 @@ export function CityDemand({ data }: { data: DashboardCityCount[] }) {
 export function DocumentsPending({ data }: { data: DashboardDocumentsPending }) {
   const items = useMemo(
     () => [
-      { label: "Driver CNIC", value: data.driverCnic, icon: CreditCard, color: DOCUMENT_COLORS.driverCnic },
-      { label: "License", value: data.driverLicense, icon: FileText, color: DOCUMENT_COLORS.driverLicense },
-      { label: "Vehicle", value: data.vehicle, icon: Car, color: DOCUMENT_COLORS.vehicle },
-      { label: "Partner CNIC", value: data.partnerCnic, icon: UserRound, color: DOCUMENT_COLORS.partnerCnic }
+      { key: "driverCnic" as const, label: "Driver CNIC", value: data.driverCnic, icon: CreditCard, color: DOCUMENT_COLORS.driverCnic },
+      { key: "driverLicense" as const, label: "License", value: data.driverLicense, icon: FileText, color: DOCUMENT_COLORS.driverLicense },
+      { key: "vehicle" as const, label: "Vehicle", value: data.vehicle, icon: Car, color: DOCUMENT_COLORS.vehicle },
+      { key: "partnerCnic" as const, label: "Partner CNIC", value: data.partnerCnic, icon: UserRound, color: DOCUMENT_COLORS.partnerCnic }
     ],
     [data]
   );
@@ -362,12 +362,12 @@ export function DocumentsPending({ data }: { data: DashboardDocumentsPending }) 
 
   return (
     <div>
-      <div className="mb-5 rounded-[1.5rem] bg-gradient-to-br from-[#fce001] to-[#fdb813] px-5 py-4 text-slate-900">
-        <p className="text-xs font-medium text-slate-900/65">Waiting for review</p>
+      <div className="mb-5 rounded-[1.5rem] bg-[#5c4308] px-5 py-4 text-white">
+        <p className="text-xs font-medium">Waiting for review</p>
         <p className="mt-1 font-heading text-3xl font-semibold tabular-nums tracking-tight">
           {total.toLocaleString()}
         </p>
-        <p className="mt-1 text-xs text-slate-900/60">CNIC, license and vehicle documents</p>
+        <p className="mt-1 text-sm">CNIC, license and vehicle documents</p>
       </div>
 
       <div className="h-52">
@@ -395,16 +395,15 @@ export function DocumentsPending({ data }: { data: DashboardDocumentsPending }) 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {items.map((item) => {
           const Icon = item.icon;
-          const ink = onChartColor(item.color);
           return (
             <div
               key={item.label}
-              className="flex items-center gap-2 rounded-2xl px-3 py-2.5"
-              style={{ background: item.color, color: ink }}
+              className="flex items-center gap-2 rounded-2xl px-3 py-2.5 text-white"
+              style={{ background: DOCUMENT_CARD_COLORS[item.key] }}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0 opacity-80" />
+              <Icon className="h-4 w-4 shrink-0" />
               <div className="min-w-0">
-                <p className="truncate text-[10px] opacity-75">{item.label}</p>
+                <p className="truncate text-xs font-medium">{item.label}</p>
                 <p className="font-heading text-sm font-semibold tabular-nums">
                   {item.value.toLocaleString()}
                 </p>

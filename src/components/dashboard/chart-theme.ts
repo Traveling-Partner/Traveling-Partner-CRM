@@ -90,6 +90,14 @@ export const DOCUMENT_COLORS = {
   partnerCnic: CHART.terracotta
 } as const;
 
+/** Dark fills so white card text stays at least 4.5:1. */
+export const DOCUMENT_CARD_COLORS = {
+  driverCnic: "#713f12",
+  driverLicense: "#7c2d12",
+  vehicle: "#115e59",
+  partnerCnic: "#9a3412"
+} as const;
+
 export function chartColor(index: number) {
   return PALETTE[index % PALETTE.length];
 }
@@ -106,7 +114,7 @@ export function onChartColor(hex: string): "#111827" | "#ffffff" {
 }
 
 export const axisTick = {
-  fontSize: 11,
+  fontSize: 12,
   fill: CHART.axis,
   fontFamily: "inherit"
 };

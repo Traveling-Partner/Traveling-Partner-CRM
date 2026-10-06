@@ -38,7 +38,7 @@ export function MetricCard({
   footer?: ReactNode;
 }) {
   const display = typeof value === "number" ? value.toLocaleString() : value;
-  const muted = tone === "brand" ? "text-slate-900/65" : "text-muted-foreground";
+  const muted = tone === "brand" ? "text-slate-900" : "text-muted-foreground";
 
   return (
     <div className={cn("rounded-2xl px-4 py-3.5 sm:px-4 sm:py-4", toneWrap[tone])}>
@@ -58,9 +58,9 @@ export function MetricCard({
           {delta ? (
             <p
               className={cn(
-                "mt-0.5 text-[11px] font-medium",
+                "mt-0.5 text-xs font-medium",
                 tone === "brand"
-                  ? "text-slate-900/70"
+                  ? "text-slate-900"
                   : delta.up
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-rose-500"
@@ -69,7 +69,7 @@ export function MetricCard({
               {delta.label}
             </p>
           ) : hint ? (
-            <p className={cn("mt-0.5 text-[11px]", muted)}>{hint}</p>
+            <p className={cn("mt-0.5 text-xs", muted)}>{hint}</p>
           ) : null}
         </div>
         {chart ? (
