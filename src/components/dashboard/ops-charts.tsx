@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -14,6 +14,13 @@ import {
   YAxis
 } from "recharts";
 import { FileText, CreditCard, Car, UserRound } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { AnalyticsTooltip } from "@/components/dashboard/AnalyticsTooltip";
 import {
   axisTick,
@@ -280,14 +287,37 @@ export function FareTrend({ data }: { data: DashboardFarePoint[] }) {
 }
 
 export function CityDemand({ data }: { data: DashboardCityCount[] }) {
-  const chartData = data.map((row, index) => ({
+  const [city, setCity] = useState("all");
+  const cities = useMemo(
+    () => Array.from(new Set(data.map((row) => row.city.trim()).filter(Boolean))),
+    [data]
+  );
+  const selected = cities.includes(city) ? city : "all";
+  const filtered = selected === "all" ? data : data.filter((row) => row.city.trim() === selected);
+  const chartData = filtered.map((row, index) => ({
     city: row.city,
     count: row.count,
     fill: CITY_COLORS[index % CITY_COLORS.length]
   }));
 
   return (
-    <div className="h-64 sm:h-72">
+    <div>
+      <div className="mb-3 flex justify-end">
+        <Select value={selected} onValueChange={setCity}>
+          <SelectTrigger className="h-9 w-44" aria-label="Filter by city">
+            <SelectValue placeholder="All cities" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All cities</SelectItem>
+            {cities.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="h-64 sm:h-72">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
           <CartesianGrid {...gridProps} horizontal={false} vertical />
@@ -308,6 +338,7 @@ export function CityDemand({ data }: { data: DashboardCityCount[] }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
