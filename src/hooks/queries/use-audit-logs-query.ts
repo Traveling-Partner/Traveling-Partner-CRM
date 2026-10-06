@@ -54,6 +54,7 @@ export function useAuditLogsQuery(
     queryKey: queryKeys.audit.logs(filters),
     filters,
     staleTime: options?.staleTime,
+    enabled: false,
     fetchPage: ({ token, signal, filters: f }) => fetchAuditLogs(f, { token, signal })
   });
 }
