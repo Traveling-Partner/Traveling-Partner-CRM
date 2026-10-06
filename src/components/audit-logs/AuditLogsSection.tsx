@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { format, parseISO } from "date-fns";
-import { ArrowUpRight, ScrollText } from "lucide-react";
+import { ArrowUpRight, ScrollText, Search } from "lucide-react";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
+import { AuditLogDetailDialog } from "@/components/audit-logs/AuditLogDetailDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectTrigger,
@@ -66,6 +68,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [highlightVisible, setHighlightVisible] = useState(Boolean(highlightId));
+  const [selectedLog, setSelectedLog] = useState<AuditLogRow | null>(null);
   const tableWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -122,46 +125,80 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
     el.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [highlightId, rows, showSkeleton]);
 
-  const columns: ColumnDef<AuditLogRow>[] = useMemo(
-    () => [
-      {
-        accessorKey: "description",
-        header: "Activity",
-        cell: ({ row }) => (
-          <span className="block max-w-xl whitespace-normal text-sm text-foreground">
-            {row.original.description?.trim() || "—"}
+  const columns: ColumnDef<AuditLogRow>[] = useMemo(() => {
+    const activity: ColumnDef<AuditLogRow> = {
+      accessorKey: "description",
+      header: "Activity",
+      cell: ({ row }) => (
+        <span className="block max-w-xl whitespace-normal text-sm text-foreground">
+          {row.original.description?.trim() || "—"}
+        </span>
+      )
+    };
+    const userType: ColumnDef<AuditLogRow> = {
+      accessorKey: "userType",
+      header: "User type",
+      cell: ({ row }) =>
+        row.original.userType ? (
+          <span className="rounded-md bg-muted/60 px-1.5 py-0.5 text-[11px] font-medium">
+            {row.original.userType}
           </span>
+        ) : (
+          "—"
         )
+    };
+    const mobile: ColumnDef<AuditLogRow> = {
+      accessorKey: "mobileNumber",
+      header: "Mobile",
+      cell: ({ row }) => row.original.mobileNumber?.trim() || "—"
+    };
+    const timestamp: ColumnDef<AuditLogRow> = {
+      accessorKey: "createdAt",
+      header: "Timestamp",
+      cell: ({ row }) => (
+        <span className="tabular-nums text-muted-foreground">
+          {formatTimestamp(row.original.createdAt)}
+        </span>
+      )
+    };
+    if (isDashboard) return [activity, userType, mobile, timestamp];
+    return [
+      activity,
+      userType,
+      mobile,
+      {
+        accessorKey: "module",
+        header: "Module",
+        cell: ({ row }) => row.original.module?.trim() || "—"
       },
       {
-        accessorKey: "userType",
-        header: "User type",
-        cell: ({ row }) =>
-          row.original.userType ? (
-            <span className="rounded bg-muted/60 px-1.5 py-0.5 text-[11px] font-medium">
-              {row.original.userType}
-            </span>
-          ) : (
-            "—"
-          )
+        accessorKey: "action",
+        header: "Action",
+        cell: ({ row }) => row.original.action?.trim() || "—"
       },
-      {
-        accessorKey: "mobileNumber",
-        header: "Mobile",
-        cell: ({ row }) => row.original.mobileNumber?.trim() || "—"
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Timestamp",
-        cell: ({ row }) => (
-          <span className="tabular-nums text-muted-foreground">
-            {formatTimestamp(row.original.createdAt)}
-          </span>
-        )
-      }
-    ],
-    []
-  );
+      timestamp
+    ];
+  }, [isDashboard]);
+
+  const hasFilters =
+    Boolean(search.trim()) ||
+    userType !== "all" ||
+    Boolean(fromDate) ||
+    Boolean(toDate) ||
+    Boolean(moduleFilter.trim()) ||
+    Boolean(actionFilter.trim()) ||
+    Boolean(userId.trim());
+
+  const clearFilters = () => {
+    setSearch("");
+    setUserType("all");
+    setFromDate("");
+    setToDate("");
+    setModuleFilter("");
+    setActionFilter("");
+    setUserId("");
+    setPage(1);
+  };
 
   return (
     <SectionCard
@@ -184,12 +221,17 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
-        ) : null
+        ) : (
+          <span className="rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium tabular-nums text-muted-foreground">
+            {showSkeleton ? "Loading…" : `${totalElements} logs`}
+          </span>
+        )
       }
     >
       {!isDashboard ? (
-        <div className="mb-4 rounded-xl border border-[#fdb813]/25 bg-gradient-to-r from-[#fce001]/10 via-[var(--brand-light)] to-transparent p-3 sm:p-3.5">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="mb-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="relative sm:col-span-2 lg:col-span-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               placeholder="Search description…"
               value={search}
@@ -197,96 +239,88 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="max-w-xs bg-background/90"
+              className="pl-9"
             />
-            <Select
-              value={userType}
-              onValueChange={(value) => {
-                setUserType(value);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-44 bg-background/90">
-                <SelectValue placeholder="User type" />
-              </SelectTrigger>
-              <SelectContent>
-                {USER_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Module"
-              value={moduleFilter}
-              onChange={(e) => {
-                setModuleFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-40 bg-background/90"
-              aria-label="Module"
-            />
-            <Input
-              placeholder="Action"
-              value={actionFilter}
-              onChange={(e) => {
-                setActionFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-40 bg-background/90"
-              aria-label="Action"
-            />
-            <Input
-              placeholder="User ID"
-              value={userId}
-              onChange={(e) => {
-                setUserId(e.target.value);
-                setPage(1);
-              }}
-              className="w-36 bg-background/90"
-              aria-label="User ID"
-            />
-            <div className="flex items-center gap-1.5">
-              <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
-                From
-              </span>
-              <Input
-                type="date"
-                value={fromDate}
-                onChange={(e) => {
-                  setFromDate(e.target.value);
-                  setPage(1);
-                }}
-                className="w-40 bg-background/90"
-                placeholder="Start date"
-                aria-label="From date"
-              />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="shrink-0 rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
-                To
-              </span>
-              <Input
-                type="date"
-                value={toDate}
-                onChange={(e) => {
-                  setToDate(e.target.value);
-                  setPage(1);
-                }}
-                className="w-40 bg-background/90"
-                placeholder="End date"
-                aria-label="To date"
-              />
-            </div>
           </div>
+          <Select
+            value={userType}
+            onValueChange={(value) => {
+              setUserType(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="User type" />
+            </SelectTrigger>
+            <SelectContent>
+              {USER_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            placeholder="Module"
+            value={moduleFilter}
+            onChange={(e) => {
+              setModuleFilter(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Module"
+          />
+          <Input
+            placeholder="Action"
+            value={actionFilter}
+            onChange={(e) => {
+              setActionFilter(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Action"
+          />
+          <Input
+            placeholder="User ID"
+            value={userId}
+            onChange={(e) => {
+              setUserId(e.target.value);
+              setPage(1);
+            }}
+            aria-label="User ID"
+          />
+          <div className="grid grid-cols-2 gap-2.5 sm:col-span-2 lg:col-span-1">
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(1);
+              }}
+              aria-label="From date"
+            />
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(1);
+              }}
+              aria-label="To date"
+            />
+          </div>
+          {hasFilters ? (
+            <div className="flex items-center sm:col-span-2 lg:col-span-3">
+              <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
       {error ? <p className="pb-3 text-sm text-destructive">{error.message}</p> : null}
       {showSkeleton ? (
         <div className="space-y-2 py-3">
           {Array.from({ length: isDashboard ? 5 : 6 }).map((_, i) => (
-            <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted/60" />
+            <Skeleton key={i} className="h-10 w-full rounded-md" />
           ))}
         </div>
       ) : rows.length === 0 ? (
@@ -307,6 +341,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
             columns={columns}
             data={rows}
             getRowId={(row, index) => String(row.id ?? index)}
+            onRowClick={setSelectedLog}
             getRowClassName={(row) => {
               if (!highlightId || String(row.id) !== highlightId) return undefined;
               return cn(
@@ -330,6 +365,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
           onPageChange={setPage}
         />
       ) : null}
+      <AuditLogDetailDialog log={selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)} />
     </SectionCard>
   );
 }
