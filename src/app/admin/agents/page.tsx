@@ -171,6 +171,8 @@ export default function AdminEmployeesPage() {
                 <Skeleton key={i} className="h-10 w-full rounded-md" />
               ))}
             </div>
+          ) : error ? (
+            <EmptyState title="Could not load this list" description={error.message} />
           ) : rows.length === 0 ? (
             <EmptyState
               title="No employees found"

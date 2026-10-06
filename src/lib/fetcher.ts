@@ -91,6 +91,19 @@ function isFailedEnvelope(data: unknown): boolean {
   );
 }
 
+function isAuthRequest(endpoint: string): boolean {
+  return endpoint.includes("/auth/");
+}
+
+function redirectExpiredLogin() {
+  if (typeof window === "undefined") return;
+  const path = window.location.pathname;
+  if (path === "/login" || path.startsWith("/login/")) return;
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.assign("/login");
+}
+
 function cancelScheduledAbort(entry: InFlightGet) {
   if (entry.abortTimer == null) return;
   clearTimeout(entry.abortTimer);
@@ -209,6 +222,14 @@ export async function fetcher<T = unknown>(
     }
 
     const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401 && !isAuthRequest(endpoint)) {
+      redirectExpiredLogin();
+      if (ignoreHttpError) {
+        return null as T;
+      }
+      throw new Error("Your session has expired. Please sign in again.");
+    }
 
     if (!response.ok || isFailedEnvelope(data)) {
       if (ignoreHttpError) {

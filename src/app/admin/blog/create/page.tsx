@@ -33,7 +33,7 @@ export default function AdminBlogCreatePage() {
   const authUser = useAppSelector((state) => state.auth.user);
 
   const [description2, setDescription2] = useState<string>("");
-  const [imagePreview, setImagePreview] = useState<string>("/mock-images/blog-cover.svg");
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
 
@@ -47,12 +47,12 @@ export default function AdminBlogCreatePage() {
   } = useForm<BlogEditorFormValues>({
     resolver: zodResolver(blogEditorSchema),
     defaultValues: {
-      coverImage: "/mock-images/blog-cover.svg",
+      coverImage: "",
       mainTitle: "",
       description1: "",
       description2: "",
-      date: new Date().toISOString().slice(0, 10),
-      author: authUser?.name || "Admin",
+      date: "",
+      author: authUser?.name?.trim() || "",
       categoryNames: [],
       tagsText: "",
       seoTitle: "",

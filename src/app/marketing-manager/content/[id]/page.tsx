@@ -16,7 +16,7 @@ import { marketingContentRows } from "@/mock-data/role-workspaces";
 export default function EditMarketingContentPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const item = useMemo(
     () => marketingContentRows.find((row) => row.id === params.id),
     [params.id]
@@ -46,8 +46,7 @@ export default function EditMarketingContentPage() {
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              success("Content updated (UI).");
-              router.push("/marketing-manager/content");
+              showError("Nothing was saved. This screen is not connected to the API.");
             }}
           >
             <div className="space-y-1.5">

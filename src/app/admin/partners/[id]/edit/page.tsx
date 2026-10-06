@@ -35,7 +35,7 @@ export default function AdminEditPartnerPage() {
       email: partner.basicInformation?.email || partner.email || "",
       mobileNumber: partner.mobileNumber || "",
       whatsApp: partner.basicInformation?.whatsApp || "",
-      gender: partner.basicInformation?.gender || "Male",
+      gender: partner.basicInformation?.gender?.trim() || "",
       city: partner.basicInformation?.city || "",
       cnicNumber: partner.basicInformation?.cnicNumber || ""
     };

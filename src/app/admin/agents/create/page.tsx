@@ -33,7 +33,7 @@ const schema = z.object({
   password: z.string().min(6, "Password is required"),
   role: z.string().trim().min(1, "Role is required"),
   city: z.string().trim().min(2, "City is required"),
-  gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
+  gender: z.string().trim().min(1, "Gender is required"),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
   cnicFront: z.string().trim().url("Valid CNIC front image URL required"),
   cnicBack: z.string().trim().url("Valid CNIC back image URL required")
@@ -64,7 +64,7 @@ export default function AdminCreateEmployeePage() {
       password: "",
       role: "",
       city: "",
-      gender: "Male",
+      gender: "",
       cnicNumber: "",
       cnicFront: "",
       cnicBack: ""
@@ -191,7 +191,7 @@ export default function AdminCreateEmployeePage() {
                   name="gender"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select value={field.value || undefined} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>

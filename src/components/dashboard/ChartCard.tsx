@@ -13,6 +13,7 @@ export function ChartCard({
   action,
   loading,
   empty,
+  unavailable,
   className,
   children,
   heightClass = "h-52 sm:h-60"
@@ -23,6 +24,8 @@ export function ChartCard({
   action?: ReactNode;
   loading?: boolean;
   empty?: boolean;
+  /** The request failed or the figure is not on the API. */
+  unavailable?: boolean;
   className?: string;
   children: ReactNode;
   heightClass?: string;
@@ -53,7 +56,7 @@ export function ChartCard({
               heightClass === "h-auto" ? "h-48" : heightClass
             )}
           />
-        ) : empty ? (
+        ) : unavailable || empty ? (
           <div
             className={cn(
               "flex flex-col items-center justify-center gap-2 rounded-3xl bg-[#f3f4f6] text-center dark:bg-white/5",
@@ -63,7 +66,7 @@ export function ChartCard({
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#fce001] to-[#f5c518]">
               <BarChart3 className="h-4 w-4 text-slate-900" />
             </div>
-            <p className="text-sm font-medium">No data yet</p>
+            <p className="text-sm font-medium">{unavailable ? "Not available" : "No data yet"}</p>
           </div>
         ) : (
           <RevealScope className={heightClass}>{children}</RevealScope>

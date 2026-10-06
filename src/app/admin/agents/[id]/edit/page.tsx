@@ -38,7 +38,7 @@ const schema = z.object({
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
   role: z.string().trim().min(1, "Role is required"),
   city: z.string().trim().min(2, "City is required"),
-  gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
+  gender: z.string().trim().min(1, "Gender is required"),
   cnicNumber: z.string().trim().min(13, "CNIC must be 13 digits").max(13, "CNIC must be 13 digits"),
   cnicFront: z.string().trim().url("Valid CNIC front image URL required"),
   cnicBack: z.string().trim().url("Valid CNIC back image URL required")
@@ -53,11 +53,13 @@ interface UploadResponse {
   data: string;
 }
 
-function normalizeGender(value: string | null): FormValues["gender"] {
-  const gender = (value || "").toUpperCase();
+function normalizeGender(value: string | null): string {
+  const trimmed = (value || "").trim();
+  const gender = trimmed.toUpperCase();
+  if (gender === "MALE") return "Male";
   if (gender === "FEMALE") return "Female";
   if (gender === "OTHER") return "Other";
-  return "Male";
+  return trimmed;
 }
 
 export default function AdminEditEmployeePage() {
@@ -77,7 +79,7 @@ export default function AdminEditEmployeePage() {
       mobileNumber: "",
       role: "",
       city: "",
-      gender: "Male",
+      gender: "",
       cnicNumber: "",
       cnicFront: "",
       cnicBack: ""
@@ -240,7 +242,7 @@ export default function AdminEditEmployeePage() {
                   name="gender"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select value={field.value || undefined} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>

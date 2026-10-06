@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,9 +38,7 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function AgentProfilePage() {
   const user = useAuthStore((s) => s.user);
-  const { success } = useToast();
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [passwordSaving, setPasswordSaving] = useState(false);
+  const { success, error: showError } = useToast();
 
   const {
     register: registerProfile,
@@ -69,7 +67,6 @@ export default function AgentProfilePage() {
   const {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
-    reset: resetPassword,
     formState: { errors: passwordErrors }
   } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -80,21 +77,12 @@ export default function AgentProfilePage() {
     }
   });
 
-  const onProfileSubmit = (values: ProfileFormValues) => {
-    setProfileSaving(true);
-    setTimeout(() => {
-      success("Profile updated successfully (mock).");
-      setProfileSaving(false);
-    }, 600);
+  const onProfileSubmit = (_values: ProfileFormValues) => {
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
 
-  const onPasswordSubmit = (values: PasswordFormValues) => {
-    setPasswordSaving(true);
-    setTimeout(() => {
-      success("Password changed successfully (mock).");
-      resetPassword();
-      setPasswordSaving(false);
-    }, 600);
+  const onPasswordSubmit = (_values: PasswordFormValues) => {
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
 
   const referralCode = user
@@ -172,9 +160,7 @@ export default function AgentProfilePage() {
                   </FormField>
                 </div>
               </div>
-              <Button type="submit" disabled={profileSaving}>
-                {profileSaving ? "Saving…" : "Save profile"}
-              </Button>
+              <Button type="submit">Save profile</Button>
             </form>
           </SectionCard>
 
@@ -259,9 +245,7 @@ export default function AgentProfilePage() {
                 placeholder="••••••••"
               />
             </FormField>
-            <Button type="submit" disabled={passwordSaving}>
-              {passwordSaving ? "Updating…" : "Change password"}
-            </Button>
+            <Button type="submit">Change password</Button>
           </form>
         </SectionCard>
       </PageContainer>

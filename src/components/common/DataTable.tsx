@@ -21,6 +21,8 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   emptyTitle?: string;
   emptyDescription?: string;
+  /** When the list request failed, show this instead of an empty-data message. */
+  error?: string | null;
   className?: string;
   /** Stable row id (e.g. database id) so cells stay aligned when data updates. */
   getRowId?: (originalRow: TData, index: number) => string;
@@ -36,6 +38,7 @@ export function DataTable<TData, TValue>({
   data,
   emptyTitle = "No data yet",
   emptyDescription = "Once records are available, they will appear here.",
+  error,
   className,
   getRowId,
   getRowClassName,
@@ -52,8 +55,8 @@ export function DataTable<TData, TValue>({
   if (!data.length) {
     return (
       <EmptyState
-        title={emptyTitle}
-        description={emptyDescription}
+        title={error ? "Could not load this list" : emptyTitle}
+        description={error || emptyDescription}
         className="py-12"
       />
     );

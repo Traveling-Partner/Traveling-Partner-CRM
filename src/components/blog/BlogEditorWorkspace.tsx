@@ -133,12 +133,18 @@ export function BlogEditorWorkspace({
         <input type="hidden" {...register.coverImage} />
         <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 shadow-premium-sm">
           <div className="relative aspect-[3/1] w-full min-h-[120px] max-h-[200px] sm:min-h-[140px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imagePreview || "/mock-images/blog-cover.svg"}
-              alt="Cover"
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-            />
+            {imagePreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imagePreview}
+                alt="Cover"
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                No cover image
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
               <div>

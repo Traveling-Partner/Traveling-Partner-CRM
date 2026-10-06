@@ -43,7 +43,7 @@ export default function AdminNewsletterPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const { data, isLoading, isFetching } = useNewsletterListQuery({
+  const { data, isLoading, isFetching, error: listError } = useNewsletterListQuery({
     page,
     pageSize,
     status: statusFilter,
@@ -213,6 +213,8 @@ export default function AdminNewsletterPage() {
                 <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted/60" />
               ))}
             </div>
+          ) : listError ? (
+            <EmptyState title="Could not load this list" description={listError.message} />
           ) : rows.length === 0 ? (
             <EmptyState
               title="No newsletters found"

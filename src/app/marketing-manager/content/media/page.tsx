@@ -14,7 +14,7 @@ const media = [
 ];
 
 export default function MarketingMediaPage() {
-  const { success } = useToast();
+  const { error: showError } = useToast();
 
   return (
     <AppShell title="Media library">
@@ -23,7 +23,7 @@ export default function MarketingMediaPage() {
           title="Media library"
           description="Upload and manage marketing assets."
           headerAction={
-            <Button size="sm" onClick={() => success("Upload dialog ready (UI).")}>
+            <Button size="sm" onClick={() => showError("Nothing was saved. This screen is not connected to the API.")}>
               Upload
             </Button>
           }

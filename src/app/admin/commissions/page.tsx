@@ -34,7 +34,7 @@ const monthOptions = (() => {
 type Row = Commission & { agentName: string };
 
 export default function AdminCommissionsPage() {
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -95,7 +95,7 @@ export default function AdminCommissionsPage() {
   ];
 
   const handleExport = () => {
-    success("CSV export started (mock).");
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
 
   return (

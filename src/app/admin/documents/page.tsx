@@ -593,6 +593,11 @@ export default function DocumentsQueuePage() {
                   <Skeleton key={i} className="h-10 w-full rounded-md" />
                 ))}
               </div>
+            ) : queueQuery.isError ? (
+              <EmptyState
+                title="Could not load this list"
+                description={queueQuery.error?.message || "The document list could not be loaded."}
+              />
             ) : documentRows.length === 0 ? (
               <EmptyState
                 title="No records found"

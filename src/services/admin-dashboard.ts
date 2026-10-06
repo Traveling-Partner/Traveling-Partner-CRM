@@ -2,15 +2,6 @@ import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import { fetcher, isAbortError } from "@/lib/fetcher";
-import {
-  DEMO_DOCUMENTS_PENDING,
-  DEMO_FARE_TREND,
-  DEMO_OUTCOME_TREND,
-  DEMO_RIDES_BY_CITY,
-  DEMO_RIDE_FUNNEL,
-  DEMO_COMMISSION,
-  DEMO_TOP_AGENTS
-} from "@/mock-data/dashboard-ops";
 
 export interface DashboardCounts {
   totalDrivers: number;
@@ -466,21 +457,17 @@ function mapDashboardResponse(
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, recentActivityLimit);
   const fallbackFunnel = funnelFromRideStatus(rideStatus);
-  const rideFunnel = ops.funnel != null ? mapRideFunnel(ops.funnel, fallbackFunnel) : DEMO_RIDE_FUNNEL;
-  const outcomeTrend = ops.outcome != null ? mapOutcomeTrend(ops.outcome) : DEMO_OUTCOME_TREND;
-  const ridesByCity = ops.city != null ? mapRidesByCity(ops.city) : DEMO_RIDES_BY_CITY;
-  const fareTrend = ops.fare != null ? mapFareTrend(ops.fare) : DEMO_FARE_TREND;
+  const rideFunnel = ops.funnel != null ? mapRideFunnel(ops.funnel, fallbackFunnel) : EMPTY_FUNNEL;
+  const outcomeTrend = ops.outcome != null ? mapOutcomeTrend(ops.outcome) : [];
+  const ridesByCity = ops.city != null ? mapRidesByCity(ops.city) : [];
+  const fareTrend = ops.fare != null ? mapFareTrend(ops.fare) : [];
   const documentsPending =
-    ops.documents != null ? mapDocumentsPending(ops.documents) : DEMO_DOCUMENTS_PENDING;
-  const commission = ops.commission != null ? mapCommission(ops.commission) : DEMO_COMMISSION;
+    ops.documents != null ? mapDocumentsPending(ops.documents) : EMPTY_DOCUMENTS;
+  const commission = ops.commission != null ? mapCommission(ops.commission) : EMPTY_COMMISSION;
   const topAgents =
     ops.topAgents != null
       ? mapTopAgents(ops.topAgents)
-      : {
-          agents: DEMO_TOP_AGENTS,
-          totalDrivers: DEMO_TOP_AGENTS.reduce((sum, row) => sum + row.drivers, 0),
-          totalPartners: DEMO_TOP_AGENTS.reduce((sum, row) => sum + row.partners, 0)
-        };
+      : { agents: [], totalDrivers: 0, totalPartners: 0 };
 
   return {
     counts,
