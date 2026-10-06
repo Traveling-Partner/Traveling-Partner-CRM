@@ -7,8 +7,9 @@
   max-width: none;
 }
 
-.dark .blog-prose {
-  color: #f8fafc;
+.dark .blog-prose,
+.dark .blog-prose :is(p, h1, h2, h3, h4, li, span, strong, em, blockquote) {
+  color: #f8fafc !important;
 }
 
 .blog-prose > * + * {
@@ -387,8 +388,8 @@
   width: 100%;
   margin: 0;
   /* Force readable text — count can update while text looks "invisible" without this */
-  color: #0f172a !important;
-  caret-color: #0f172a !important;
+  color: #0f172a;
+  caret-color: #0f172a;
   opacity: 1 !important;
   visibility: visible !important;
   font-size: 1rem !important;
@@ -396,9 +397,10 @@
   background: transparent;
 }
 
-.dark .blog-editor-surface .ProseMirror {
+.dark .blog-editor-surface .ProseMirror,
+.dark .blog-editor-surface .ProseMirror :is(p, h1, h2, h3, h4, li, span, strong, em, blockquote, td, th) {
   color: #f8fafc !important;
-  caret-color: #fdb813 !important;
+  caret-color: #fdb813;
 }
 
 .blog-editor-surface .ProseMirror p,
@@ -410,7 +412,6 @@
 .blog-editor-surface .ProseMirror blockquote,
 .blog-editor-surface .ProseMirror td,
 .blog-editor-surface .ProseMirror th {
-  color: inherit !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
