@@ -2,21 +2,29 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import "./globals.css";
 import "@/styles/tp-loader.css";
-import { Poppins, Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { ReduxProvider } from "@/store/ReduxProvider";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins"
+const poppins = localFont({
+  src: [
+    { path: "../fonts/poppins-latin-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/poppins-latin-500.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/poppins-latin-600.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/poppins-latin-700.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/poppins-latin-800.woff2", weight: "800", style: "normal" },
+    { path: "../fonts/poppins-latin-900.woff2", weight: "900", style: "normal" }
+  ],
+  variable: "--font-poppins",
+  display: "swap"
 });
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-montserrat"
+const montserrat = localFont({
+  src: "../fonts/montserrat-latin.woff2",
+  weight: "400 700",
+  variable: "--font-montserrat",
+  display: "swap"
 });
 
 export const metadata: Metadata = {
