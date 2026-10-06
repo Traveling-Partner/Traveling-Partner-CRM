@@ -37,14 +37,14 @@ export function AuthBootstrap() {
         ? {
             id: String(persistedUser.id ?? decoded.id),
             role: normalizeRole(String(persistedUser.role || decoded.role)),
-            name: String(persistedUser.name ?? ""),
+            name: String(persistedUser.name || decoded.name || ""),
             email: String(persistedUser.email ?? ""),
             mobileNumber: String(persistedUser.mobileNumber ?? decoded.mobileNumber ?? "")
           }
         : {
             id: String(decoded.id),
             role: normalizeRole(decoded.role),
-            name: "",
+            name: decoded.name ?? "",
             email: "",
             mobileNumber: decoded.mobileNumber
           };
