@@ -213,7 +213,7 @@ export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
       }
       icon={
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#fce001] to-[#fdb813] shadow-sm">
-          <ScrollText className="h-5 w-5 text-foreground" />
+          <ScrollText className="h-5 w-5 text-slate-900" />
         </div>
       }
       headerAction={

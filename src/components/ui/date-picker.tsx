@@ -257,10 +257,10 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-[18.5rem] overflow-hidden border-border/70 bg-popover p-0 shadow-xl" align="start">
-            <div className="flex items-center gap-1 bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-2">
+            <div className="flex items-center gap-1 bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2 py-2 text-slate-900">
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-black/10"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-900 hover:bg-black/10"
                 onClick={() => {
                   if (panel === "years") setViewDate((d) => addYears(d, -12));
                   else if (panel === "months") setViewDate((d) => addYears(d, -1));
@@ -277,7 +277,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
                   aria-pressed={panel === "months"}
                   onClick={() => setPanel((p) => (p === "months" ? "days" : "months"))}
                   className={cn(
-                    "inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-foreground transition-colors",
+                    "inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-slate-900 transition-colors",
                     panel === "months" ? "bg-black/15" : "hover:bg-black/10"
                   )}
                 >
@@ -290,7 +290,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
                   aria-pressed={panel === "years"}
                   onClick={() => setPanel((p) => (p === "years" ? "days" : "years"))}
                   className={cn(
-                    "inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-foreground transition-colors",
+                    "inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-slate-900 transition-colors",
                     panel === "years" ? "bg-black/15" : "hover:bg-black/10"
                   )}
                 >
@@ -300,7 +300,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
               </div>
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-black/10"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-900 hover:bg-black/10"
                 onClick={() => {
                   if (panel === "years") setViewDate((d) => addYears(d, 12));
                   else if (panel === "months") setViewDate((d) => addYears(d, 1));
@@ -327,7 +327,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
                       className={cn(
                         "h-9 rounded-lg text-xs font-medium transition-colors",
                         active
-                          ? "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-foreground shadow-sm"
+                          ? "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-slate-900 shadow-sm"
                           : "bg-muted/40 text-foreground hover:bg-[var(--brand-light-hover)] dark:bg-white/5"
                       )}
                     >
@@ -355,7 +355,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
                       className={cn(
                         "h-9 rounded-lg text-xs font-medium tabular-nums transition-colors",
                         active
-                          ? "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-foreground shadow-sm"
+                          ? "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-slate-900 shadow-sm"
                           : "bg-muted/40 text-foreground hover:bg-[var(--brand-light-hover)] dark:bg-white/5"
                       )}
                     >
@@ -394,7 +394,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
                         inMonth && !selectedDay && "text-foreground hover:bg-[var(--brand-light-hover)]",
                         today && !selectedDay && "ring-1 ring-[#fdb813]/80",
                         selectedDay &&
-                          "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-foreground shadow-sm hover:from-[#fce001] hover:to-[#fdb813]",
+                          "bg-gradient-to-br from-[#fce001] to-[#fdb813] font-semibold text-slate-900 shadow-sm hover:from-[#fce001] hover:to-[#fdb813]",
                         dayDisabled && "cursor-not-allowed opacity-30 hover:bg-transparent"
                       )}
                     >
@@ -433,7 +433,7 @@ export const DatePickerInput = React.forwardRef<HTMLInputElement, DatePickerInpu
               </button>
               <button
                 type="button"
-                className="rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm hover:brightness-[1.03]"
+                className="rounded-md bg-gradient-to-r from-[#fce001] to-[#fdb813] px-2.5 py-1 text-xs font-semibold text-slate-900 shadow-sm hover:brightness-[1.03]"
                 onClick={() => {
                   const now = new Date();
                   if (isDateTime) {
