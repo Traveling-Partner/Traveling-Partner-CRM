@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
@@ -26,6 +26,7 @@ import { MissingData } from "@/components/common/MissingData";
 import { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
 import { RIDE_STATUSES, type RideRow } from "@/services/rides";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 
 function currency(n: number | null) {
   if (n == null || Number.isNaN(n)) return <MissingData />;
@@ -48,16 +49,25 @@ function formatDateTime(value: string | null) {
   });
 }
 
-export default function AdminRidesPage() {
-  const [search, setSearch] = useState("");
-  const [bookingReference, setBookingReference] = useState("");
-  const [cityFilter, setCityFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [rideType, setRideType] = useState("");
-  const [startedAt, setStartedAt] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const resetPage = () => setPage(1);
+function AdminRidesList() {
+  const { values, setValues } = useUrlFilters({
+    search: "",
+    booking: "",
+    city: "",
+    status: "all",
+    type: "",
+    date: "",
+    page: "1",
+    size: String(DEFAULT_PAGE_SIZE)
+  });
+  const search = values.search;
+  const bookingReference = values.booking;
+  const cityFilter = values.city;
+  const statusFilter = values.status;
+  const rideType = values.type;
+  const startedAt = values.date;
+  const page = Math.max(1, Number(values.page) || 1);
+  const pageSize = Math.max(1, Number(values.size) || DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useRidesListQuery({
     page,
@@ -160,35 +170,23 @@ export default function AdminRidesPage() {
               <Input
                 placeholder="Search address, name, phone"
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  resetPage();
-                }}
+                onChange={(e) => setValues({ search: e.target.value, page: "1" })}
                 className="pl-9"
               />
             </div>
             <Input
               placeholder="Booking ref (TP-000036)"
               value={bookingReference}
-              onChange={(e) => {
-                setBookingReference(e.target.value);
-                resetPage();
-              }}
+              onChange={(e) => setValues({ booking: e.target.value, page: "1" })}
             />
             <Input
               placeholder="City"
               value={cityFilter}
-              onChange={(e) => {
-                setCityFilter(e.target.value);
-                resetPage();
-              }}
+              onChange={(e) => setValues({ city: e.target.value, page: "1" })}
             />
             <Select
               value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                resetPage();
-              }}
+              onValueChange={(value) => setValues({ status: value, page: "1" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
@@ -205,18 +203,12 @@ export default function AdminRidesPage() {
             <Input
               placeholder="Ride type"
               value={rideType}
-              onChange={(e) => {
-                setRideType(e.target.value);
-                resetPage();
-              }}
+              onChange={(e) => setValues({ type: e.target.value, page: "1" })}
             />
             <Input
               type="date"
               value={startedAt}
-              onChange={(e) => {
-                setStartedAt(e.target.value);
-                resetPage();
-              }}
+              onChange={(e) => setValues({ date: e.target.value, page: "1" })}
             />
           </div>
           {loading ? (
@@ -235,16 +227,21 @@ export default function AdminRidesPage() {
           )}
           <ListPaginationFooter
             pageSize={pageSize}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
+            onPageSizeChange={(size) => setValues({ size: String(size), page: "1" })}
             currentPage={page}
             totalPages={totalPages}
-            onPageChange={setPage}
+            onPageChange={(next) => setValues({ page: String(next) })}
           />
         </SectionCard>
       </PageContainer>
     </AppShell>
+  );
+}
+
+export default function AdminRidesPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminRidesList />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -19,17 +19,26 @@ import type { DriverRow } from "@/services/users";
 import { Search, Filter, UserCircle, Clock, CheckCircle2, Ban, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 
-export default function AdminDriversPage() {
+function AdminDriversList() {
   const router = useRouter();
-
-  const [nameFilter, setNameFilter] = useState("");
-  const [phoneFilter, setPhoneFilter] = useState("");
-  const [cityFilter, setCityFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { values, setValues } = useUrlFilters({
+    name: "",
+    phone: "",
+    city: "",
+    gender: "all",
+    status: "all",
+    page: "1",
+    size: String(DEFAULT_PAGE_SIZE)
+  });
+  const nameFilter = values.name;
+  const phoneFilter = values.phone;
+  const cityFilter = values.city;
+  const genderFilter = values.gender;
+  const statusFilter = values.status;
+  const page = Math.max(1, Number(values.page) || 1);
+  const pageSize = Math.max(1, Number(values.size) || DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, isFetching, error } = useDriversListQuery({
     page,
@@ -85,8 +94,6 @@ export default function AdminDriversPage() {
       valueColor: "text-orange-600 dark:text-orange-400"
     }
   ];
-
-  const resetPage = () => setPage(1);
 
   const columns: ColumnDef<DriverRow>[] = [
     {
@@ -242,35 +249,23 @@ export default function AdminDriversPage() {
                 <Input
                   placeholder="Name"
                   value={nameFilter}
-                  onChange={(e) => {
-                    setNameFilter(e.target.value);
-                    resetPage();
-                  }}
+                  onChange={(e) => setValues({ name: e.target.value, page: "1" })}
                   className="pl-9"
                 />
               </div>
               <Input
                 placeholder="Phone number"
                 value={phoneFilter}
-                onChange={(e) => {
-                  setPhoneFilter(e.target.value);
-                  resetPage();
-                }}
+                onChange={(e) => setValues({ phone: e.target.value, page: "1" })}
               />
               <Input
                 placeholder="City"
                 value={cityFilter}
-                onChange={(e) => {
-                  setCityFilter(e.target.value);
-                  resetPage();
-                }}
+                onChange={(e) => setValues({ city: e.target.value, page: "1" })}
               />
               <Select
                 value={genderFilter}
-                onValueChange={(value) => {
-                  setGenderFilter(value);
-                  resetPage();
-                }}
+                onValueChange={(value) => setValues({ gender: value, page: "1" })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Gender" />
@@ -284,10 +279,7 @@ export default function AdminDriversPage() {
               </Select>
               <Select
                 value={statusFilter}
-                onValueChange={(value) => {
-                  setStatusFilter(value);
-                  resetPage();
-                }}
+                onValueChange={(value) => setValues({ status: value, page: "1" })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Status" />
@@ -317,16 +309,21 @@ export default function AdminDriversPage() {
 
           <ListPaginationFooter
             pageSize={pageSize}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
+            onPageSizeChange={(size) => setValues({ size: String(size), page: "1" })}
             currentPage={page}
             totalPages={totalPages}
-            onPageChange={setPage}
+            onPageChange={(next) => setValues({ page: String(next) })}
           />
         </SectionCard>
       </PageContainer>
     </AppShell>
+  );
+}
+
+export default function AdminDriversPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminDriversList />
+    </Suspense>
   );
 }
