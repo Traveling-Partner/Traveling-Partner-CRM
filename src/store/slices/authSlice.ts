@@ -51,6 +51,7 @@ export const loginUserThunk = createAsyncThunk(
         throw new Error("Invalid token returned from server");
       }
 
+      const loginRecord = data as typeof data & Record<string, unknown>;
       const user: AuthUser = {
         id: String(data.id ?? decoded.id),
         role: pickResolvedRole([
@@ -58,9 +59,15 @@ export const loginUserThunk = createAsyncThunk(
           ...rolesFromUnknown(data.roles),
           decoded.role
         ]),
-        name: data.name ?? "",
+        name: personName(
+          data.name,
+          loginRecord.fullName,
+          loginRecord.userName,
+          loginRecord.username,
+          decoded.name
+        ),
         email: data.email ?? "",
-        mobileNumber: decoded.mobileNumber,
+        mobileNumber: decoded.mobileNumber || mobileNumber,
         mustChangePassword: false
       };
 
@@ -112,6 +119,21 @@ const authSlice = createSlice({
     markAuthInitialized: (state) => {
       state.authInitialized = true;
     },
+    patchAuthProfile: (
+      state,
+      action: PayloadAction<{ name?: string; email?: string; mobileNumber?: string }>
+    ) => {
+      if (!state.user) return;
+      const name = personName(action.payload.name);
+      const email = action.payload.email?.trim();
+      const mobileNumber = action.payload.mobileNumber?.trim();
+      if (name) state.user.name = name;
+      if (email) state.user.email = email;
+      if (mobileNumber) state.user.mobileNumber = mobileNumber;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(state.user));
+      }
+    },
     setAuthRole: (state, action: PayloadAction<string>) => {
       if (!state.user) return;
       const role = normalizeRole(action.payload);
@@ -148,6 +170,21 @@ export const {
   clearAuthError,
   setForcePasswordChange,
   markAuthInitialized,
+  patchAuthProfile,
   setAuthRole
 } = authSlice.actions;
+
+function personName(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed || looksLikePhone(trimmed)) continue;
+    return trimmed;
+  }
+  return "";
+}
+
+function looksLikePhone(value: string): boolean {
+  return /^\d{8,}$/.test(value.replace(/[\s()+-]/g, ""));
+}
 export default authSlice.reducer;
