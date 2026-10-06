@@ -62,12 +62,12 @@ export default function AdminBlogEditPage() {
   } = useForm<BlogEditorFormValues>({
     resolver: zodResolver(blogEditorSchema),
     defaultValues: {
-      coverImage: "/mock-images/blog-cover.svg",
+      coverImage: "",
       mainTitle: "",
       description1: "",
       description2: "",
-      date: new Date().toISOString().slice(0, 10),
-      author: "Admin",
+      date: "",
+      author: "",
       categoryNames: [],
       tagsText: "",
       seoTitle: "",
@@ -103,17 +103,15 @@ export default function AdminBlogEditPage() {
         setExistingRecord(row);
         const desc2 = row.description2 ?? "";
         const dateStr =
-          typeof row.date === "string" && row.date.trim()
-            ? row.date.trim().slice(0, 10)
-            : new Date().toISOString().slice(0, 10);
+          typeof row.date === "string" && row.date.trim() ? row.date.trim().slice(0, 10) : "";
 
         reset({
-          coverImage: row.coverImage?.trim() || "/mock-images/blog-cover.svg",
+          coverImage: row.coverImage?.trim() || "",
           mainTitle: row.mainTitle ?? "",
           description1: row.description1 ?? "",
           description2: desc2,
           date: dateStr,
-          author: row.author ?? "Admin",
+          author: row.author?.trim() || "",
           categoryNames: parseCategoryNames(row.categoryName),
           tagsText: (row.tags ?? []).join(", "),
           seoTitle: row.seoTitle ?? "",
@@ -123,7 +121,7 @@ export default function AdminBlogEditPage() {
           faqs: faqsFromApi(row.faqs)
         });
         setDescription2(desc2);
-        setImagePreview(row.coverImage?.trim() || "/mock-images/blog-cover.svg");
+        setImagePreview(row.coverImage?.trim() || "");
       } catch {
         setNotFound(true);
       } finally {

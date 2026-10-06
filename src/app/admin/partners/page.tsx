@@ -49,7 +49,8 @@ export default function AdminPartnersPage() {
   const {
     data: statusCounts,
     isLoading: countsLoading,
-    isFetching: countsFetching
+    isFetching: countsFetching,
+    error: countsError
   } = usePartnerStatusCountsQuery();
 
   const partnerRows: PartnerRow[] = data?.content ?? [];
@@ -216,6 +217,8 @@ export default function AdminPartnersPage() {
                     </p>
                     {countsLoadingState ? (
                       <Skeleton className="mt-1 h-7 w-12" />
+                    ) : countsError ? (
+                      <p className="mt-1 text-sm font-medium text-destructive">Not available</p>
                     ) : (
                       <p className={cn("text-2xl font-bold tracking-tight tabular-nums", card.valueColor)}>
                         {card.value.toLocaleString()}
@@ -312,7 +315,7 @@ export default function AdminPartnersPage() {
               ))}
             </div>
           ) : (
-            <DataTable columns={columns} data={partnerRows} />
+            <DataTable columns={columns} data={partnerRows} error={error?.message} />
           )}
 
           <ListPaginationFooter

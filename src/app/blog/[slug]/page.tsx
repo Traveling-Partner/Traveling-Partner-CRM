@@ -6,6 +6,7 @@ import { getBlogById } from "@/services/blog";
 import type { BlogApiRecord } from "@/services/blog";
 import { useAppSelector } from "@/store/hooks";
 import { formatRelativePostTime } from "@/lib/format-relative-post-time";
+import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import "@/components/blog/blog-content.css";
 import TPLoader from "@/components/TPLoader";
 
@@ -72,7 +73,7 @@ export default function BlogPreviewPage() {
   const title = post.mainTitle;
   const dateLabel = formatPreviewDate(post.date ?? undefined);
   const relativePosted = formatRelativePostTime(post.date ?? undefined);
-  const html = post.description2?.trim() ?? "";
+  const html = sanitizeBlogHtml(post.description2 ?? "");
 
   return (
     <main className="min-h-screen bg-background px-4 py-10 text-foreground">

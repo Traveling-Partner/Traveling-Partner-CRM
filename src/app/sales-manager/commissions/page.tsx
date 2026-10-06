@@ -24,10 +24,10 @@ type CommissionStatus = "PENDING" | "APPROVED" | "REJECTED";
 type Row = (typeof smCommissionRows)[number] & { status: CommissionStatus };
 
 export default function SalesManagerCommissionsPage() {
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [rows, setRows] = useState<Row[]>(() => [...smCommissionRows]);
+  const rows: Row[] = smCommissionRows.map((row) => ({ ...row }));
 
   const filtered = useMemo(
     () =>
@@ -40,9 +40,8 @@ export default function SalesManagerCommissionsPage() {
     [rows, search, status]
   );
 
-  const updateStatus = (id: string, next: CommissionStatus) => {
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status: next } : row)));
-    success(`Commission ${next.toLowerCase()}.`);
+  const updateStatus = (_id: string, _next: CommissionStatus) => {
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
 
   const columns: ColumnDef<Row>[] = [
@@ -105,7 +104,7 @@ export default function SalesManagerCommissionsPage() {
           title="Commission queue"
           description="Approve or reject agent commissions. History, analytics, and monthly summaries included."
           headerAction={
-            <Button variant="outline" size="sm" onClick={() => success("CSV export started (UI).")}>
+            <Button variant="outline" size="sm" onClick={() => showError("Nothing was saved. This screen is not connected to the API.")}>
               Export
             </Button>
           }

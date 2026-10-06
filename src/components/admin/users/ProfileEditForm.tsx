@@ -88,7 +88,7 @@ export function ProfileEditForm({
           control={control}
           name="gender"
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select value={field.value || undefined} onValueChange={field.onChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>

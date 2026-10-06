@@ -25,11 +25,11 @@ import { Search } from "lucide-react";
 type Row = (typeof managerUsers)[number];
 
 export default function ManagerUsersPage() {
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [role, setRole] = useState("all");
-  const [rows, setRows] = useState<Row[]>(() => [...managerUsers]);
+  const rows = managerUsers;
 
   const filtered = useMemo(
     () =>
@@ -82,17 +82,7 @@ export default function ManagerUsersPage() {
             variant="outline"
             className="h-7 text-[11px]"
             onClick={() => {
-              setRows((prev) =>
-                prev.map((u) =>
-                  u.id === row.original.id
-                    ? {
-                        ...u,
-                        status: u.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
-                      }
-                    : u
-                )
-              );
-              success("User status updated (UI).");
+              showError("Nothing was saved. This screen is not connected to the API.");
             }}
           >
             {row.original.status === "ACTIVE" ? "Deactivate" : "Activate"}
@@ -102,8 +92,7 @@ export default function ManagerUsersPage() {
             variant="outline"
             className="h-7 text-[11px]"
             onClick={() => {
-              setRows((prev) => prev.filter((u) => u.id !== row.original.id));
-              success("User removed (UI).");
+              showError("Nothing was saved. This screen is not connected to the API.");
             }}
           >
             Delete

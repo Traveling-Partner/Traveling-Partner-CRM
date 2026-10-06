@@ -179,6 +179,8 @@ export default function NewsletterSubscribersPage() {
                 />
               ))}
             </div>
+          ) : error ? (
+            <EmptyState title="Could not load this list" description={error.message} />
           ) : totalSubscribers === 0 ? (
             <EmptyState
               title="No subscribers found"

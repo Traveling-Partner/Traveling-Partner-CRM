@@ -25,10 +25,10 @@ type ContentStatus = "PUBLISHED" | "PENDING" | "SCHEDULED" | "UNPUBLISHED";
 type Row = (typeof marketingContentRows)[number] & { status: ContentStatus };
 
 export default function MarketingContentPage() {
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [rows, setRows] = useState<Row[]>(() => [...marketingContentRows]);
+  const rows: Row[] = marketingContentRows.map((row) => ({ ...row }));
 
   const filtered = useMemo(
     () =>
@@ -44,9 +44,8 @@ export default function MarketingContentPage() {
     [rows, search, status]
   );
 
-  const setContentStatus = (id: string, next: ContentStatus) => {
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status: next } : row)));
-    success(`Content marked ${next.toLowerCase()}.`);
+  const setContentStatus = (_id: string, _next: ContentStatus) => {
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
 
   const columns: ColumnDef<Row>[] = [
@@ -97,8 +96,7 @@ export default function MarketingContentPage() {
             variant="outline"
             className="h-7 text-[11px]"
             onClick={() => {
-              setRows((prev) => prev.filter((r) => r.id !== row.original.id));
-              success("Content deleted.");
+              showError("Nothing was saved. This screen is not connected to the API.");
             }}
           >
             Delete

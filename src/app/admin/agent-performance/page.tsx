@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
@@ -21,14 +21,10 @@ import {
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { Search, Filter } from "lucide-react";
 import { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
-import {
-  buildAgentPerformanceRow,
-  formatAgentCurrency,
-  formatAgentDate,
-  type AgentPerformanceRow
-} from "@/lib/agent-onboarding";
+import { formatAgentDate } from "@/lib/agent-onboarding";
 import { showPhone } from "@/lib/format-ids";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+import type { AgentRow } from "@/services/users";
 
 export default function AdminAgentPerformancePage() {
   const router = useRouter();
@@ -47,15 +43,12 @@ export default function AdminAgentPerformancePage() {
     gender: "all"
   });
 
-  const agentRows: AgentPerformanceRow[] = useMemo(
-    () => (data?.content ?? []).map(buildAgentPerformanceRow),
-    [data?.content]
-  );
+  const agentRows: AgentRow[] = data?.content ?? [];
 
   const totalPages = data?.totalPages ?? 1;
   const loading = isLoading || isFetching;
 
-  const columns: ColumnDef<AgentPerformanceRow>[] = [
+  const columns: ColumnDef<AgentRow>[] = [
     {
       accessorKey: "name",
       header: "Agent name",
@@ -96,61 +89,11 @@ export default function AdminAgentPerformancePage() {
       cell: ({ row }) => <StatusBadge status={row.original.status} />
     },
     {
-      accessorKey: "driverCount",
-      header: "Drivers",
-      cell: ({ row }) => (
-        <span className="font-heading font-semibold tabular-nums">{row.original.driverCount}</span>
-      )
-    },
-    {
-      accessorKey: "passengerCount",
-      header: "Passengers",
-      cell: ({ row }) => (
-        <span className="font-heading font-semibold tabular-nums">{row.original.passengerCount}</span>
-      )
-    },
-    {
-      accessorKey: "totalCommission",
-      header: "Total earned",
-      cell: ({ row }) => (
-        <span className="text-sm font-medium tabular-nums whitespace-nowrap">
-          {formatAgentCurrency(row.original.totalCommission)}
-        </span>
-      )
-    },
-    {
-      accessorKey: "paidAmount",
-      header: "Total paid",
-      cell: ({ row }) => (
-        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap">
-          {formatAgentCurrency(row.original.paidAmount)}
-        </span>
-      )
-    },
-    {
-      accessorKey: "remainingAmount",
-      header: "Remaining",
-      cell: ({ row }) => (
-        <span className="text-sm font-medium text-amber-600 dark:text-amber-400 tabular-nums whitespace-nowrap">
-          {formatAgentCurrency(row.original.remainingAmount)}
-        </span>
-      )
-    },
-    {
-      accessorKey: "lastPaymentDate",
-      header: "Last payment",
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-          {formatAgentDate(row.original.lastPaymentDate)}
-        </span>
-      )
-    },
-    {
-      accessorKey: "joiningDate",
+      accessorKey: "createdAt",
       header: "Joining date",
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-          {formatAgentDate(row.original.joiningDate)}
+          {formatAgentDate(row.original.createdAt)}
         </span>
       )
     },
@@ -175,7 +118,7 @@ export default function AdminAgentPerformancePage() {
       <PageContainer>
         <SectionCard
           title="Agent performance overview"
-          description="All agents with onboarding counts, commission totals, payment status, and quick access to detailed records."
+          description="Agents from the directory, with the contact details and status returned by the API."
         >
           {error ? (
             <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -226,7 +169,12 @@ export default function AdminAgentPerformancePage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <DataTable columns={columns} data={agentRows} getRowId={(row) => String(row.id)} />
+              <DataTable
+                columns={columns}
+                data={agentRows}
+                error={error?.message}
+                getRowId={(row) => String(row.id)}
+              />
             </div>
           )}
           <ListPaginationFooter

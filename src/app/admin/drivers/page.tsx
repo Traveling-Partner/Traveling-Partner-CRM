@@ -53,7 +53,8 @@ function AdminDriversList() {
   const {
     data: statusCounts,
     isLoading: countsLoading,
-    isFetching: countsFetching
+    isFetching: countsFetching,
+    error: countsError
   } = useDriverStatusCountsQuery();
 
   const drivers: DriverRow[] = data?.content ?? [];
@@ -222,6 +223,8 @@ function AdminDriversList() {
                     </p>
                     {countsLoadingState ? (
                       <Skeleton className="mt-1 h-7 w-12" />
+                    ) : countsError ? (
+                      <p className="mt-1 text-sm font-medium text-destructive">Not available</p>
                     ) : (
                       <p className={cn("text-2xl font-bold tracking-tight tabular-nums", card.valueColor)}>
                         {card.value.toLocaleString()}
@@ -305,7 +308,7 @@ function AdminDriversList() {
               ))}
             </div>
           ) : (
-            <DataTable columns={columns} data={drivers} />
+            <DataTable columns={columns} data={drivers} error={error?.message} />
           )}
 
           <ListPaginationFooter

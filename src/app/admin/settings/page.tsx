@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 
 export default function AdminSettingsPage() {
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const [defaultCommission, setDefaultCommission] = useState(10);
   const [appName, setAppName] = useState("Traveling Partner Portal");
   const [notifyOnDriver, setNotifyOnDriver] = useState(true);
@@ -20,13 +20,13 @@ export default function AdminSettingsPage() {
   const [notifyOnCommission, setNotifyOnCommission] = useState(false);
 
   const saveCommission = () => {
-    success("Commission config saved (mock).");
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
   const saveApp = () => {
-    success("App settings saved (mock).");
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
   const saveNotifications = () => {
-    success("Notification preferences saved (mock).");
+    showError("Nothing was saved. This screen is not connected to the API.");
   };
 
   return (

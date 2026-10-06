@@ -82,7 +82,7 @@ function AdminRidesList() {
 
   const rides = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
-  const total = data?.totalElements ?? 0;
+  const total = error ? null : (data?.totalElements ?? 0);
   const loading = isLoading || isFetching;
 
   const columns: ColumnDef<RideRow>[] = useMemo(
@@ -149,7 +149,7 @@ function AdminRidesList() {
               {loading && !data ? (
                 <Skeleton className="mt-1 h-8 w-16" />
               ) : (
-                <p className="text-2xl font-heading font-semibold">{total}</p>
+                <p className="text-2xl font-heading font-semibold">{error ? "Not available" : total}</p>
               )}
             </CardContent>
           </Card>
@@ -228,6 +228,8 @@ function AdminRidesList() {
                 <Skeleton key={i} className="h-10 w-full rounded-md" />
               ))}
             </div>
+          ) : error ? (
+            <EmptyState title="Could not load this list" description={error.message} />
           ) : rides.length === 0 ? (
             <EmptyState
               title="No rides found"

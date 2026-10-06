@@ -87,7 +87,7 @@ export default function AdminBlogPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const { data, isLoading, isFetching } = useBlogListQuery({
+  const { data, isLoading, isFetching, error } = useBlogListQuery({
     page,
     pageSize,
     status: statusFilter,
@@ -368,6 +368,8 @@ export default function AdminBlogPage() {
                 <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted/60" />
               ))}
             </div>
+          ) : error ? (
+            <EmptyState title="Could not load this list" description={error.message} />
           ) : rows.length === 0 ? (
             <EmptyState
               title="No posts found"

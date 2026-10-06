@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/toast";
 
 export default function CreateManagerUserPage() {
   const router = useRouter();
-  const { success } = useToast();
+  const { error: showError } = useToast();
 
   return (
     <AppShell title="Create user">
@@ -28,8 +28,7 @@ export default function CreateManagerUserPage() {
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              success("User create form submitted (UI).");
-              router.push("/manager/users");
+              showError("Nothing was saved. This screen is not connected to the API.");
             }}
           >
             <div className="grid gap-4 sm:grid-cols-2">

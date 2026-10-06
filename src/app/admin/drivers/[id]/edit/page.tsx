@@ -36,7 +36,7 @@ export default function AdminEditDriverPage() {
       email: driver.basicInformation?.email || driver.email || "",
       mobileNumber: driver.mobileNumber || "",
       whatsApp: driver.basicInformation?.whatsApp || "",
-      gender: driver.basicInformation?.gender || "Male",
+      gender: driver.basicInformation?.gender?.trim() || "",
       city: driver.basicInformation?.city || "",
       cnicNumber: driver.basicInformation?.cnicNumber || ""
     };

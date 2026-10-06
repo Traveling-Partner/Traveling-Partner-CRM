@@ -17,9 +17,14 @@ import {
   type SosStatusUpdatePayload
 } from "@/services/sos-incidents";
 
+/** Reload the same SOS reads while this page is open and the tab is visible. */
+const SOS_REFETCH_INTERVAL_MS = 30_000;
+
 export function useSosOverviewQuery() {
   return useApiQuery<SosOverview>({
     queryKey: queryKeys.sos.overview(),
+    refetchInterval: SOS_REFETCH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
     queryFn: ({ token, signal }) => fetchSosOverview({ token, signal })
   });
 }
@@ -50,6 +55,8 @@ export function useSosIncidentsQuery(params: {
   return useApiQuery<SosIncidentsPage>({
     queryKey: queryKeys.sos.incidentList(filters),
     placeholderData: keepPreviousData,
+    refetchInterval: SOS_REFETCH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
     queryFn: ({ token, signal }) => fetchSosIncidents(filters, { token, signal })
   });
 }
@@ -58,6 +65,8 @@ export function useSosIncidentDetailQuery(id: string | undefined) {
   return useApiQuery<SosIncidentDetail>({
     queryKey: queryKeys.sos.incidentDetail(id ?? ""),
     enabled: !!id,
+    refetchInterval: SOS_REFETCH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
     queryFn: ({ token, signal }) => fetchSosIncidentDetail(id!, { token, signal })
   });
 }

@@ -151,6 +151,8 @@ export default function AdminCarouselListPage() {
                 <div key={i} className="h-14 w-full animate-pulse rounded-md bg-muted/60" />
               ))}
             </div>
+          ) : loadError ? (
+            <EmptyState title="Could not load this list" description={loadError.message} />
           ) : pageRows.length === 0 ? (
             <EmptyState
               title="No banners found"

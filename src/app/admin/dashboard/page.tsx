@@ -119,11 +119,8 @@ export default function AdminDashboardPage() {
     currency: "PKR",
     maximumFractionDigits: 0
   }).format(fareTrendTotal);
-  const demoBadge = (
-    <span className="rounded-full bg-slate-900/6 px-2.5 py-1 text-xs font-semibold text-muted-foreground dark:bg-white/10">
-      Demo data
-    </span>
-  );
+  const failed = Boolean(error);
+  const widgetUnavailable = (missing: boolean) => failed || missing;
 
   return (
     <AppShell title="Admin Dashboard">
@@ -140,41 +137,49 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MetricCard
             label="Total rides"
-            value={counts.totalRidePlans}
+            value={failed ? "Not available" : counts.totalRidePlans}
             icon={Car}
             tone="brand"
             loading={isLoading}
-            delta={ridesDelta}
+            delta={failed ? null : ridesDelta}
             chart={
-              <Sparkline
-                data={ridesTrend.map((point) => ({ day: point.day, count: point.count }))}
-                variant="onBrand"
-              />
+              failed ? undefined : (
+                <Sparkline
+                  data={ridesTrend.map((point) => ({ day: point.day, count: point.count }))}
+                  variant="onBrand"
+                />
+              )
             }
           />
           <MetricCard
             label="Total drivers"
-            value={counts.totalDrivers}
+            value={failed ? "Not available" : counts.totalDrivers}
             icon={Users}
             loading={isLoading}
-            chart={<SparkBars values={statusRows.map((row) => row.value)} />}
+            chart={failed ? undefined : <SparkBars values={statusRows.map((row) => row.value)} />}
           />
           <MetricCard
             label="Total partners"
-            value={counts.totalPartners}
+            value={failed ? "Not available" : counts.totalPartners}
             icon={Briefcase}
             loading={isLoading}
-            chart={<SparkRows values={topAgents.agents.map((agent) => agent.partners)} />}
+            chart={
+              failed ? undefined : (
+                <SparkRows values={topAgents.agents.map((agent) => agent.partners)} />
+              )
+            }
           />
           <MetricCard
             label="Total agents"
-            value={counts.totalSalesAgents}
+            value={failed ? "Not available" : counts.totalSalesAgents}
             icon={UserCircle2}
             loading={isLoading}
             chart={
-              <SparkHeat
-                values={topAgents.agents.map((agent) => agent.drivers + agent.partners)}
-              />
+              failed ? undefined : (
+                <SparkHeat
+                  values={topAgents.agents.map((agent) => agent.drivers + agent.partners)}
+                />
+              )
             }
           />
         </div>
@@ -190,7 +195,8 @@ export default function AdminDashboardPage() {
             </span>
           }
           loading={isLoading}
-          empty={!isLoading && ridesTrend.length === 0}
+          unavailable={failed}
+          empty={!isLoading && !failed && ridesTrend.length === 0}
           heightClass="h-56 sm:h-72"
         >
           <TrendArea
@@ -206,7 +212,8 @@ export default function AdminDashboardPage() {
           description="Requested, Accepted, Started, Cancelled & Completed"
           heightClass="h-56 sm:h-64"
           loading={isLoading}
-          empty={!isLoading && rideChartData.every((row) => row.value === 0)}
+          unavailable={failed}
+          empty={!isLoading && !failed && rideChartData.every((row) => row.value === 0)}
         >
           <RideStatusBoard items={rideChartData} />
         </ChartCard>
@@ -216,6 +223,7 @@ export default function AdminDashboardPage() {
           description="Proportional ride breakdown"
           heightClass="h-auto min-h-[16rem] sm:min-h-[18rem]"
           loading={isLoading}
+          unavailable={failed}
         >
           <DonutMix
             emptyCenter
@@ -231,9 +239,9 @@ export default function AdminDashboardPage() {
           title="Ride funnel"
           description="Requested through completed"
           loading={isLoading}
-          empty={!isLoading && !funnelHasData}
+          unavailable={widgetUnavailable(opsDemo.rideFunnel)}
+          empty={!isLoading && !widgetUnavailable(opsDemo.rideFunnel) && !funnelHasData}
           heightClass="h-auto"
-          badge={opsDemo.rideFunnel ? demoBadge : undefined}
         >
           <RideFunnel data={rideFunnel} />
         </ChartCard>
@@ -242,9 +250,9 @@ export default function AdminDashboardPage() {
           title="Completed vs canceled"
           description="Daily outcomes, last 14 days"
           loading={isLoading}
-          empty={!isLoading && outcomeTrend.length === 0}
+          unavailable={widgetUnavailable(opsDemo.outcomeTrend)}
+          empty={!isLoading && !widgetUnavailable(opsDemo.outcomeTrend) && outcomeTrend.length === 0}
           heightClass="h-56 sm:h-72"
-          badge={opsDemo.outcomeTrend ? demoBadge : undefined}
         >
           <OutcomeTrend data={outcomeTrend} />
         </ChartCard>
@@ -252,9 +260,9 @@ export default function AdminDashboardPage() {
           title="Documents pending"
           description="CNIC, license and vehicle review"
           loading={isLoading}
-          empty={!isLoading && documentsTotal === 0}
+          unavailable={widgetUnavailable(opsDemo.documentsPending)}
+          empty={!isLoading && !widgetUnavailable(opsDemo.documentsPending) && documentsTotal === 0}
           heightClass="h-auto"
-          badge={opsDemo.documentsPending ? demoBadge : undefined}
         >
           <DocumentsPending data={documentsPending} />
         </ChartCard>
@@ -262,14 +270,16 @@ export default function AdminDashboardPage() {
           title="Fare trend"
           description="Gross fare, last 14 days"
           loading={isLoading}
-          empty={!isLoading && fareTrend.length === 0}
+          unavailable={widgetUnavailable(opsDemo.fareTrend)}
+          empty={!isLoading && !widgetUnavailable(opsDemo.fareTrend) && fareTrend.length === 0}
           heightClass="h-auto"
           badge={
             <span className="inline-flex items-center gap-2">
-              {opsDemo.fareTrend ? demoBadge : null}
-              <span className="font-heading text-sm font-semibold tabular-nums">
-                {isLoading ? "—" : fareTotalLabel}
-              </span>
+              {widgetUnavailable(opsDemo.fareTrend) ? null : (
+                <span className="font-heading text-sm font-semibold tabular-nums">
+                  {isLoading ? "—" : fareTotalLabel}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1 rounded-full bg-[#5c4308] px-2.5 py-1 text-xs font-semibold text-white">
                 <TrendingUp className="h-3 w-3" />
                 14 days
@@ -283,9 +293,9 @@ export default function AdminDashboardPage() {
           title="Rides by city"
           description="Demand ranked by volume"
           loading={isLoading}
-          empty={!isLoading && ridesByCity.length === 0}
+          unavailable={widgetUnavailable(opsDemo.ridesByCity)}
+          empty={!isLoading && !widgetUnavailable(opsDemo.ridesByCity) && ridesByCity.length === 0}
           heightClass="h-auto"
-          badge={opsDemo.ridesByCity ? demoBadge : undefined}
         >
           <CityDemand data={ridesByCity} />
         </ChartCard>
@@ -295,7 +305,8 @@ export default function AdminDashboardPage() {
           description="Proportional status breakdown"
           heightClass="h-auto"
           loading={isLoading}
-          empty={!isLoading && driverStatusTotal === 0}
+          unavailable={failed}
+          empty={!isLoading && !failed && driverStatusTotal === 0}
         >
           <DonutMix
             items={statusRows}
@@ -309,8 +320,8 @@ export default function AdminDashboardPage() {
           description="New registered drivers and partners by agents"
           heightClass="h-auto"
           loading={isLoading}
-          empty={!isLoading && topAgents.agents.length === 0}
-          badge={opsDemo.topAgents ? demoBadge : undefined}
+          unavailable={widgetUnavailable(opsDemo.topAgents)}
+          empty={!isLoading && !widgetUnavailable(opsDemo.topAgents) && topAgents.agents.length === 0}
         >
           <TopAgentsBoard
             data={topAgents.agents}
@@ -324,10 +335,9 @@ export default function AdminDashboardPage() {
           description="Pending, released, remaining and total commission"
           heightClass="h-auto"
           loading={isLoading}
+          unavailable={widgetUnavailable(opsDemo.commission)}
           badge={
-            opsDemo.commission ? (
-              demoBadge
-            ) : (
+            widgetUnavailable(opsDemo.commission) ? undefined : (
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-[#f5c518]">
                 <BadgeDollarSign className="h-4 w-4" />
               </span>
@@ -342,7 +352,7 @@ export default function AdminDashboardPage() {
           description="Share of pending, released and remaining"
           heightClass="h-auto"
           loading={isLoading}
-          badge={opsDemo.commission ? demoBadge : undefined}
+          unavailable={widgetUnavailable(opsDemo.commission)}
         >
           <DonutMix
             items={[

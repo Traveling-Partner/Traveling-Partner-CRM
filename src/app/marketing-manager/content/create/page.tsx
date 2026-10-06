@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/toast";
 
 export default function CreateMarketingContentPage() {
   const router = useRouter();
-  const { success } = useToast();
+  const { error: showError } = useToast();
   const [status, setStatus] = useState("PENDING");
 
   return (
@@ -34,8 +34,7 @@ export default function CreateMarketingContentPage() {
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              success("Content saved (UI).");
-              router.push("/marketing-manager/content");
+              showError("Nothing was saved. This screen is not connected to the API.");
             }}
           >
             <div className="space-y-1.5">
