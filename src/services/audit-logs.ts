@@ -10,6 +10,9 @@ export interface AuditLogRow {
   description: string | null;
   createdAt: string;
   mobileNumber: string | null;
+  module: string | null;
+  action: string | null;
+  userId: string | null;
 }
 
 function toFromDateParam(dateOnly: string): string | undefined {
@@ -35,13 +38,41 @@ function parseAuditLogsResponse(res: unknown): PaginatedResponse<AuditLogRow> {
     r.data && typeof r.data === "object" ? (r.data as Record<string, unknown>) : r;
 
   const content = Array.isArray(payload.content)
-    ? (payload.content as AuditLogRow[])
+    ? payload.content.map((item, index) => normalizeAuditLog(item, index))
     : [];
   const totalPages = typeof payload.totalPages === "number" ? payload.totalPages : 1;
   const totalElements =
     typeof payload.totalElements === "number" ? payload.totalElements : content.length;
 
   return { content, totalPages, totalElements };
+}
+
+function textField(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function normalizeAuditLog(value: unknown, index: number): AuditLogRow {
+  const row = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const rawId = row.id;
+  const parsedId =
+    typeof rawId === "number"
+      ? rawId
+      : typeof rawId === "string" && rawId.trim()
+        ? Number(rawId)
+        : NaN;
+  return {
+    id: Number.isFinite(parsedId) ? parsedId : index,
+    userType: textField(row.userType),
+    description: textField(row.description),
+    createdAt: textField(row.createdAt) ?? "",
+    mobileNumber: textField(row.mobileNumber),
+    module: textField(row.module),
+    action: textField(row.action),
+    userId: textField(row.userId)
+  };
 }
 
 export async function fetchAuditLogs(

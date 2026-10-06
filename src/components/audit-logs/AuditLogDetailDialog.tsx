@@ -84,6 +84,30 @@ export function AuditLogDetailDialog({ log, onOpenChange }: AuditLogDetailDialog
                 </dt>
                 <dd className="mt-0.5 font-medium">{log.mobileNumber?.trim() || "—"}</dd>
               </div>
+              {log.module ? (
+                <div className="rounded-lg border border-border/50 px-3 py-2">
+                  <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Module
+                  </dt>
+                  <dd className="mt-0.5 font-medium">{log.module}</dd>
+                </div>
+              ) : null}
+              {log.action ? (
+                <div className="rounded-lg border border-border/50 px-3 py-2">
+                  <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Action
+                  </dt>
+                  <dd className="mt-0.5 font-medium">{log.action}</dd>
+                </div>
+              ) : null}
+              {log.userId ? (
+                <div className="rounded-lg border border-border/50 px-3 py-2">
+                  <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    User ID
+                  </dt>
+                  <dd className="mt-0.5 font-medium tabular-nums">{log.userId}</dd>
+                </div>
+              ) : null}
               <div className="col-span-2 rounded-lg border border-border/50 px-3 py-2">
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Time

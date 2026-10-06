@@ -28,6 +28,7 @@ interface DataTableProps<TData, TValue> {
   getRowClassName?: (originalRow: TData, index: number) => string | undefined;
   /** Classes on the inner <table> (e.g. min-width so wide lists scroll instead of wrapping). */
   tableClassName?: string;
+  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -38,7 +39,8 @@ export function DataTable<TData, TValue>({
   className,
   getRowId,
   getRowClassName,
-  tableClassName
+  tableClassName,
+  onRowClick
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -81,7 +83,11 @@ export function DataTable<TData, TValue>({
             <TableRow
               key={row.id}
               data-row-id={row.id}
-              className={getRowClassName?.(row.original, row.index)}
+              className={cn(
+                onRowClick && "cursor-pointer",
+                getRowClassName?.(row.original, row.index)
+              )}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>

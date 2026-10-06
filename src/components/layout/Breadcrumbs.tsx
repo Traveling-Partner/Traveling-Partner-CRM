@@ -54,7 +54,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   safety: "Safety Center",
   incidents: "SOS Incidents",
   services: "Emergency Services",
-  "access-management": "Access Management"
+  "access-management": "Access Management",
+  "audit-logs": "Audit Logs"
 };
 
 const GROUP_BY_SEGMENT: Record<string, string> = {

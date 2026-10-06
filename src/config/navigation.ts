@@ -24,7 +24,8 @@ import {
   ShieldAlert,
   Siren,
   Phone,
-  KeyRound
+  KeyRound,
+  ScrollText
 } from "lucide-react";
 import { ROLES, type AppRole } from "@/lib/roles";
 import { normalizeRole } from "@/lib/rbac";
@@ -158,6 +159,7 @@ export const adminNav: SidebarEntry[] = [
   contentManagementGroup,
   financialManagementGroup,
   vehicleManagementGroup,
+  { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText },
   { label: "Access Management", href: "/admin/access-management", icon: KeyRound }
 ];
 
