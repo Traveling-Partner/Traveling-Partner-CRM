@@ -24,7 +24,7 @@ import {
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { MissingData } from "@/components/common/MissingData";
 import { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
-import { RIDE_STATUSES, type RideRow } from "@/services/rides";
+import { RIDE_STATUSES, RIDE_TYPES, type RideRow } from "@/services/rides";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
@@ -55,7 +55,7 @@ function AdminRidesList() {
     booking: "",
     city: "",
     status: "all",
-    type: "",
+    type: "all",
     date: "",
     page: "1",
     size: String(DEFAULT_PAGE_SIZE)
@@ -200,11 +200,22 @@ function AdminRidesList() {
                 ))}
               </SelectContent>
             </Select>
-            <Input
-              placeholder="Ride type"
+            <Select
               value={rideType}
-              onChange={(e) => setValues({ type: e.target.value, page: "1" })}
-            />
+              onValueChange={(value) => setValues({ type: value, page: "1" })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Ride type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ride types</SelectItem>
+                {RIDE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type.replaceAll("_", " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Input
               type="date"
               value={startedAt}
