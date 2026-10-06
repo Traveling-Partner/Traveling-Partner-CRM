@@ -201,8 +201,9 @@ export async function fetcher<T = unknown>(
       if (timedOut) {
         throw new RequestTimeoutError();
       }
-      if (isAbortError(error)) {
-        throw error;
+      if (isAbortError(error) || fetchSignal?.aborted || signal?.aborted) {
+        if (isAbortError(error)) throw error;
+        throw new DOMException("The operation was aborted.", "AbortError");
       }
       throw new Error(NETWORK_ERROR);
     }
