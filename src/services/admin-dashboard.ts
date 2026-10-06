@@ -11,7 +11,6 @@ import {
   DEMO_COMMISSION,
   DEMO_TOP_AGENTS
 } from "@/mock-data/dashboard-ops";
-import { fetchAuditLogs } from "@/services/audit-logs";
 
 export interface DashboardCounts {
   totalDrivers: number;
@@ -544,7 +543,6 @@ export async function fetchAdminDashboardData(
     driverStatusRes,
     ridesTrendRes,
     rideStatusRes,
-    auditLogsPage,
     funnelRes,
     outcomeRes,
     cityRes,
@@ -557,20 +555,6 @@ export async function fetchAdminDashboardData(
     fetcher<unknown>(buildApiUrl("/users/driver-status-counts"), requestInit),
     fetcher<unknown>(buildApiUrl("/users/graph/last-14-days"), requestInit),
     fetcher<unknown>(buildApiUrl("/users/ride-status-count"), requestInit),
-    fetchAuditLogs(
-      {
-        page: 1,
-        pageSize: recentActivityLimit,
-        userType: "all",
-        search: "",
-        fromDate: "",
-        toDate: "",
-        module: "",
-        action: "",
-        userId: ""
-      },
-      { token, signal }
-    ),
     fetchOptionalJson("/users/ride-funnel", { ...requestInit, debugLabel: `${label}:funnel` }),
     fetchOptionalJson(
       "/users/graph/completed-vs-canceled",
@@ -589,7 +573,7 @@ export async function fetchAdminDashboardData(
     driverStatusRes,
     ridesTrendRes,
     rideStatusRes,
-    auditLogsPage.content ?? [],
+    [],
     recentActivityLimit,
     {
       funnel: funnelRes,
