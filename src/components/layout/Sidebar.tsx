@@ -336,7 +336,13 @@ export function Sidebar({
             <img
               src="/tp-logo.png?v=2"
               alt="Traveling Partner"
-              className="h-11 w-auto max-w-[150px] bg-transparent object-contain"
+              className="h-11 w-auto max-w-[150px] bg-transparent object-contain dark:hidden"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/tp-logo-dark.png?v=1"
+              alt="Traveling Partner"
+              className="hidden h-[50px] w-auto max-w-[165px] bg-transparent object-contain dark:block"
             />
           </Link>
         )}
