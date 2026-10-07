@@ -14,6 +14,7 @@ const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
   { path: "/admin/newsletter-subscribers", modules: ["NEWSLETTER_SUBSCRIBERS"] },
   { path: "/admin/vehicle-model-variants", modules: ["VEHICLE_MODEL_VARIANT"] },
   { path: "/admin/access-management", modules: ["ACCESS_MANAGEMENT"] },
+  { path: "/admin/audit-logs", modules: ["AUDIT_LOGS"] },
   { path: "/admin/agent-performance", modules: ["AGENT_PERFORMANCE"] },
   { path: "/admin/commission-management", modules: ["COMMISSION", "COMMISSION_MANAGEMENT"] },
   { path: "/admin/insurance-management", modules: ["INSURANCE"] },

@@ -86,6 +86,11 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     ]
   },
   {
+    id: "audit-logs-section",
+    label: "Audit Logs",
+    children: [{ id: "AUDIT_LOGS", label: "Audit Logs" }]
+  },
+  {
     id: "access-management-section",
     label: "Access Management",
     children: [{ id: "ACCESS_MANAGEMENT", label: "Access Management" }]
