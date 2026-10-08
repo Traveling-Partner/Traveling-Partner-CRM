@@ -55,22 +55,30 @@ function levelLabel(level: PermissionLevel) {
   return "None";
 }
 
+type PermissionRow = {
+  module: string;
+  level: PermissionLevel;
+  label: string;
+};
+
 function groupPermissionRows(permissions: PermissionEntry[]) {
   const byModule = new Map(permissions.map((entry) => [entry.module, entry]));
   const used = new Set<string>();
 
-  const groups = ACCESS_MODULES.map((section) => {
-    const items = section.children.map((child) => {
-      used.add(child.id);
-      const entry = byModule.get(child.id);
-      return {
-        module: child.id,
-        level: entry?.level ?? "NONE",
-        label: child.label
-      };
-    });
-    return { id: section.id, label: section.label, items };
-  }).filter((group) => group.items.length > 0);
+  const groups: Array<{ id: string; label: string; items: PermissionRow[] }> = ACCESS_MODULES.map(
+    (section) => {
+      const items = section.children.map((child) => {
+        used.add(child.id);
+        const entry = byModule.get(child.id);
+        return {
+          module: child.id,
+          level: entry?.level ?? "NONE",
+          label: child.label
+        };
+      });
+      return { id: section.id, label: section.label, items };
+    }
+  ).filter((group) => group.items.length > 0);
 
   const leftover = permissions.filter((entry) => !used.has(entry.module));
   if (leftover.length > 0) {
@@ -78,7 +86,8 @@ function groupPermissionRows(permissions: PermissionEntry[]) {
       id: "other",
       label: "Other",
       items: leftover.map((entry) => ({
-        ...entry,
+        module: entry.module,
+        level: entry.level,
         label: formatPermissionModule(entry.module)
       }))
     });
