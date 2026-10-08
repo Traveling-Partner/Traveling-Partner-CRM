@@ -32,7 +32,7 @@ interface LoginResponse {
 }
 
 export async function generateAdminOtp({ mobileNumber }: OtpPayload) {
-  const response = await fetcher<GenerateOtpResponse>(apiUrl("/auth/admin/generate/otp"), {
+  const response = await fetcher<GenerateOtpResponse>(apiUrl("/auth/ops/generate/otp"), {
     method: "POST",
     body: JSON.stringify({ mobileNumber }),
     debugLabel: "auth:generate-otp"
