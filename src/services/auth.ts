@@ -40,6 +40,15 @@ export async function generateAdminOtp({ mobileNumber }: OtpPayload) {
   return response;
 }
 
+export async function resendAdminOtp({ mobileNumber }: OtpPayload) {
+  const response = await fetcher<GenerateOtpResponse>(apiUrl("/auth/ops/resend-otp"), {
+    method: "POST",
+    body: JSON.stringify({ mobileNumber }),
+    debugLabel: "auth:resend-otp"
+  });
+  return response;
+}
+
 export async function loginUser({ mobileNumber, otp }: LoginPayload) {
   const response = await fetcher<LoginResponse>(apiUrl("/auth/admin/login"), {
     method: "POST",

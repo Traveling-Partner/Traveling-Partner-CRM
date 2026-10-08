@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearAuthError, loginUserThunk } from "@/store/slices/authSlice";
-import { generateAdminOtp } from "@/services/auth";
+import { generateAdminOtp, resendAdminOtp } from "@/services/auth";
 import { fetchAdminDashboardData } from "@/services/admin-dashboard";
 import { DASHBOARD_STALE_TIME_MS } from "@/lib/api/query-config";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -34,11 +34,13 @@ export default function LoginPage() {
   const { loading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [showOtpField, setShowOtpField] = useState(false);
   const [otpGenerating, setOtpGenerating] = useState(false);
+  const [otpResending, setOtpResending] = useState(false);
   const otpInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
     handleSubmit,
+    getValues,
     setError,
     formState: { errors }
   } = useForm<LoginFormValues>({
@@ -105,6 +107,24 @@ export default function LoginPage() {
     }
   };
 
+  const onResendOtp = async () => {
+    const mobileNumber = getValues("mobileNumber").trim();
+    if (mobileNumber.length < 8) {
+      setError("mobileNumber", { type: "manual", message: "Enter a valid mobile number" });
+      return;
+    }
+    setOtpResending(true);
+    try {
+      await resendAdminOtp({ mobileNumber });
+      toastSuccess("A new OTP has been sent.");
+      setTimeout(() => otpInputRef.current?.focus(), 0);
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Failed to resend OTP.");
+    } finally {
+      setOtpResending(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <CardContent className="space-y-6 p-6 sm:p-8">
@@ -159,6 +179,17 @@ export default function LoginPage() {
                 }}
               />
             </FormField>
+          ) : null}
+
+          {showOtpField ? (
+            <button
+              type="button"
+              className="text-sm font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-60"
+              disabled={loading || otpGenerating || otpResending}
+              onClick={onResendOtp}
+            >
+              {otpResending ? "Sending OTP..." : "Resend OTP"}
+            </button>
           ) : null}
 
           {error ? (
