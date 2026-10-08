@@ -1,10 +1,11 @@
+import type { PermissionModule } from "@/lib/permission-modules";
+
 /**
- * Display grouping only. Row data and `module` keys come from the permission APIs.
- * Child `id` must match backend `module` (e.g. DASHBOARD, TAX).
+ * Display grouping only. Row `id` must be a backend permission module.
  */
 
 export type AccessLeafModule = {
-  id: string;
+  id: PermissionModule;
   label: string;
 };
 
@@ -28,7 +29,7 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
       { id: "USER_MANAGEMENT", label: "User Management" },
       { id: "DRIVER", label: "Driver" },
       { id: "PARTNER", label: "Partner" },
-      { id: "EMPLOYEES_LIST", label: "Employees List" },
+      { id: "MANAGERS_USERS", label: "Employees List" },
       { id: "DOCUMENT", label: "Document" }
     ]
   },
@@ -61,8 +62,8 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     children: [
       { id: "BLOGS", label: "Blogs" },
       { id: "NEWSLETTER_LIST", label: "Newsletter List" },
-      { id: "NEWSLETTER_SUBSCRIBERS", label: "Newsletter Subscribers" },
-      { id: "CAROUSEL", label: "Carousel" }
+      { id: "NEWSLETTER_SUBSCRIBER", label: "Newsletter Subscribers" },
+      { id: "BANNER", label: "Carousel" }
     ]
   },
   {
@@ -84,11 +85,6 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
       { id: "VEHICLE_MODEL", label: "Vehicle Model" },
       { id: "VEHICLE_MODEL_VARIANT", label: "Vehicle Model Variant" }
     ]
-  },
-  {
-    id: "audit-logs-section",
-    label: "Audit Logs",
-    children: [{ id: "AUDIT_LOGS", label: "Audit Logs" }]
   },
   {
     id: "access-management-section",

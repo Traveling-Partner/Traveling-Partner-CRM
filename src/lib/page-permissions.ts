@@ -11,10 +11,9 @@ import type { PermissionLevel, RolePermissionsData } from "@/services/permission
 /** Longest path first so `/admin/safety/services` is not treated as `/admin/safety`. */
 const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
   { path: "/admin/safety/services", modules: ["EMERGENCY_LIST"] },
-  { path: "/admin/newsletter-subscribers", modules: ["NEWSLETTER_SUBSCRIBERS"] },
+  { path: "/admin/newsletter-subscribers", modules: ["NEWSLETTER_SUBSCRIBER"] },
   { path: "/admin/vehicle-model-variants", modules: ["VEHICLE_MODEL_VARIANT"] },
   { path: "/admin/access-management", modules: ["ACCESS_MANAGEMENT"] },
-  { path: "/admin/audit-logs", modules: ["AUDIT_LOGS"] },
   { path: "/admin/agent-performance", modules: ["AGENT_PERFORMANCE"] },
   { path: "/admin/commission-management", modules: ["COMMISSION", "COMMISSION_MANAGEMENT"] },
   { path: "/admin/insurance-management", modules: ["INSURANCE"] },
@@ -27,8 +26,8 @@ const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
   { path: "/admin/documents", modules: ["DOCUMENT"] },
   { path: "/admin/partners", modules: ["PARTNER"] },
   { path: "/admin/drivers", modules: ["DRIVER"] },
-  { path: "/admin/agents", modules: ["EMPLOYEES_LIST"] },
-  { path: "/admin/carousel", modules: ["CAROUSEL"] },
+  { path: "/admin/agents", modules: ["MANAGERS_USERS"] },
+  { path: "/admin/carousel", modules: ["BANNER"] },
   { path: "/admin/safety", modules: ["SOS_OVERVIEW", "SAFETY_CENTER"] },
   { path: "/admin/blog", modules: ["BLOGS"] },
   { path: "/admin/rides", modules: ["RIDES"] },
@@ -57,11 +56,20 @@ export function toPagePermissionGate(
   return { allowed, levels };
 }
 
+/** Not a permission module. Visible to admin only (admin has no permission gate). */
+const ADMIN_ONLY_PATHS = ["/admin/audit-logs"];
+
+function matchesPath(pathname: string, path: string): boolean {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
 function modulesForPath(pathname: string): string[] {
-  const match = MODULE_PATHS.find(
-    ({ path }) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  const match = MODULE_PATHS.find(({ path }) => matchesPath(pathname, path));
   return match?.modules ?? [];
+}
+
+function isAdminOnlyPath(pathname: string): boolean {
+  return ADMIN_ONLY_PATHS.some((path) => matchesPath(pathname, path));
 }
 
 export function getLevelForPath(
@@ -83,6 +91,7 @@ export function getLevelForPath(
 /** Mapped admin pages must be READ or WRITE. Unmentioned modules are hidden. */
 export function isHrefAllowed(href: string, gate: PagePermissionGate | null): boolean {
   if (!gate) return true;
+  if (isAdminOnlyPath(href)) return false;
   const modules = modulesForPath(href);
   if (!modules.length) return true;
   return modules.some((module) => gate.allowed.has(module));
