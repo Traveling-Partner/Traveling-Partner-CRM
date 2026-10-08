@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch(`${baseUrl}/auth/admin/login`, {
+    const response = await fetch(`${baseUrl}/auth/ops/verify-otp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

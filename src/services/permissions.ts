@@ -127,14 +127,14 @@ export async function fetchRolePermissions(
 }
 
 /**
- * GET /api/user/permission — logged-in employee's modules.
+ * GET /api/auth/ops/permissions — logged-in employee's modules.
  * `data` may be `{ role, permissions }` or a permissions array.
  */
 export async function fetchUserPermissions(opts: {
   token: string;
   signal?: AbortSignal;
 }): Promise<RolePermissionsData> {
-  const res = await fetcher<unknown>(apiUrl("/user/permission"), {
+  const res = await fetcher<unknown>(apiUrl("/auth/ops/permissions"), {
     token: opts.token,
     signal: opts.signal,
     debugLabel: "permissions:me"
