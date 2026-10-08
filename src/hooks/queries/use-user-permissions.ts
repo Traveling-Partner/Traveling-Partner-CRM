@@ -10,7 +10,7 @@ import { normalizeRole } from "@/lib/rbac";
 import { ROLES } from "@/lib/roles";
 import { setAuthRole } from "@/store/slices/authSlice";
 
-/** One GET /user/permission per logged-in user. Admin is never filtered. */
+/** One GET /auth/ops/permissions per logged-in user. Admin is never filtered. */
 export function useUserPermissionsQuery() {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.auth.user?.id);

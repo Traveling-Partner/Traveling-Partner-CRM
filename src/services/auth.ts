@@ -50,7 +50,7 @@ export async function resendAdminOtp({ mobileNumber }: OtpPayload) {
 }
 
 export async function loginUser({ mobileNumber, otp }: LoginPayload) {
-  const response = await fetcher<LoginResponse>(apiUrl("/auth/admin/login"), {
+  const response = await fetcher<LoginResponse>(apiUrl("/auth/ops/verify-otp"), {
     method: "POST",
     body: JSON.stringify({ mobileNumber, otp }),
     debugLabel: "auth:login"

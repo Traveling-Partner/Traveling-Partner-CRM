@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 import { getLevelForPath } from "@/lib/page-permissions";
 
-/** Current page access from GET /user/permission. No extra API. */
+/** Current page access from GET /auth/ops/permissions. No extra API. */
 export function usePageAccess(pathname?: string) {
   const currentPath = usePathname();
   const path = pathname ?? currentPath ?? "";
