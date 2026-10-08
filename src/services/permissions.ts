@@ -1,5 +1,6 @@
 import { apiUrl } from "@/lib/api-base";
 import { fetcher } from "@/lib/fetcher";
+import { canonicalPermissionList, canonicalPermissionModule } from "@/lib/permission-modules";
 
 /** Levels from GET/PUT permission APIs — not Read/Write. */
 export type PermissionLevel = "READ" | "WRITE" | "NONE";
@@ -50,7 +51,8 @@ function parseLevel(value: unknown): PermissionLevel {
 function parsePermissionEntry(value: unknown): PermissionEntry | null {
   if (!value || typeof value !== "object") return null;
   const row = value as Record<string, unknown>;
-  const module = typeof row.module === "string" ? row.module.trim() : "";
+  const rawModule = typeof row.module === "string" ? row.module : "";
+  const module = canonicalPermissionModule(rawModule);
   if (!module) return null;
   return { module, level: parseLevel(row.level) };
 }
@@ -70,9 +72,10 @@ function parseRole(value: unknown): PermissionRole | null {
 
 function parsePermissionList(value: unknown): PermissionEntry[] {
   if (!Array.isArray(value)) return [];
-  return value
+  const parsed = value
     .map(parsePermissionEntry)
     .filter((entry): entry is PermissionEntry => entry !== null);
+  return canonicalPermissionList(parsed);
 }
 
 /** Accepts `{ role, permissions }` or a raw permissions array. */
@@ -154,10 +157,7 @@ export async function updateRolePermissions(
     token,
     body: JSON.stringify({
       role: payload.role,
-      permissions: payload.permissions.map((entry) => ({
-        module: entry.module,
-        level: entry.level
-      }))
+      permissions: canonicalPermissionList(payload.permissions)
     }),
     debugLabel: "permissions:update"
   });
