@@ -26,27 +26,22 @@ export function RideRouteMap({
   const hasCoords =
     startLat != null && startLng != null && endLat != null && endLng != null;
 
-  const { mapUrl } = useMemo(() => {
+  const mapUrl = useMemo(() => {
     if (
       startLat == null ||
       startLng == null ||
       endLat == null ||
       endLng == null
     ) {
-      return { mapUrl: null as string | null };
+      return null;
     }
-    const padLat = 0.03;
-    const padLng = 0.04;
-    const minLat = Math.min(startLat, endLat) - padLat;
-    const maxLat = Math.max(startLat, endLat) + padLat;
-    const minLng = Math.min(startLng, endLng) - padLng;
-    const maxLng = Math.max(startLng, endLng) + padLng;
-
-    const bbox = `${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}`;
-    const markerA = `%26marker=${startLat}%2C${startLng}`;
-    const markerB = `%26marker=${endLat}%2C${endLng}`;
-    const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}${markerA}${markerB}%26layer=mapnik`;
-    return { mapUrl };
+    const params = new URLSearchParams({
+      saddr: `${startLat},${startLng}`,
+      daddr: `${endLat},${endLng}`,
+      hl: "en",
+      output: "embed"
+    });
+    return `https://maps.google.com/maps?${params.toString()}`;
   }, [startLat, startLng, endLat, endLng]);
 
   return (
