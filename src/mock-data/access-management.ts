@@ -7,6 +7,8 @@ import type { PermissionModule } from "@/lib/permission-modules";
 export type AccessLeafModule = {
   id: PermissionModule;
   label: string;
+  /** Saved with the role, not shown. The section heading already names this module. */
+  hidden?: boolean;
 };
 
 export type AccessModuleNode = {
@@ -15,7 +17,7 @@ export type AccessModuleNode = {
   children: AccessLeafModule[];
 };
 
-/** Every page sits under its section heading. */
+/** Sidebar order. Hidden rows are parent modules, not pages under the heading. */
 export const ACCESS_MODULES: AccessModuleNode[] = [
   {
     id: "dashboard-section",
@@ -26,33 +28,33 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "user-management-section",
     label: "User Management",
     children: [
-      { id: "USER_MANAGEMENT", label: "User Management" },
-      { id: "DRIVER", label: "Driver" },
-      { id: "PARTNER", label: "Partner" },
+      { id: "USER_MANAGEMENT", label: "User Management", hidden: true },
+      { id: "DRIVER", label: "Drivers" },
+      { id: "PARTNER", label: "Partners" },
       { id: "MANAGERS_USERS", label: "Employees List" },
-      { id: "DOCUMENT", label: "Document" }
+      { id: "DOCUMENT", label: "Documents" }
     ]
-  },
-  {
-    id: "sos-management-section",
-    label: "SOS Management",
-    children: [{ id: "SOS_MANAGEMENT", label: "SOS Management" }]
   },
   {
     id: "ride-management",
     label: "Ride Management",
+    children: [{ id: "RIDES", label: "Rides" }]
+  },
+  {
+    id: "safety-center",
+    label: "Safety Center",
     children: [
-      { id: "RIDES", label: "Rides" },
-      { id: "SAFETY_CENTER", label: "Safety Center" },
+      { id: "SOS_MANAGEMENT", label: "SOS Management", hidden: true },
+      { id: "SAFETY_CENTER", label: "Safety Center", hidden: true },
       { id: "SOS_OVERVIEW", label: "SOS Overview" },
-      { id: "EMERGENCY_LIST", label: "Emergency List" }
+      { id: "EMERGENCY_LIST", label: "Emergency Services" }
     ]
   },
   {
     id: "commission-management-section",
     label: "Commission Management",
     children: [
-      { id: "COMMISSION_MANAGEMENT", label: "Commission Management" },
+      { id: "COMMISSION_MANAGEMENT", label: "Commission Management", hidden: true },
       { id: "AGENT_PERFORMANCE", label: "Agent Performance" }
     ]
   },
@@ -60,8 +62,8 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "content-management",
     label: "Content Management",
     children: [
-      { id: "BLOGS", label: "Blogs" },
-      { id: "NEWSLETTER_LIST", label: "Newsletter List" },
+      { id: "BLOGS", label: "Blog" },
+      { id: "NEWSLETTER_LIST", label: "Newsletter" },
       { id: "NEWSLETTER_SUBSCRIBER", label: "Newsletter Subscribers" },
       { id: "BANNER", label: "Carousel" }
     ]
@@ -70,20 +72,20 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "financial-management",
     label: "Financial Management",
     children: [
-      { id: "TAX", label: "Tax" },
-      { id: "COMMISSION", label: "Commission" },
-      { id: "INSURANCE", label: "Insurance" },
-      { id: "PLATFORM_FEE", label: "Platform Fee" }
+      { id: "TAX", label: "Tax Management" },
+      { id: "COMMISSION", label: "Commission Management" },
+      { id: "INSURANCE", label: "Insurance Management" },
+      { id: "PLATFORM_FEE", label: "Platform Fee Management" }
     ]
   },
   {
     id: "vehicle-management",
     label: "Vehicle Management",
     children: [
-      { id: "VEHICLE_TYPE", label: "Vehicle Type" },
+      { id: "VEHICLE_TYPE", label: "Vehicle Types" },
       { id: "VEHICLE_BRANDS", label: "Vehicle Brands" },
-      { id: "VEHICLE_MODEL", label: "Vehicle Model" },
-      { id: "VEHICLE_MODEL_VARIANT", label: "Vehicle Model Variant" }
+      { id: "VEHICLE_MODEL", label: "Vehicle Models" },
+      { id: "VEHICLE_MODEL_VARIANT", label: "Vehicle Model Variants" }
     ]
   },
   {
