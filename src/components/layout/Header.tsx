@@ -50,7 +50,9 @@ export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const dispatch = useAppDispatch();
   const { user, logout } = useAuthStore();
   const storedName = readableName(user?.name);
-  const profileQuery = usePortalUserDetailQuery(storedName ? undefined : user?.id);
+  const profileQuery = usePortalUserDetailQuery(storedName ? undefined : user?.id, {
+    optional: true
+  });
   const profile = profileQuery.data;
   const personName = storedName || readableName(profile?.name);
   const displayName = personName || "User";

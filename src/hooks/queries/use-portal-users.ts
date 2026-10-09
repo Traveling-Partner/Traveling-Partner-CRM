@@ -46,12 +46,24 @@ export function usePortalUsersListQuery(params: {
   });
 }
 
-export function usePortalUserDetailQuery(id: string | undefined) {
-  return useApiQuery<PortalUser>({
+export function usePortalUserDetailQuery(
+  id: string | undefined,
+  options?: { optional?: boolean }
+) {
+  const optional = options?.optional === true;
+  return useApiQuery<PortalUser | null>({
     queryKey: queryKeys.portalUsers.detail(id ?? ""),
     enabled: Boolean(id),
     refetchOnMount: false,
-    queryFn: ({ token, signal }) => fetchPortalUserById(id ?? "", { token, signal })
+    retry: optional ? false : undefined,
+    queryFn: async ({ token, signal }) => {
+      try {
+        return await fetchPortalUserById(id ?? "", { token, signal });
+      } catch (error) {
+        if (optional) return null;
+        throw error;
+      }
+    }
   });
 }
 
