@@ -49,6 +49,35 @@ function formatDateTime(value: string | null) {
   });
 }
 
+function RideCountCard({
+  label,
+  value,
+  loading,
+  failed
+}: {
+  label: string;
+  value: number | null;
+  loading: boolean;
+  failed: boolean;
+}) {
+  return (
+    <Card className="border-border/80 bg-gradient-to-b from-card to-muted/30 shadow-sm">
+      <CardContent className="pt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        {loading ? (
+          <Skeleton className="mt-1 h-8 w-16" />
+        ) : (
+          <p className="text-2xl font-heading font-semibold">
+            {failed || value == null ? "Not available" : value}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminRidesList() {
   const { values, setValues } = useUrlFilters({
     search: "",
@@ -69,7 +98,7 @@ function AdminRidesList() {
   const page = Math.max(1, Number(values.page) || 1);
   const pageSize = Math.max(1, Number(values.size) || DEFAULT_PAGE_SIZE);
 
-  const { data, isLoading, isFetching, error } = useRidesListQuery({
+  const listFilters = {
     page,
     pageSize,
     status: statusFilter,
@@ -78,6 +107,31 @@ function AdminRidesList() {
     bookingReference,
     rideType,
     startedAt
+  };
+  const { data, isLoading, isFetching, error } = useRidesListQuery(listFilters);
+  const requestedCount = useRidesListQuery({
+    ...listFilters,
+    page: 1,
+    pageSize: 1,
+    status: "REQUESTED"
+  });
+  const completedCount = useRidesListQuery({
+    ...listFilters,
+    page: 1,
+    pageSize: 1,
+    status: "COMPLETED"
+  });
+  const canceledCount = useRidesListQuery({
+    ...listFilters,
+    page: 1,
+    pageSize: 1,
+    status: "CANCELED"
+  });
+  const expiredCount = useRidesListQuery({
+    ...listFilters,
+    page: 1,
+    pageSize: 1,
+    status: "EXPIRED"
   });
 
   const rides = data?.content ?? [];
@@ -140,19 +194,37 @@ function AdminRidesList() {
   return (
     <AppShell title="Rides">
       <PageContainer>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-border/80 bg-gradient-to-b from-card to-muted/30 shadow-sm">
-            <CardContent className="pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Total rides
-              </p>
-              {loading && !data ? (
-                <Skeleton className="mt-1 h-8 w-16" />
-              ) : (
-                <p className="text-2xl font-heading font-semibold">{error ? "Not available" : total}</p>
-              )}
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <RideCountCard
+            label="Total rides"
+            value={total}
+            loading={loading && !data}
+            failed={Boolean(error)}
+          />
+          <RideCountCard
+            label="Requested"
+            value={requestedCount.data?.totalElements ?? null}
+            loading={requestedCount.isLoading && !requestedCount.data}
+            failed={Boolean(requestedCount.error)}
+          />
+          <RideCountCard
+            label="Completed"
+            value={completedCount.data?.totalElements ?? null}
+            loading={completedCount.isLoading && !completedCount.data}
+            failed={Boolean(completedCount.error)}
+          />
+          <RideCountCard
+            label="Canceled"
+            value={canceledCount.data?.totalElements ?? null}
+            loading={canceledCount.isLoading && !canceledCount.data}
+            failed={Boolean(canceledCount.error)}
+          />
+          <RideCountCard
+            label="Expired"
+            value={expiredCount.data?.totalElements ?? null}
+            loading={expiredCount.isLoading && !expiredCount.data}
+            failed={Boolean(expiredCount.error)}
+          />
         </div>
         <SectionCard
           title="Ride list"
