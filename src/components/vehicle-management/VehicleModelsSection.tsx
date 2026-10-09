@@ -29,7 +29,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
-  STATUS_OPTIONS,
+  VISIBLE_STATUS_OPTIONS,
   modelSchema,
   type ModelForm
 } from "@/app/admin/vehicle-management/_vehicle-form-shared";
@@ -64,7 +64,7 @@ export function VehicleModelsSection() {
 
   const form = useForm<ModelForm>({
     resolver: zodResolver(modelSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, brandId: 0, status: "PENDING", image: "" }
+    defaultValues: { name: "", vehicleTypeId: 0, brandId: 0, status: "ACTIVE", image: "" }
   });
 
   const selectedTypeId = form.watch("vehicleTypeId");
@@ -81,7 +81,7 @@ export function VehicleModelsSection() {
 
   const openAdd = () => {
     setEditingId(null);
-    form.reset({ name: "", vehicleTypeId: 0, brandId: 0, status: "PENDING", image: "" });
+    form.reset({ name: "", vehicleTypeId: 0, brandId: 0, status: "ACTIVE", image: "" });
     setShowModal(true);
   };
 
@@ -386,11 +386,19 @@ export function VehicleModelsSection() {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
+                  {VISIBLE_STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
                     </SelectItem>
                   ))}
+                  {field.value &&
+                  !VISIBLE_STATUS_OPTIONS.includes(
+                    field.value as (typeof VISIBLE_STATUS_OPTIONS)[number]
+                  ) ? (
+                    <SelectItem value={field.value} className="hidden">
+                      {field.value}
+                    </SelectItem>
+                  ) : null}
                 </SelectContent>
               </Select>
             )}

@@ -29,7 +29,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
-  STATUS_OPTIONS,
+  VISIBLE_STATUS_OPTIONS,
   vehicleTypeSchema,
   type VehicleTypeForm
 } from "@/app/admin/vehicle-management/_vehicle-form-shared";
@@ -55,7 +55,7 @@ export function VehicleTypesSection() {
 
   const form = useForm<VehicleTypeForm>({
     resolver: zodResolver(vehicleTypeSchema),
-    defaultValues: { name: "", status: "PENDING", image: "" }
+    defaultValues: { name: "", status: "ACTIVE", image: "" }
   });
 
   const invalidate = async () => {
@@ -64,7 +64,7 @@ export function VehicleTypesSection() {
 
   const openAdd = () => {
     setEditingId(null);
-    form.reset({ name: "", status: "PENDING", image: "" });
+    form.reset({ name: "", status: "ACTIVE", image: "" });
     setShowModal(true);
   };
 
@@ -254,11 +254,19 @@ export function VehicleTypesSection() {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
+                  {VISIBLE_STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
                     </SelectItem>
                   ))}
+                  {field.value &&
+                  !VISIBLE_STATUS_OPTIONS.includes(
+                    field.value as (typeof VISIBLE_STATUS_OPTIONS)[number]
+                  ) ? (
+                    <SelectItem value={field.value} className="hidden">
+                      {field.value}
+                    </SelectItem>
+                  ) : null}
                 </SelectContent>
               </Select>
             )}

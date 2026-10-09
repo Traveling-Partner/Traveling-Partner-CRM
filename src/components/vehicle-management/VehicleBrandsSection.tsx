@@ -29,7 +29,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
-  STATUS_OPTIONS,
+  VISIBLE_STATUS_OPTIONS,
   brandSchema,
   type BrandForm
 } from "@/app/admin/vehicle-management/_vehicle-form-shared";
@@ -60,7 +60,7 @@ export function VehicleBrandsSection() {
 
   const form = useForm<BrandForm>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { name: "", vehicleTypeId: 0, status: "PENDING", image: "" }
+    defaultValues: { name: "", vehicleTypeId: 0, status: "ACTIVE", image: "" }
   });
 
   const invalidate = async () => {
@@ -69,7 +69,7 @@ export function VehicleBrandsSection() {
 
   const openAdd = () => {
     setEditingId(null);
-    form.reset({ name: "", vehicleTypeId: 0, status: "PENDING", image: "" });
+    form.reset({ name: "", vehicleTypeId: 0, status: "ACTIVE", image: "" });
     setShowModal(true);
   };
 
@@ -313,11 +313,19 @@ export function VehicleBrandsSection() {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
+                  {VISIBLE_STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
                     </SelectItem>
                   ))}
+                  {field.value &&
+                  !VISIBLE_STATUS_OPTIONS.includes(
+                    field.value as (typeof VISIBLE_STATUS_OPTIONS)[number]
+                  ) ? (
+                    <SelectItem value={field.value} className="hidden">
+                      {field.value}
+                    </SelectItem>
+                  ) : null}
                 </SelectContent>
               </Select>
             )}
