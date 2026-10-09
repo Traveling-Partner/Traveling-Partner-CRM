@@ -67,14 +67,17 @@ function groupPermissionRows(permissions: PermissionEntry[]) {
 
   const groups: Array<{ id: string; label: string; items: PermissionRow[] }> = ACCESS_MODULES.map(
     (section) => {
-      const items = section.children.map((child) => {
+      const items = section.children.flatMap((child) => {
         used.add(child.id);
+        if (child.hidden) return [];
         const entry = byModule.get(child.id);
-        return {
-          module: child.id,
-          level: entry?.level ?? "NONE",
-          label: child.label
-        };
+        return [
+          {
+            module: child.id,
+            level: entry?.level ?? "NONE",
+            label: child.label
+          }
+        ];
       });
       return { id: section.id, label: section.label, items };
     }
@@ -248,6 +251,21 @@ function GroupRows({
   items: Array<PermissionEntry & { label: string }>;
   onChange: (module: string, moduleLabel: string, level: PermissionLevel) => void;
 }) {
+  const sameAsHeading =
+    items.length === 1 && items[0].label.toLowerCase() === label.toLowerCase();
+
+  if (sameAsHeading) {
+    const item = items[0];
+    return (
+      <PermissionRow
+        module={item.module}
+        label={label}
+        value={item.level}
+        onChange={(level) => onChange(item.module, item.label, level)}
+      />
+    );
+  }
+
   return (
     <>
       <TableRow className="hover:bg-transparent">
