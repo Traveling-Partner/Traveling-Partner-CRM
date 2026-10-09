@@ -3,7 +3,7 @@ import { z } from "zod";
 export const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPROVED"] as const;
 
 /** Choices shown in vehicle status menus. Saved values outside this list stay valid. */
-export const VISIBLE_STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED"] as const;
+export const VISIBLE_STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED", "PENDING"] as const;
 
 export { DEFAULT_PAGE_SIZE as DEFAULT_VEHICLE_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
