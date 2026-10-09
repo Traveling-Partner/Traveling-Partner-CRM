@@ -34,7 +34,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
-  STATUS_OPTIONS,
+  VISIBLE_STATUS_OPTIONS,
   variantSchema,
   type VariantForm
 } from "@/app/admin/vehicle-management/_vehicle-form-shared";
@@ -86,7 +86,7 @@ export function VehicleModelVariantsSection() {
       brandId: 0,
       modelYearId: 0,
       mileage: 0,
-      status: "PENDING",
+      status: "ACTIVE",
       image: ""
     }
   });
@@ -122,7 +122,7 @@ export function VehicleModelVariantsSection() {
       brandId: 0,
       modelYearId: 0,
       mileage: 0,
-      status: "PENDING",
+      status: "ACTIVE",
       image: ""
     });
     setShowModal(true);
@@ -512,11 +512,19 @@ export function VehicleModelVariantsSection() {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
+                  {VISIBLE_STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
                     </SelectItem>
                   ))}
+                  {field.value &&
+                  !VISIBLE_STATUS_OPTIONS.includes(
+                    field.value as (typeof VISIBLE_STATUS_OPTIONS)[number]
+                  ) ? (
+                    <SelectItem value={field.value} className="hidden">
+                      {field.value}
+                    </SelectItem>
+                  ) : null}
                 </SelectContent>
               </Select>
             )}
