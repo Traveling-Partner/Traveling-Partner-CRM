@@ -109,6 +109,17 @@ export const queryKeys = {
     lists: () => ["portalUsers", "list"] as const,
     list: (filters: PortalUsersListFilters) => ["portalUsers", "list", filters] as const,
     detail: (id: string | number) => ["portalUsers", "detail", String(id)] as const
+  },
+  salesAgent: {
+    all: ["salesAgent"] as const,
+    overview: () => ["salesAgent", "overview"] as const,
+    profile: () => ["salesAgent", "profile"] as const,
+    drivers: (filters: SalesAgentListFilters) =>
+      ["salesAgent", "drivers", filters] as const,
+    partners: (filters: SalesAgentListFilters) =>
+      ["salesAgent", "partners", filters] as const,
+    commissions: (filters: SalesAgentCommissionFilters) =>
+      ["salesAgent", "commissions", filters] as const
   }
 } as const;
 
@@ -270,4 +281,16 @@ export interface PortalUsersListFilters {
   pageSize: number;
   search: string;
   role: string;
+}
+
+export interface SalesAgentListFilters {
+  page: number;
+  pageSize: number;
+  search: string;
+}
+
+export interface SalesAgentCommissionFilters {
+  page: number;
+  pageSize: number;
+  filter: string;
 }

@@ -7,194 +7,156 @@ import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
+import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
-  SelectItem
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { useAuthStore } from "@/store/auth.store";
-import { commissions } from "@/mock-data/commissions";
-import type { Commission } from "@/types/domain";
-import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
+import { useSalesAgentCommissionsQuery } from "@/hooks/queries/use-sales-agent";
+import { showPhone } from "@/lib/format-ids";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
+import type { SalesAgentCommission } from "@/services/sales-agent";
 
-type CommissionRow = Commission & { statusLabel: "PENDING" | "PAID" };
+function money(value: number | null) {
+  if (value == null) return "—";
+  return new Intl.NumberFormat("en-PK", {
+    style: "currency",
+    currency: "PKR",
+    maximumFractionDigits: 0
+  }).format(value);
+}
 
-const monthOptions = (() => {
-  const months: string[] = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    months.push(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-    );
-  }
-  return months;
-})();
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString();
+}
 
 export default function AgentCommissionsPage() {
-  const user = useAuthStore((s) => s.user);
-  const agentId = user?.id ?? "";
-
-  const [monthFilter, setMonthFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { data, isLoading, error } = useSalesAgentCommissionsQuery({
+    page,
+    pageSize,
+    filter
+  });
 
-  const myCommissions = useMemo(
-    () =>
-      commissions
-        .filter((c) => c.agentId === agentId)
-        .map((c) => ({ ...c, statusLabel: c.status })),
-    [agentId]
+  const rows = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const loading = isLoading && !data;
+
+  const columns: ColumnDef<SalesAgentCommission>[] = useMemo(
+    () => [
+      {
+        accessorKey: "referredUserName",
+        header: "User",
+        cell: ({ row }) => (
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">{row.original.referredUserName || "—"}</p>
+            <p className="text-xs text-muted-foreground">
+              {showPhone(row.original.referredUserMobileNumber)}
+            </p>
+          </div>
+        )
+      },
+      {
+        accessorKey: "referredUserRole",
+        header: "Type",
+        cell: ({ row }) => row.original.referredUserRole || "—"
+      },
+      {
+        accessorKey: "amount",
+        header: "Amount",
+        cell: ({ row }) => (
+          <span className="font-heading font-semibold">{money(row.original.amount)}</span>
+        )
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) =>
+          row.original.status ? <StatusBadge status={row.original.status} /> : "—"
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Date",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {formatDate(row.original.createdAt)}
+          </span>
+        )
+      }
+    ],
+    []
   );
-
-  const filtered = useMemo(() => {
-    return myCommissions.filter((c) => {
-      const matchesMonth =
-        monthFilter === "all" || c.month === monthFilter;
-      const matchesStatus =
-        statusFilter === "all" || c.status === statusFilter;
-      return matchesMonth && matchesStatus;
-    });
-  }, [myCommissions, monthFilter, statusFilter]);
-
-  const paginated = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, page, pageSize]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-
-  const columns: ColumnDef<CommissionRow>[] = [
-    {
-      accessorKey: "month",
-      header: "Month",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {new Date(row.original.month + "-01").toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric"
-          })}
-        </span>
-      )
-    },
-    {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ row }) => (
-        <span className="font-heading font-semibold">
-          {new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-            maximumFractionDigits: 0
-          }).format(row.original.amount)}
-        </span>
-      )
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <StatusBadge
-          status={
-            row.original.status === "PAID" ? "APPROVED" : "PENDING"
-          }
-        />
-      )
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created",
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString()}
-        </span>
-      )
-    }
-  ];
-
-  if (!user) return null;
 
   return (
     <AppShell title="My Commissions">
       <PageContainer>
         <SectionCard
           title="Commission history"
-          description="View your commission payouts. Data is filtered to your account only."
+          description="Payments for users you referred. Filter uses pending, released, or all."
         >
-          {myCommissions.length === 0 ? (
-            <EmptyState
-              title="No commissions yet"
-              description="Once you onboard drivers and partners, your commission records will appear here."
-            />
+          <div className="flex flex-wrap items-center gap-2 pb-4">
+            <Select
+              value={filter}
+              onValueChange={(value) => {
+                setFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="released">Released</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {error ? (
+            <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error.message}
+            </p>
+          ) : null}
+
+          {loading ? (
+            <div className="space-y-2 py-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-10 w-full rounded-md" />
+              ))}
+            </div>
+          ) : error ? (
+            <EmptyState title="Could not load commissions" description={error.message} />
           ) : (
-            <>
-              <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={monthFilter}
-                    onValueChange={(v) => {
-                      setMonthFilter(v);
-                      setPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All months</SelectItem>
-                      {monthOptions.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {new Date(m + "-01").toLocaleDateString("en-US", {
-                            month: "short",
-                            year: "numeric"
-                          })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={statusFilter}
-                    onValueChange={(v) => {
-                      setStatusFilter(v);
-                      setPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All status</SelectItem>
-                      <SelectItem value="PENDING">Pending</SelectItem>
-                      <SelectItem value="PAID">Paid</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <DataTable
-                columns={columns}
-                data={paginated}
-                emptyTitle="No matching commissions"
-                emptyDescription="Try changing the month or status filter."
-              />
-
-              <ListPaginationFooter
-                pageSize={pageSize}
-                onPageSizeChange={(size) => {
-                  setPageSize(size);
-                  setPage(1);
-                }}
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </>
+            <DataTable
+              columns={columns}
+              data={rows}
+              getRowId={(row) => String(row.id)}
+              emptyTitle="No commissions yet"
+              emptyDescription="Payments for your referred users will appear here."
+            />
           )}
+
+          <ListPaginationFooter
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </SectionCard>
       </PageContainer>
     </AppShell>

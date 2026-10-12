@@ -38,6 +38,13 @@ export {
 } from "@/hooks/queries/use-access-permissions";
 export { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 export {
+  useSalesAgentOverviewQuery,
+  useSalesAgentProfileQuery,
+  useSalesAgentDriversQuery,
+  useSalesAgentPartnersQuery,
+  useSalesAgentCommissionsQuery
+} from "@/hooks/queries/use-sales-agent";
+export {
   useVehicleTypesQuery,
   useVehicleModelsQuery,
   useVehicleColorsQuery,

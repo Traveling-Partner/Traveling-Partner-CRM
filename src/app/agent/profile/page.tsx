@@ -1,253 +1,110 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Copy } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
+import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FormField } from "@/components/common/FormField";
-import { useAuthStore } from "@/store/auth.store";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
-import { Copy } from "lucide-react";
+import { useSalesAgentProfileQuery } from "@/hooks/queries/use-sales-agent";
+import { showPhone } from "@/lib/format-ids";
 
-const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Enter a valid email"),
-  phone: z.string().min(10, "Enter a valid phone number").optional().or(z.literal(""))
-});
-
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z
-      .string()
-      .min(8, "New password must be at least 8 characters"),
-    confirmPassword: z.string()
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"]
-  });
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
-type PasswordFormValues = z.infer<typeof passwordSchema>;
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 text-sm text-foreground">{value || "—"}</p>
+    </div>
+  );
+}
 
 export default function AgentProfilePage() {
-  const user = useAuthStore((s) => s.user);
-  const { success, error: showError } = useToast();
-
-  const {
-    register: registerProfile,
-    handleSubmit: handleProfileSubmit,
-    reset: resetProfile,
-    formState: { errors: profileErrors }
-  } = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: user?.name ?? "",
-      email: user?.email ?? "",
-      phone: ""
-    }
-  });
-
-  useEffect(() => {
-    if (user) {
-      resetProfile({
-        name: user.name,
-        email: user.email,
-        phone: ""
-      });
-    }
-  }, [user, resetProfile]);
-
-  const {
-    register: registerPassword,
-    handleSubmit: handlePasswordSubmit,
-    formState: { errors: passwordErrors }
-  } = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    }
-  });
-
-  const onProfileSubmit = (_values: ProfileFormValues) => {
-    showError("Nothing was saved. This screen is not connected to the API.");
-  };
-
-  const onPasswordSubmit = (_values: PasswordFormValues) => {
-    showError("Nothing was saved. This screen is not connected to the API.");
-  };
-
-  const referralCode = user
-    ? `REF-${user.id.toUpperCase().replace(/-/g, "")}-${user.name.split(" ")[0]?.slice(0, 2).toUpperCase() ?? "AG"}`
-    : "";
+  const { data, isLoading, error } = useSalesAgentProfileQuery();
+  const { success } = useToast();
+  const loading = isLoading && !data;
+  const initials = (data?.name || "SA")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const copyReferral = () => {
-    if (referralCode) {
-      navigator.clipboard.writeText(referralCode);
-      success("Referral code copied to clipboard.");
-    }
+    if (!data?.referralCode) return;
+    navigator.clipboard.writeText(data.referralCode);
+    success("Referral code copied.");
   };
-
-  if (!user) return null;
 
   return (
     <AppShell title="Profile">
       <PageContainer>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <SectionCard
-            title="Profile"
-            description="Your account details. Changes are mock and not persisted."
-            className="lg:col-span-2"
-          >
-            <form
-              className="space-y-4"
-              onSubmit={handleProfileSubmit(onProfileSubmit)}
-              noValidate
+        {error ? (
+          <p className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error.message}
+          </p>
+        ) : null}
+
+        {loading ? (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Skeleton className="h-64 lg:col-span-2" />
+            <Skeleton className="h-40" />
+          </div>
+        ) : error || !data ? (
+          <EmptyState
+            title="Profile not available"
+            description={error?.message || "Your sales agent profile could not be loaded."}
+          />
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <SectionCard
+              title="Profile"
+              description="Your account details from the sales agent API."
+              className="lg:col-span-2"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#fce001] to-[#fdb813] text-2xl font-heading font-bold text-slate-900 shadow-md">
-                  {user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
+                  {initials}
                 </div>
-                <div className="flex-1 space-y-4">
-                  <FormField
-                    label="Full name"
-                    htmlFor="name"
-                    required
-                    error={profileErrors.name}
-                  >
-                    <Input
-                      id="name"
-                      {...registerProfile("name")}
-                      placeholder="Your name"
-                    />
-                  </FormField>
-                  <FormField
-                    label="Email"
-                    htmlFor="email"
-                    required
-                    error={profileErrors.email}
-                  >
-                    <Input
-                      id="email"
-                      type="email"
-                      {...registerProfile("email")}
-                      placeholder="you@company.com"
-                    />
-                  </FormField>
-                  <FormField
-                    label="Phone"
-                    htmlFor="phone"
-                    error={profileErrors.phone}
-                  >
-                    <Input
-                      id="phone"
-                      type="tel"
-                      {...registerProfile("phone")}
-                      placeholder="+971 50 123 4567"
-                    />
-                  </FormField>
+                <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                  <Field label="Full name" value={data.name || "—"} />
+                  <Field label="Phone" value={showPhone(data.mobileNumber)} />
+                  <Field label="Email" value={data.email || "—"} />
+                  <Field label="City" value={data.city || "—"} />
                 </div>
               </div>
-              <Button type="submit">Save profile</Button>
-            </form>
-          </SectionCard>
+            </SectionCard>
 
-          <SectionCard
-            title="Referral code"
-            description="Share this code when onboarding new drivers or partners."
-          >
-            <div className="rounded-lg border border-border/80 bg-muted/30 p-4">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Your code
-              </p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-md bg-background px-3 py-2 font-mono text-sm font-semibold">
-                  {referralCode}
-                </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={copyReferral}
-                  aria-label="Copy referral code"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+            <SectionCard
+              title="Referral code"
+              description="Share this code when registering drivers or partners."
+            >
+              <div className="rounded-lg border border-border/80 bg-muted/30 p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Your code
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded-md bg-background px-3 py-2 font-mono text-sm font-semibold">
+                    {data.referralCode || "—"}
+                  </code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={copyReferral}
+                    disabled={!data.referralCode}
+                    aria-label="Copy referral code"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <p className="mt-2 text-[0.7rem] text-muted-foreground">
-                Admins may use this to attribute new signups to you.
-              </p>
-            </div>
-          </SectionCard>
-        </div>
-
-        <SectionCard
-          title="Change password"
-          description="Update your password. This is a mock flow and does not persist."
-          className="mt-6"
-        >
-          <form
-            className="max-w-md space-y-4"
-            onSubmit={handlePasswordSubmit(onPasswordSubmit)}
-            noValidate
-          >
-            <FormField
-              label="Current password"
-              htmlFor="currentPassword"
-              required
-              error={passwordErrors.currentPassword}
-            >
-              <Input
-                id="currentPassword"
-                type="password"
-                autoComplete="current-password"
-                {...registerPassword("currentPassword")}
-                placeholder="••••••••"
-              />
-            </FormField>
-            <FormField
-              label="New password"
-              htmlFor="newPassword"
-              required
-              error={passwordErrors.newPassword}
-            >
-              <Input
-                id="newPassword"
-                type="password"
-                autoComplete="new-password"
-                {...registerPassword("newPassword")}
-                placeholder="At least 8 characters"
-              />
-            </FormField>
-            <FormField
-              label="Confirm new password"
-              htmlFor="confirmPassword"
-              required
-              error={passwordErrors.confirmPassword}
-            >
-              <Input
-                id="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                {...registerPassword("confirmPassword")}
-                placeholder="••••••••"
-              />
-            </FormField>
-            <Button type="submit">Change password</Button>
-          </form>
-        </SectionCard>
+            </SectionCard>
+          </div>
+        )}
       </PageContainer>
     </AppShell>
   );
