@@ -1,3 +1,4 @@
+import { format, parseISO } from "date-fns";
 import { apiUrl } from "@/lib/api-base";
 import type { PaginatedResponse } from "@/lib/api/types";
 import { fetcher } from "@/lib/fetcher";
@@ -13,6 +14,12 @@ export interface SalesAgentSignupPoint {
   value: number;
 }
 
+export interface SalesAgentSignupDay {
+  day: string;
+  drivers: number;
+  partners: number;
+}
+
 export interface SalesAgentOverview {
   referredPartnerCount: number | null;
   referredDriverCount: number | null;
@@ -23,6 +30,15 @@ export interface SalesAgentOverview {
   releasedCommissionTotal: number | null;
   totalCommissionAmount: number | null;
   signupGraph: SalesAgentSignupPoint[];
+  signupDays: SalesAgentSignupDay[];
+  paymentGraph: SalesAgentSignupPoint[];
+  verificationGraph: SalesAgentSignupPoint[];
+  totalDriverSignups: number | null;
+  totalPartnerSignups: number | null;
+  paidVerificationCount: number | null;
+  unverifiedPaymentTotal: number | null;
+  otherPaymentTotal: number | null;
+  unsupportedMetrics: string[];
 }
 
 export interface SalesAgentProfile {
@@ -94,7 +110,56 @@ function toApiPage(page: number): number {
   return Math.max(0, page - 1);
 }
 
+function formatDay(value: string): string {
+  try {
+    return format(parseISO(value), "MMM d");
+  } catch {
+    return value;
+  }
+}
+
+function parseDatedPoints(value: unknown, keys: string[]): SalesAgentSignupPoint[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      const row = asRecord(item);
+      const date = readText(row.date ?? row.day ?? row.label);
+      let amount: number | null = null;
+      for (const key of keys) {
+        amount = readNumber(row[key]);
+        if (amount != null) break;
+      }
+      if (!date || amount == null) return null;
+      return { label: formatDay(date), value: amount };
+    })
+    .filter((row): row is SalesAgentSignupPoint => row !== null);
+}
+
+function parseSignupDays(value: unknown): SalesAgentSignupDay[] {
+  const payload = asRecord(value);
+  const drivers = parseDatedPoints(payload.driverSignups, ["count", "value"]);
+  const partners = parseDatedPoints(payload.partnerSignups, ["count", "value"]);
+  const byDay = new Map<string, SalesAgentSignupDay>();
+  for (const point of drivers) {
+    byDay.set(point.label, { day: point.label, drivers: point.value, partners: 0 });
+  }
+  for (const point of partners) {
+    const current = byDay.get(point.label);
+    if (current) current.partners = point.value;
+    else byDay.set(point.label, { day: point.label, drivers: 0, partners: point.value });
+  }
+  return [...byDay.values()];
+}
+
 function parseSignupGraph(value: unknown): SalesAgentSignupPoint[] {
+  const days = parseSignupDays(value);
+  if (days.length > 0) {
+    return days.map((day) => ({
+      label: day.day,
+      value: day.drivers + day.partners
+    }));
+  }
+
   const payload = asRecord(value);
   const dates = Array.isArray(payload.dates)
     ? payload.dates
@@ -108,7 +173,7 @@ function parseSignupGraph(value: unknown): SalesAgentSignupPoint[] {
       : [];
   if (dates.length > 0) {
     return dates.map((label, index) => ({
-      label: String(label),
+      label: formatDay(String(label)),
       value: readNumber(counts[index]) ?? 0
     }));
   }
@@ -118,19 +183,22 @@ function parseSignupGraph(value: unknown): SalesAgentSignupPoint[] {
     : Array.isArray(payload.points)
       ? payload.points
       : [];
-  return rows
-    .map((item) => {
-      const row = asRecord(item);
-      const label = readText(row.label ?? row.day ?? row.date ?? row.month);
-      const count = readNumber(row.value ?? row.count);
-      if (!label || count == null) return null;
-      return { label, value: count };
-    })
-    .filter((row): row is SalesAgentSignupPoint => row !== null);
+  return parseDatedPoints(rows, ["count", "value", "amount"]);
+}
+
+function parseUnsupportedMetrics(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+  }
+  return Object.keys(asRecord(value));
 }
 
 function parseOverview(res: unknown): SalesAgentOverview {
   const data = asRecord(unwrapData(res));
+  const signup = asRecord(data.signupGraph);
+  const signupGraph = parseSignupGraph(data.signupGraph);
+  const unsupportedMetrics = parseUnsupportedMetrics(data.unsupportedMetrics);
+  const blocked = new Set(unsupportedMetrics);
   return {
     referredPartnerCount: readNumber(data.referredPartnerCount),
     referredDriverCount: readNumber(data.referredDriverCount),
@@ -140,7 +208,22 @@ function parseOverview(res: unknown): SalesAgentOverview {
     pendingCommissionTotal: readNumber(data.pendingCommissionTotal),
     releasedCommissionTotal: readNumber(data.releasedCommissionTotal),
     totalCommissionAmount: readNumber(data.totalCommissionAmount),
-    signupGraph: parseSignupGraph(data.signupGraph)
+    signupGraph,
+    signupDays: parseSignupDays(data.signupGraph),
+    paymentGraph: parseDatedPoints(data.paymentGraph, ["amount", "value", "count"]),
+    verificationGraph: parseDatedPoints(data.verificationGraph, ["count", "value"]),
+    totalDriverSignups: readNumber(signup.totalDriverSignups),
+    totalPartnerSignups: readNumber(signup.totalPartnerSignups),
+    paidVerificationCount: blocked.has("paidVerificationCount")
+      ? null
+      : readNumber(data.paidVerificationCount),
+    unverifiedPaymentTotal: blocked.has("unverifiedPaymentTotal")
+      ? null
+      : readNumber(data.unverifiedPaymentTotal),
+    otherPaymentTotal: blocked.has("otherPaymentTotal")
+      ? null
+      : readNumber(data.otherPaymentTotal),
+    unsupportedMetrics
   };
 }
 

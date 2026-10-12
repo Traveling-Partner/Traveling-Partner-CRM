@@ -3,6 +3,8 @@
 import {
   BadgeCheck,
   BadgeDollarSign,
+  CircleDollarSign,
+  CreditCard,
   Handshake,
   ShieldCheck,
   UserPlus,
@@ -29,10 +31,24 @@ function count(value: number | null) {
   return value == null ? "Not available" : value;
 }
 
+const AWAITING_BACKEND = "Awaiting backend";
+
+function PendingTag() {
+  return (
+    <span className="inline-flex items-center rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+      {AWAITING_BACKEND}
+    </span>
+  );
+}
+
 export default function AgentDashboardPage() {
   const { data, isLoading, error } = useSalesAgentOverviewQuery();
   const loading = isLoading && !data;
   const failed = Boolean(error);
+  const unsupported = new Set(data?.unsupportedMetrics ?? []);
+  const pendingPaid = unsupported.has("paidVerificationCount");
+  const pendingUnverified = unsupported.has("unverifiedPaymentTotal");
+  const pendingOther = unsupported.has("otherPaymentTotal");
 
   return (
     <AppShell title="Agent Dashboard">
@@ -102,14 +118,65 @@ export default function AgentDashboardPage() {
             icon={BadgeDollarSign}
             loading={loading}
           />
+          <MetricCard
+            label="Paid verifications"
+            value={
+              failed
+                ? "Not available"
+                : pendingPaid
+                  ? "—"
+                  : count(data?.paidVerificationCount ?? null)
+            }
+            hint="Paid verification count"
+            icon={CreditCard}
+            loading={loading}
+            tag={failed ? undefined : pendingPaid ? AWAITING_BACKEND : undefined}
+          />
+          <MetricCard
+            label="Unverified payments"
+            value={
+              failed
+                ? "Not available"
+                : pendingUnverified
+                  ? "—"
+                  : money(data?.unverifiedPaymentTotal ?? null)
+            }
+            hint="Not yet verified"
+            icon={Wallet}
+            loading={loading}
+            tag={failed ? undefined : pendingUnverified ? AWAITING_BACKEND : undefined}
+          />
+          <MetricCard
+            label="Other payments"
+            value={
+              failed
+                ? "Not available"
+                : pendingOther
+                  ? "—"
+                  : money(data?.otherPaymentTotal ?? null)
+            }
+            hint="Other commission totals"
+            icon={CircleDollarSign}
+            loading={loading}
+            tag={failed ? undefined : pendingOther ? AWAITING_BACKEND : undefined}
+          />
         </div>
 
         <ChartCard
           title="Registrations"
-          description="Signups referred by you"
+          description={
+            data?.totalDriverSignups != null || data?.totalPartnerSignups != null
+              ? `Drivers ${data.totalDriverSignups ?? 0} · Partners ${data.totalPartnerSignups ?? 0}`
+              : "Driver and partner signups referred by you"
+          }
+          badge={
+            !loading && !failed && (data?.signupGraph.length ?? 0) === 0 ? (
+              <PendingTag />
+            ) : undefined
+          }
           loading={loading}
           unavailable={failed}
-          empty={!loading && !failed && (data?.signupGraph.length ?? 0) === 0}
+          empty={false}
           heightClass="h-56 sm:h-72"
         >
           <TrendArea
@@ -120,6 +187,54 @@ export default function AgentDashboardPage() {
             xKey="day"
             yKey="count"
             name="Signups"
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Verifications"
+          description="Daily verification counts"
+          badge={
+            !loading && !failed && (data?.verificationGraph.length ?? 0) === 0 ? (
+              <PendingTag />
+            ) : undefined
+          }
+          loading={loading}
+          unavailable={failed}
+          empty={false}
+          heightClass="h-56 sm:h-72"
+        >
+          <TrendArea
+            data={(data?.verificationGraph ?? []).map((point) => ({
+              day: point.label,
+              count: point.value
+            }))}
+            xKey="day"
+            yKey="count"
+            name="Verifications"
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Payments"
+          description="Daily commission amounts"
+          badge={
+            !loading && !failed && (data?.paymentGraph.length ?? 0) === 0 ? (
+              <PendingTag />
+            ) : undefined
+          }
+          loading={loading}
+          unavailable={failed}
+          empty={false}
+          heightClass="h-56 sm:h-72"
+        >
+          <TrendArea
+            data={(data?.paymentGraph ?? []).map((point) => ({
+              day: point.label,
+              count: point.value
+            }))}
+            xKey="day"
+            yKey="count"
+            name="Payments"
           />
         </ChartCard>
       </PageContainer>
