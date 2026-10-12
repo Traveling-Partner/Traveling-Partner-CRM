@@ -205,14 +205,15 @@ export function VehicleBrandsSection() {
               {
                 key: "vehicleType",
                 header: "Vehicle Type",
-                render: (item: VehicleBrand) => (
-                  <span className="text-xs text-muted-foreground">
-                    {item.vehicleTypeName ||
-                      vehicleTypes.find((type) => Number(type.id) === Number(item.vehicleTypeId))
-                        ?.name ||
-                      "—"}
-                  </span>
-                )}
+                render: (item: VehicleBrand) => {
+                  const typeName =
+                    item.vehicleTypeName ||
+                    vehicleTypes.find((type) => Number(type.id) === Number(item.vehicleTypeId))
+                      ?.name;
+                  return (
+                    <span className="text-xs text-muted-foreground">{typeName || "—"}</span>
+                  );
+                }
               },
               {
                 key: "status",
