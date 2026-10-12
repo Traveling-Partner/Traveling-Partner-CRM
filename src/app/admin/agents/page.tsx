@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/select";
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { Search } from "lucide-react";
-import { useEmployeeRolesQuery, usePortalUsersListQuery } from "@/hooks/queries/use-portal-users";
+import { usePortalUsersListQuery } from "@/hooks/queries/use-portal-users";
 import { showPhone } from "@/lib/format-ids";
+import { ROLE_LABELS } from "@/lib/roles";
 import { formatPortalRole, primaryRole, type PortalUser } from "@/services/portal-users";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 import { WriteOnly } from "@/components/auth/WriteOnly";
@@ -34,7 +35,6 @@ export default function AdminEmployeesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const rolesQuery = useEmployeeRolesQuery();
   const { data, isLoading, error } = usePortalUsersListQuery({
     page,
     pageSize,
@@ -157,9 +157,9 @@ export default function AdminEmployeesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All roles</SelectItem>
-                {rolesQuery.roles.map((item) => (
-                  <SelectItem key={item.name} value={item.name}>
-                    {formatPortalRole(item.name)}
+                {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
                   </SelectItem>
                 ))}
               </SelectContent>

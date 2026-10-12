@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useApiQuery } from "@/hooks/api";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -10,15 +11,24 @@ import { normalizeRole } from "@/lib/rbac";
 import { ROLES } from "@/lib/roles";
 import { setAuthRole } from "@/store/slices/authSlice";
 
+const LIST_PAGES_WITHOUT_PERMISSION = new Set([
+  "/admin/drivers",
+  "/admin/partners",
+  "/admin/agents",
+  "/admin/agent-performance"
+]);
+
 /** One GET /auth/ops/permissions per logged-in user. Admin is never filtered. */
 export function useUserPermissionsQuery() {
   const dispatch = useAppDispatch();
+  const pathname = usePathname();
   const userId = useAppSelector((state) => state.auth.user?.id);
   const isAdmin = normalizeRole(useAppSelector((state) => state.auth.user?.role)) === ROLES.ADMIN;
+  const skipListPage = LIST_PAGES_WITHOUT_PERMISSION.has(pathname ?? "");
 
   const query = useApiQuery<RolePermissionsData>({
     queryKey: queryKeys.permissions.me(userId ?? ""),
-    enabled: Boolean(userId) && !isAdmin,
+    enabled: Boolean(userId) && !isAdmin && !skipListPage,
     staleTime: Infinity,
     refetchOnMount: false,
     retry: false,
