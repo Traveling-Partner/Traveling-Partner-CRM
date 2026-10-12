@@ -48,10 +48,11 @@ export function VehicleBrandsSection() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadTypes, setLoadTypes] = useState(false);
 
   const vehicleTypeId = typeFilter === "all" ? undefined : Number(typeFilter);
   const brandsQuery = useVehicleBrandsQuery(page, pageSize, search, vehicleTypeId);
-  const typesQuery = useVehicleTypeOptionsQuery();
+  const typesQuery = useVehicleTypeOptionsQuery(showModal || loadTypes);
 
   const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
   const vehicleTypes = (typesQuery.data ?? []) as VehicleEntity[];
@@ -159,6 +160,9 @@ export function VehicleBrandsSection() {
             </div>
             <Select
               value={typeFilter}
+              onOpenChange={(open) => {
+                if (open) setLoadTypes(true);
+              }}
               onValueChange={(value) => {
                 setTypeFilter(value);
                 setPage(1);
@@ -201,12 +205,14 @@ export function VehicleBrandsSection() {
               {
                 key: "vehicleType",
                 header: "Vehicle Type",
-                render: (item: VehicleBrand) => {
-                  const typeName = vehicleTypes.find(
-                    (type) => Number(type.id) === Number(item.vehicleTypeId)
-                  )?.name;
-                  return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
-                }
+                render: (item: VehicleBrand) => (
+                  <span className="text-xs text-muted-foreground">
+                    {item.vehicleTypeName ||
+                      vehicleTypes.find((type) => Number(type.id) === Number(item.vehicleTypeId))
+                        ?.name ||
+                      "—"}
+                  </span>
+                )}
               },
               {
                 key: "status",
