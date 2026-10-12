@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Menu, MoonStar, SunMedium, ChevronDown } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
-import { useAppDispatch } from "@/store/hooks";
-import { patchAuthProfile } from "@/store/slices/authSlice";
-import { usePortalUserDetailQuery } from "@/hooks/queries/use-portal-users";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,32 +43,13 @@ function nameInitials(name: string): string {
 
 export function Header({ title, onToggleSidebarMobile }: HeaderProps) {
   const { theme, setTheme } = useTheme();
-  const dispatch = useAppDispatch();
   const { user, logout } = useAuthStore();
-  const storedName = readableName(user?.name);
-  const profileQuery = usePortalUserDetailQuery(storedName ? undefined : user?.id, {
-    optional: true
-  });
-  const profile = profileQuery.data;
-  const personName = storedName || readableName(profile?.name);
+  const personName = readableName(user?.name);
   const displayName = personName || "User";
-  const phone = formatPhone(user?.mobileNumber || profile?.mobileNumber) ?? "";
+  const phone = formatPhone(user?.mobileNumber) ?? "";
   const appRole = toAppRole(user?.role);
   const roleLabel = appRole ? ROLE_LABELS[appRole] : user?.role?.replace(/_/g, " ") || "User";
   const isDark = theme === "dark";
-
-  useEffect(() => {
-    if (!profile || storedName) return;
-    const name = readableName(profile.name);
-    if (!name && !profile.email && !profile.mobileNumber) return;
-    dispatch(
-      patchAuthProfile({
-        name,
-        email: profile.email ?? undefined,
-        mobileNumber: profile.mobileNumber ?? undefined
-      })
-    );
-  }, [dispatch, profile, storedName]);
 
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/98 px-3 backdrop-blur-xl sm:px-4 md:px-5">
