@@ -21,7 +21,8 @@ import {
   type SidebarLink,
   type SidebarSection
 } from "@/config/navigation";
-import { getDefaultRouteForRole } from "@/lib/rbac";
+import { getDefaultRouteForRole, normalizeRole } from "@/lib/rbac";
+import { ROLES } from "@/lib/roles";
 import { filterNavByPermissions, firstAllowedHref, navForPermissions } from "@/lib/page-permissions";
 import { useUserPermissionsQuery } from "@/hooks/queries/use-user-permissions";
 
@@ -285,7 +286,8 @@ export function Sidebar({
   const { user } = useAuthStore();
   const { gate, isAdmin } = useUserPermissionsQuery();
   const navItems = useMemo(() => {
-    if (!isAdmin && !gate) return [];
+    const isAgent = normalizeRole(user?.role) === ROLES.AGENT;
+    if (!isAdmin && !isAgent && !gate) return [];
     return filterNavByPermissions(navForPermissions(user?.role, gate), gate);
   }, [isAdmin, user?.role, gate]);
   const homeHref =

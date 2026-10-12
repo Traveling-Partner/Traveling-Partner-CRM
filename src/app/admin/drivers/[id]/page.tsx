@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Download, Eye, FileText, Pencil, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { WriteOnly } from "@/components/auth/WriteOnly";
+import { usePageAccess } from "@/hooks/use-page-access";
 import { PageContainer } from "@/components/common/PageContainer";
 import { SectionCard } from "@/components/common/SectionCard";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -69,6 +69,7 @@ function previewDocLabel(id: PreviewDocument["id"]): string {
 export default function AdminDriverDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { canWrite } = usePageAccess();
   const { success, error } = useToast();
 
   const { data, isLoading, isError } = useDriverDetailQuery(params.id);
@@ -229,14 +230,19 @@ export default function AdminDriverDetailPage() {
             </Link>
           </Button>
           {driver ? (
-            <WriteOnly>
+            canWrite ? (
               <Button size="sm" asChild>
                 <Link href={`/admin/drivers/${params.id}/edit`} className="gap-1.5">
                   <Pencil className="h-4 w-4" />
                   Edit driver
                 </Link>
               </Button>
-            </WriteOnly>
+            ) : (
+              <Button size="sm" disabled className="gap-1.5">
+                <Pencil className="h-4 w-4" />
+                Edit driver
+              </Button>
+            )
           ) : null}
         </div>
 
@@ -315,8 +321,7 @@ export default function AdminDriverDetailPage() {
             )}
           </SectionCard>
 
-          <WriteOnly>
-            <SectionCard title="Account controls">
+          <SectionCard title="Account controls">
               <div className="space-y-3 text-sm">
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Block or unblock this driver. Document approval is separate and drives verification.
@@ -325,7 +330,7 @@ export default function AdminDriverDetailPage() {
                   <Button
                     size="sm"
                     variant={isBlocked ? "default" : "destructive"}
-                    disabled={updatingStatus}
+                    disabled={!canWrite || updatingStatus}
                     onClick={() => setStatusConfirmOpen(true)}
                   >
                     {isBlocked ? "Unblock" : "Block"}
@@ -333,7 +338,6 @@ export default function AdminDriverDetailPage() {
                 </div>
               </div>
             </SectionCard>
-          </WriteOnly>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -394,11 +398,10 @@ export default function AdminDriverDetailPage() {
                       {(selectedDocument?.type || "DOCUMENT").replaceAll("_", " ")}
                     </p>
                   </div>
-                  <WriteOnly>
-                    <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 gap-2">
                       <Button
                         size="sm"
-                        disabled={docMutation.isPending || selectedDocStatus === "APPROVED"}
+                        disabled={!canWrite || docMutation.isPending || selectedDocStatus === "APPROVED"}
                         onClick={() => {
                           setRejectReason("");
                           setDocDecision("APPROVE");
@@ -409,7 +412,7 @@ export default function AdminDriverDetailPage() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        disabled={docMutation.isPending || selectedDocStatus === "REJECTED"}
+                        disabled={!canWrite || docMutation.isPending || selectedDocStatus === "REJECTED"}
                         onClick={() => {
                           setRejectReason("");
                           setDocDecision("REJECT");
@@ -418,7 +421,6 @@ export default function AdminDriverDetailPage() {
                         Reject
                       </Button>
                     </div>
-                  </WriteOnly>
                 </div>
 
                 <div className="grid gap-3 p-3 md:grid-cols-2">
