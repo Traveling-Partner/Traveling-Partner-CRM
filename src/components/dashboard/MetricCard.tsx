@@ -25,7 +25,8 @@ export function MetricCard({
   tone = "neutral",
   icon: Icon,
   loading,
-  footer
+  footer,
+  tag
 }: {
   label: string;
   value: string | number;
@@ -36,6 +37,7 @@ export function MetricCard({
   icon?: ComponentType<{ className?: string }>;
   loading?: boolean;
   footer?: ReactNode;
+  tag?: string;
 }) {
   const display = typeof value === "number" ? value.toLocaleString() : value;
   const muted = tone === "brand" ? "text-slate-900" : "text-muted-foreground";
@@ -44,7 +46,14 @@ export function MetricCard({
     <div className={cn("rounded-2xl px-4 py-3.5 sm:px-4 sm:py-4", toneWrap[tone])}>
       <div className="flex items-center justify-between gap-2">
         <p className={cn("text-xs sm:text-sm", muted)}>{label}</p>
-        {Icon ? <Icon className={cn("h-3.5 w-3.5 shrink-0", muted)} /> : null}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {tag ? (
+            <span className="rounded-full border border-amber-200/70 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold leading-none text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+              {tag}
+            </span>
+          ) : null}
+          {Icon ? <Icon className={cn("h-3.5 w-3.5 shrink-0", muted)} /> : null}
+        </div>
       </div>
       <div className="mt-2 flex items-end justify-between gap-3">
         <div className="min-w-0">
