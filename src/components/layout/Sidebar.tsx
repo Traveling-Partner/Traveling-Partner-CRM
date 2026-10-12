@@ -287,7 +287,9 @@ export function Sidebar({
   const { gate, isAdmin } = useUserPermissionsQuery();
   const navItems = useMemo(() => {
     const isAgent = normalizeRole(user?.role) === ROLES.AGENT;
-    if (!isAdmin && !isAgent && !gate) return [];
+    if (!isAdmin && !isAgent && !gate) {
+      return filterNavByPermissions(navForPermissions(user?.role, null), null);
+    }
     return filterNavByPermissions(navForPermissions(user?.role, gate), gate);
   }, [isAdmin, user?.role, gate]);
   const homeHref =
