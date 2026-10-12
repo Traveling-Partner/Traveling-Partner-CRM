@@ -26,6 +26,8 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const RESEND_WAIT_SECONDS = 30;
+
 export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -35,13 +37,17 @@ export default function LoginPage() {
   const [showOtpField, setShowOtpField] = useState(false);
   const [otpGenerating, setOtpGenerating] = useState(false);
   const [otpResending, setOtpResending] = useState(false);
+  const [resendWait, setResendWait] = useState(0);
   const otpInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
     handleSubmit,
     getValues,
+    setValue,
+    watch,
     setError,
+    clearErrors,
     formState: { errors }
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -50,6 +56,25 @@ export default function LoginPage() {
       otp: ""
     }
   });
+
+  const otpValue = watch("otp") ?? "";
+
+  useEffect(() => {
+    if (resendWait <= 0) return;
+    const timer = window.setInterval(() => {
+      setResendWait((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendWait]);
+
+  const clearOtpField = () => {
+    setValue("otp", "");
+    clearErrors("otp");
+  };
+
+  const startResendWait = () => {
+    setResendWait(RESEND_WAIT_SECONDS);
+  };
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -70,6 +95,7 @@ export default function LoginPage() {
         await generateAdminOtp({ mobileNumber: values.mobileNumber.trim() });
         toastSuccess("Your OTP is generated successfully.");
         setShowOtpField(true);
+        startResendWait();
         setTimeout(() => otpInputRef.current?.focus(), 0);
       } catch (err) {
         toastError(err instanceof Error ? err.message : "Failed to generate OTP.");
@@ -103,8 +129,16 @@ export default function LoginPage() {
 
       router.replace(getDefaultRouteForRole(loggedInUser.role));
     } catch {
-      // Error state is already handled in Redux.
+      clearOtpField();
+      setTimeout(() => otpInputRef.current?.focus(), 0);
     }
+  };
+
+  const onChangeNumber = () => {
+    setShowOtpField(false);
+    clearOtpField();
+    setResendWait(0);
+    dispatch(clearAuthError());
   };
 
   const onResendOtp = async () => {
@@ -117,6 +151,8 @@ export default function LoginPage() {
     try {
       await resendAdminOtp({ mobileNumber });
       toastSuccess("A new OTP has been sent.");
+      clearOtpField();
+      startResendWait();
       setTimeout(() => otpInputRef.current?.focus(), 0);
     } catch (err) {
       toastError(err instanceof Error ? err.message : "Failed to resend OTP.");
@@ -149,9 +185,21 @@ export default function LoginPage() {
               type="text"
               placeholder="03002234519"
               autoComplete="tel"
+              readOnly={showOtpField}
+              aria-readonly={showOtpField}
+              className={showOtpField ? "cursor-not-allowed bg-muted/50" : undefined}
               {...register("mobileNumber")}
             />
           </FormField>
+          {showOtpField ? (
+            <button
+              type="button"
+              className="-mt-3 text-sm font-medium text-foreground underline-offset-2 hover:underline"
+              onClick={onChangeNumber}
+            >
+              Change number
+            </button>
+          ) : null}
 
           {showOtpField ? (
             <FormField
@@ -182,14 +230,19 @@ export default function LoginPage() {
           ) : null}
 
           {showOtpField ? (
-            <button
-              type="button"
-              className="text-sm font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-60"
-              disabled={loading || otpGenerating || otpResending}
-              onClick={onResendOtp}
-            >
-              {otpResending ? "Sending OTP..." : "Resend OTP"}
-            </button>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <button
+                type="button"
+                className="text-sm font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-60"
+                disabled={loading || otpGenerating || otpResending || resendWait > 0}
+                onClick={onResendOtp}
+              >
+                {otpResending ? "Sending OTP..." : "Resend OTP"}
+              </button>
+              {resendWait > 0 ? (
+                <span className="text-sm text-muted-foreground">{resendWait}s</span>
+              ) : null}
+            </div>
           ) : null}
 
           {error ? (
@@ -199,7 +252,11 @@ export default function LoginPage() {
           <Button
             type="submit"
             className="mt-2 w-full h-11"
-            disabled={loading || otpGenerating}
+            disabled={
+              loading ||
+              otpGenerating ||
+              (showOtpField && otpValue.replace(/\D/g, "").length < 4)
+            }
           >
             {showOtpField
               ? loading
