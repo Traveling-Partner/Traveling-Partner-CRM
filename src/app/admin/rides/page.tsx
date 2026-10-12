@@ -109,30 +109,19 @@ function AdminRidesList() {
     startedAt
   };
   const { data, isLoading, isFetching, error } = useRidesListQuery(listFilters);
-  const requestedCount = useRidesListQuery({
-    ...listFilters,
+  const countFilters = {
     page: 1,
     pageSize: 1,
-    status: "REQUESTED"
-  });
-  const completedCount = useRidesListQuery({
-    ...listFilters,
-    page: 1,
-    pageSize: 1,
-    status: "COMPLETED"
-  });
-  const canceledCount = useRidesListQuery({
-    ...listFilters,
-    page: 1,
-    pageSize: 1,
-    status: "CANCELED"
-  });
-  const expiredCount = useRidesListQuery({
-    ...listFilters,
-    page: 1,
-    pageSize: 1,
-    status: "EXPIRED"
-  });
+    city: "",
+    search: "",
+    bookingReference: "",
+    rideType: "all",
+    startedAt: ""
+  };
+  const requestedCount = useRidesListQuery({ ...countFilters, status: "REQUESTED" });
+  const completedCount = useRidesListQuery({ ...countFilters, status: "COMPLETED" });
+  const canceledCount = useRidesListQuery({ ...countFilters, status: "CANCELED" });
+  const expiredCount = useRidesListQuery({ ...countFilters, status: "EXPIRED" });
 
   const rides = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
