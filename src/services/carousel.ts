@@ -126,11 +126,11 @@ export async function deleteBanner(id: number, token: string | null) {
   });
 }
 
-export async function getCarouselPublishedIds(
+export async function getCarouselBanners(
   token: string | null,
   signal?: AbortSignal
-): Promise<Set<number>> {
-  const publishedIds = new Set<number>();
+): Promise<BannerRecord[]> {
+  const banners: BannerRecord[] = [];
   let page = 1;
   const size = 50;
   let totalPages = 1;
@@ -142,11 +142,19 @@ export async function getCarouselPublishedIds(
       dedupe: false
     });
     const parsed = parseCarouselPage(res);
-    parsed.content.forEach((item) => publishedIds.add(item.id));
+    banners.push(...parsed.content);
     totalPages = parsed.totalPages;
     if (parsed.last) break;
     page += 1;
   }
 
-  return publishedIds;
+  return banners;
+}
+
+export async function getCarouselPublishedIds(
+  token: string | null,
+  signal?: AbortSignal
+): Promise<Set<number>> {
+  const banners = await getCarouselBanners(token, signal);
+  return new Set(banners.map((item) => item.id));
 }

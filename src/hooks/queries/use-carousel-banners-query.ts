@@ -2,11 +2,7 @@
 
 import { useApiQuery } from "@/hooks/api";
 import { queryKeys } from "@/lib/api/query-keys";
-import {
-  getAllBanners,
-  getCarouselPublishedIds,
-  type BannerRecord
-} from "@/services/carousel";
+import { getCarouselBanners, type BannerRecord } from "@/services/carousel";
 
 export type BannerStatus = "Published" | "Draft";
 
@@ -15,14 +11,10 @@ export interface BannerRow extends BannerRecord {
 }
 
 async function fetchCarouselRows(token: string, signal?: AbortSignal): Promise<BannerRow[]> {
-  const [allBanners, publishedIds] = await Promise.all([
-    getAllBanners(token, signal),
-    getCarouselPublishedIds(token, signal)
-  ]);
-
-  return allBanners.map((item) => ({
+  const banners = await getCarouselBanners(token, signal);
+  return banners.map((item) => ({
     ...item,
-    status: publishedIds.has(item.id) ? "Published" : "Draft"
+    status: "Published"
   }));
 }
 
