@@ -1,11 +1,13 @@
 import {
   adminNav,
+  agentNav,
   getNavForRole,
   isSidebarGroup,
   isSidebarSection,
   type SidebarEntry
 } from "@/config/navigation";
 import { normalizeRole } from "@/lib/rbac";
+import { ROLES } from "@/lib/roles";
 import type { PermissionLevel, RolePermissionsData } from "@/services/permissions";
 
 /** Longest path first so `/admin/safety/services` is not treated as `/admin/safety`. */
@@ -105,7 +107,16 @@ export function navForPermissions(
   role: string | null | undefined,
   gate: PagePermissionGate | null
 ): SidebarEntry[] {
-  return gate ? adminNav : getNavForRole(normalizeRole(role));
+  const appRole = normalizeRole(role);
+  if (appRole === ROLES.AGENT) {
+    if (!gate) return agentNav;
+    const extras = filterNavByPermissions(adminNav, gate).filter((entry) => {
+      if (isSidebarGroup(entry) || isSidebarSection(entry)) return true;
+      return entry.href !== "/admin/dashboard";
+    });
+    return extras.length ? [...agentNav, ...extras] : agentNav;
+  }
+  return gate ? adminNav : getNavForRole(appRole);
 }
 
 export function filterNavByPermissions(
@@ -136,6 +147,7 @@ export function firstAllowedHref(
   role: string | null | undefined,
   gate: PagePermissionGate | null
 ): string | null {
+  if (normalizeRole(role) === ROLES.AGENT) return "/agent/dashboard";
   const walk = (entries: SidebarEntry[]): string | null => {
     for (const entry of entries) {
       if (isSidebarSection(entry)) continue;
