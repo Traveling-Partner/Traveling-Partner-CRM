@@ -27,8 +27,11 @@ export interface VehicleModel extends VehicleEntity {
 
 export interface VehicleModelVariant extends VehicleEntity {
   vehicleTypeId: number | null;
+  vehicleTypeName: string | null;
   brandId: number | null;
+  brandName: string | null;
   modelYearId: number | null;
+  modelYearName: string | null;
   mileage: number | null;
 }
 

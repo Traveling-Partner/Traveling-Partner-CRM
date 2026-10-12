@@ -55,6 +55,9 @@ export function VehicleModelVariantsSection() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadTypes, setLoadTypes] = useState(false);
+  const [loadBrands, setLoadBrands] = useState(false);
+  const [loadModels, setLoadModels] = useState(false);
 
   const vehicleTypeId = typeFilter === "all" ? undefined : Number(typeFilter);
   const brandId = brandFilter === "all" ? undefined : Number(brandFilter);
@@ -67,9 +70,9 @@ export function VehicleModelVariantsSection() {
     brandId,
     modelYearId
   );
-  const typesQuery = useVehicleTypeOptionsQuery();
-  const brandsQuery = useVehicleBrandOptionsQuery();
-  const modelsQuery = useVehicleModelOptionsQuery();
+  const typesQuery = useVehicleTypeOptionsQuery(showModal || loadTypes);
+  const brandsQuery = useVehicleBrandOptionsQuery(undefined, showModal || loadBrands);
+  const modelsQuery = useVehicleModelOptionsQuery(undefined, undefined, showModal || loadModels);
 
   const vehicleModelVariants = (variantsQuery.data?.content ?? []) as VehicleModelVariant[];
   const vehicleTypes = (typesQuery.data ?? []) as VehicleEntity[];
@@ -220,6 +223,9 @@ export function VehicleModelVariantsSection() {
             </div>
             <Select
               value={typeFilter}
+              onOpenChange={(open) => {
+                if (open) setLoadTypes(true);
+              }}
               onValueChange={(value) => {
                 setTypeFilter(value);
                 setBrandFilter("all");
@@ -241,6 +247,9 @@ export function VehicleModelVariantsSection() {
             </Select>
             <Select
               value={brandFilter}
+              onOpenChange={(open) => {
+                if (open) setLoadBrands(true);
+              }}
               onValueChange={(value) => {
                 setBrandFilter(value);
                 setModelFilter("all");
@@ -261,6 +270,9 @@ export function VehicleModelVariantsSection() {
             </Select>
             <Select
               value={modelFilter}
+              onOpenChange={(open) => {
+                if (open) setLoadModels(true);
+              }}
               onValueChange={(value) => {
                 setModelFilter(value);
                 setPage(1);
@@ -304,30 +316,39 @@ export function VehicleModelVariantsSection() {
                 key: "vehicleType",
                 header: "Vehicle Type",
                 render: (item: VehicleModelVariant) => {
-                  const typeName = vehicleTypes.find(
-                    (type) => Number(type.id) === Number(item.vehicleTypeId)
-                  )?.name;
-                  return <span className="text-xs text-muted-foreground">{typeName ?? "—"}</span>;
+                  const typeName =
+                    item.vehicleTypeName ||
+                    vehicleTypes.find((type) => Number(type.id) === Number(item.vehicleTypeId))
+                      ?.name;
+                  return (
+                    <span className="text-xs text-muted-foreground">{typeName || "—"}</span>
+                  );
                 }
               },
               {
                 key: "brand",
                 header: "Brand",
                 render: (item: VehicleModelVariant) => {
-                  const brandName = vehicleBrands.find(
-                    (brand) => Number(brand.id) === Number(item.brandId)
-                  )?.name;
-                  return <span className="text-xs text-muted-foreground">{brandName ?? "—"}</span>;
+                  const brandName =
+                    item.brandName ||
+                    vehicleBrands.find((brand) => Number(brand.id) === Number(item.brandId))
+                      ?.name;
+                  return (
+                    <span className="text-xs text-muted-foreground">{brandName || "—"}</span>
+                  );
                 }
               },
               {
                 key: "model",
                 header: "Model",
                 render: (item: VehicleModelVariant) => {
-                  const modelName = vehicleModels.find(
-                    (model) => Number(model.id) === Number(item.modelYearId)
-                  )?.name;
-                  return <span className="text-xs text-muted-foreground">{modelName ?? "—"}</span>;
+                  const modelName =
+                    item.modelYearName ||
+                    vehicleModels.find((model) => Number(model.id) === Number(item.modelYearId))
+                      ?.name;
+                  return (
+                    <span className="text-xs text-muted-foreground">{modelName || "—"}</span>
+                  );
                 }
               },
               {
