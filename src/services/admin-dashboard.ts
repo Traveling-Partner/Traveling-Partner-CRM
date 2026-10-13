@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
-import { fetcher, isAbortError } from "@/lib/fetcher";
+import { fetcher } from "@/lib/fetcher";
 
 export interface DashboardCounts {
   totalDrivers: number;
@@ -247,22 +247,6 @@ function formatDayLabel(date: string) {
   }
 }
 
-async function fetchOptionalJson(
-  path: string,
-  requestInit: { token: string; signal?: AbortSignal; dedupe: false; debugLabel: string },
-  searchParams?: Record<string, string | number | undefined>
-): Promise<unknown | null> {
-  try {
-    return await fetcher<unknown | null>(buildApiUrl(path, searchParams), {
-      ...requestInit,
-      ignoreHttpError: true
-    });
-  } catch (error) {
-    if (isAbortError(error)) throw error;
-    return null;
-  }
-}
-
 function funnelFromRideStatus(rideStatus: RideStatusCountResponse): DashboardRideFunnel {
   return {
     stages: [
@@ -409,7 +393,9 @@ function mapTopAgents(payload: unknown): DashboardTopAgents {
   const agents = rows
     .map((item) => {
       const row = asRecord(item);
-      const name = String(row.agentName ?? row.name ?? "").trim();
+      const name =
+        String(row.agentName ?? row.name ?? "").trim() ||
+        (row.agentId != null ? `Agent ${row.agentId}` : "Agent");
       return {
         name,
         drivers: num(row.newDrivers ?? row.drivers ?? row.driverCount),
@@ -432,41 +418,39 @@ function mapTopAgents(payload: unknown): DashboardTopAgents {
   return { agents, totalDrivers, totalPartners };
 }
 
-function mapDashboardResponse(
-  countsRes: unknown,
-  driverStatusRes: unknown,
-  ridesTrendRes: unknown,
-  rideStatusRes: unknown,
-  recentActivity: DashboardAuditLogItem[],
-  recentActivityLimit: number,
-  ops: {
-    funnel: unknown | null;
-    outcome: unknown | null;
-    city: unknown | null;
-    fare: unknown | null;
-    documents: unknown | null;
-    commission: unknown | null;
-    topAgents: unknown | null;
-  }
-): AdminDashboardData {
-  const counts = unwrapEnvelope<CountsResponse>(countsRes);
-  const driverStatusCounts = unwrapEnvelope<DriverStatusCountsResponse>(driverStatusRes);
-  const ridesTrendPayload = unwrapEnvelope<Last14DaysGraphResponse>(ridesTrendRes);
-  const rideStatus = unwrapEnvelope<RideStatusCountResponse>(rideStatusRes);
-  const activity = [...recentActivity]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, recentActivityLimit);
+function mapDashboardResponse(overview: Record<string, unknown>): AdminDashboardData {
+  const counts = {
+    ...EMPTY_COUNTS,
+    ...(overview.counts ? unwrapEnvelope<CountsResponse>(overview.counts) : {})
+  };
+  const driverStatusCounts = {
+    ...EMPTY_DRIVER_STATUS,
+    ...(overview.driverStatusCounts
+      ? unwrapEnvelope<DriverStatusCountsResponse>(overview.driverStatusCounts)
+      : {})
+  };
+  const ridesTrendPayload = overview.ridesLast14Days
+    ? unwrapEnvelope<Last14DaysGraphResponse>(overview.ridesLast14Days)
+    : { dates: [], counts: [] };
+  const rideStatus = overview.rideStatusCount
+    ? unwrapEnvelope<RideStatusCountResponse>(overview.rideStatusCount)
+    : { requested: 0, accepted: 0, started: 0, canceled: 0, completed: 0 };
   const fallbackFunnel = funnelFromRideStatus(rideStatus);
-  const rideFunnel = ops.funnel != null ? mapRideFunnel(ops.funnel, fallbackFunnel) : EMPTY_FUNNEL;
-  const outcomeTrend = ops.outcome != null ? mapOutcomeTrend(ops.outcome) : [];
-  const ridesByCity = ops.city != null ? mapRidesByCity(ops.city) : [];
-  const fareTrend = ops.fare != null ? mapFareTrend(ops.fare) : [];
+  const rideFunnel =
+    overview.rideFunnel != null ? mapRideFunnel(overview.rideFunnel, fallbackFunnel) : EMPTY_FUNNEL;
+  const outcomeTrend =
+    overview.completedVsCanceled != null ? mapOutcomeTrend(overview.completedVsCanceled) : [];
+  const ridesByCity = overview.ridesByCity != null ? mapRidesByCity(overview.ridesByCity) : [];
+  const fareTrend = overview.fareLast14Days != null ? mapFareTrend(overview.fareLast14Days) : [];
   const documentsPending =
-    ops.documents != null ? mapDocumentsPending(ops.documents) : EMPTY_DOCUMENTS;
-  const commission = ops.commission != null ? mapCommission(ops.commission) : EMPTY_COMMISSION;
+    overview.documentsPending != null
+      ? mapDocumentsPending(overview.documentsPending)
+      : EMPTY_DOCUMENTS;
+  const commission =
+    overview.agentCommission != null ? mapCommission(overview.agentCommission) : EMPTY_COMMISSION;
   const topAgents =
-    ops.topAgents != null
-      ? mapTopAgents(ops.topAgents)
+    overview.agentPerformance != null
+      ? mapTopAgents(overview.agentPerformance)
       : { agents: [], totalDrivers: 0, totalPartners: 0 };
 
   return {
@@ -483,7 +467,7 @@ function mapDashboardResponse(
       { status: "CANCELED", count: rideStatus.canceled ?? 0 },
       { status: "COMPLETED", count: rideStatus.completed ?? 0 }
     ],
-    recentActivity: activity,
+    recentActivity: [],
     rideFunnel,
     outcomeTrend,
     ridesByCity,
@@ -492,27 +476,27 @@ function mapDashboardResponse(
     commission,
     topAgents,
     opsApi: {
-      rideFunnel: ops.funnel != null,
-      outcomeTrend: ops.outcome != null,
-      ridesByCity: ops.city != null,
-      fareTrend: ops.fare != null,
-      documentsPending: ops.documents != null,
-      commission: ops.commission != null,
-      topAgents: ops.topAgents != null
+      rideFunnel: overview.rideFunnel != null,
+      outcomeTrend: overview.completedVsCanceled != null,
+      ridesByCity: overview.ridesByCity != null,
+      fareTrend: overview.fareLast14Days != null,
+      documentsPending: overview.documentsPending != null,
+      commission: overview.agentCommission != null,
+      topAgents: overview.agentPerformance != null
     },
     opsDemo: {
-      rideFunnel: ops.funnel == null,
-      outcomeTrend: ops.outcome == null,
-      ridesByCity: ops.city == null,
-      fareTrend: ops.fare == null,
-      documentsPending: ops.documents == null,
-      commission: ops.commission == null,
-      topAgents: ops.topAgents == null
+      rideFunnel: overview.rideFunnel == null,
+      outcomeTrend: overview.completedVsCanceled == null,
+      ridesByCity: overview.ridesByCity == null,
+      fareTrend: overview.fareLast14Days == null,
+      documentsPending: overview.documentsPending == null,
+      commission: overview.agentCommission == null,
+      topAgents: overview.agentPerformance == null
     }
   };
 }
 
-/** Fetches all admin dashboard metrics in one parallel batch. */
+/** One GET /users/dashboard — same widgets, no extra metric calls. */
 export async function fetchAdminDashboardData(
   token: string,
   options: {
@@ -521,55 +505,13 @@ export async function fetchAdminDashboardData(
     debugSource?: string;
   } = {}
 ): Promise<AdminDashboardData> {
-  const { signal, recentActivityLimit = 10, debugSource } = options;
+  const { signal, debugSource } = options;
   const label = debugSource ? `admin-dashboard:${debugSource}` : "admin-dashboard";
-  const requestInit = { token, signal, dedupe: false as const, debugLabel: label };
-
-  const [
-    countsRes,
-    driverStatusRes,
-    ridesTrendRes,
-    rideStatusRes,
-    funnelRes,
-    outcomeRes,
-    cityRes,
-    fareRes,
-    documentsRes,
-    commissionRes,
-    topAgentsRes
-  ] = await Promise.all([
-    fetcher<unknown>(buildApiUrl("/users/counts"), requestInit),
-    fetcher<unknown>(buildApiUrl("/users/driver-status-counts"), requestInit),
-    fetcher<unknown>(buildApiUrl("/users/graph/last-14-days"), requestInit),
-    fetcher<unknown>(buildApiUrl("/users/ride-status-count"), requestInit),
-    fetchOptionalJson("/users/ride-funnel", { ...requestInit, debugLabel: `${label}:funnel` }),
-    fetchOptionalJson(
-      "/users/graph/completed-vs-canceled",
-      { ...requestInit, debugLabel: `${label}:outcome` },
-      { days: 14 }
-    ),
-    fetchOptionalJson("/users/rides-by-city", { ...requestInit, debugLabel: `${label}:city` }),
-    fetchOptionalJson("/users/graph/fare-last-14-days", { ...requestInit, debugLabel: `${label}:fare` }),
-    fetchOptionalJson("/users/documents/pending-counts", { ...requestInit, debugLabel: `${label}:docs` }),
-    fetchOptionalJson("/users/agent-commission-graph", { ...requestInit, debugLabel: `${label}:commission` }),
-    fetchOptionalJson("/users/agent-performance", { ...requestInit, debugLabel: `${label}:agent-performance` })
-  ]);
-
-  return mapDashboardResponse(
-    countsRes,
-    driverStatusRes,
-    ridesTrendRes,
-    rideStatusRes,
-    [],
-    recentActivityLimit,
-    {
-      funnel: funnelRes,
-      outcome: outcomeRes,
-      city: cityRes,
-      fare: fareRes,
-      documents: documentsRes,
-      commission: commissionRes,
-      topAgents: topAgentsRes
-    }
-  );
+  const res = await fetcher<unknown>(buildApiUrl("/users/dashboard"), {
+    token,
+    signal,
+    dedupe: false,
+    debugLabel: label
+  });
+  return mapDashboardResponse(asRecord(unwrapEnvelope(res)));
 }
