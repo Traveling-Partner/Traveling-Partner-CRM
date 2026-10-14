@@ -29,17 +29,36 @@ function toToDateParam(dateOnly: string): string | undefined {
   return `${trimmed}T23:59:59`;
 }
 
-function parseAuditLogsResponse(res: unknown): PaginatedResponse<AuditLogRow> {
+export function parseAuditLogsPage(res: unknown): PaginatedResponse<AuditLogRow> {
+  if (Array.isArray(res)) {
+    return {
+      content: res.map((item, index) => normalizeAuditLog(item, index)),
+      totalPages: 1,
+      totalElements: res.length
+    };
+  }
   if (!res || typeof res !== "object") {
     return { content: [], totalPages: 1, totalElements: 0 };
   }
   const r = res as Record<string, unknown>;
+  if (Array.isArray(r.data)) {
+    return {
+      content: r.data.map((item, index) => normalizeAuditLog(item, index)),
+      totalPages: 1,
+      totalElements: r.data.length
+    };
+  }
   const payload =
-    r.data && typeof r.data === "object" ? (r.data as Record<string, unknown>) : r;
+    r.data && typeof r.data === "object"
+      ? (r.data as Record<string, unknown>)
+      : r;
 
-  const content = Array.isArray(payload.content)
-    ? payload.content.map((item, index) => normalizeAuditLog(item, index))
-    : [];
+  const rawRows = Array.isArray(payload.content)
+    ? payload.content
+    : Array.isArray(payload)
+      ? payload
+      : [];
+  const content = rawRows.map((item, index) => normalizeAuditLog(item, index));
   const totalPages = typeof payload.totalPages === "number" ? payload.totalPages : 1;
   const totalElements =
     typeof payload.totalElements === "number" ? payload.totalElements : content.length;
@@ -97,5 +116,5 @@ export async function fetchAuditLogs(
     dedupe: false,
     debugLabel: "audit-logs:list"
   });
-  return parseAuditLogsResponse(res);
+  return parseAuditLogsPage(res);
 }

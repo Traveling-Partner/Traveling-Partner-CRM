@@ -22,10 +22,7 @@ import {
 } from "@/components/ui/select";
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { SafetyKpiCards } from "@/components/safety-center/SafetyKpiCards";
-import {
-  useSosIncidentsQuery,
-  useSosOverviewQuery
-} from "@/hooks/queries/use-sos-incidents";
+import { useSosIncidentsQuery } from "@/hooks/queries/use-sos-incidents";
 import type { SosIncidentRow } from "@/services/sos-incidents";
 import { DEFAULT_PAGE_SIZE } from "@/lib/page-size";
 
@@ -48,7 +45,6 @@ export default function AdminSafetyOverviewPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const overviewQuery = useSosOverviewQuery();
   const listQuery = useSosIncidentsQuery({
     page,
     pageSize,
@@ -58,7 +54,7 @@ export default function AdminSafetyOverviewPage() {
     userId
   });
 
-  const stats = overviewQuery.data?.stats;
+  const stats = listQuery.data?.stats ?? null;
   const rows = listQuery.data?.content ?? [];
   const cities = listQuery.data?.cities ?? [];
   const totalItems = listQuery.data?.totalElements ?? rows.length;
@@ -127,7 +123,7 @@ export default function AdminSafetyOverviewPage() {
   return (
     <AppShell title="Safety Center" wideContent>
       <PageContainer>
-        {overviewQuery.isLoading ? (
+        {listQuery.isLoading && !listQuery.data ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 w-full" />
@@ -135,10 +131,10 @@ export default function AdminSafetyOverviewPage() {
           </div>
         ) : (
           <SafetyKpiCards
-            activeCount={stats?.activeCount ?? 0}
-            criticalCount={stats?.criticalCount ?? 0}
-            resolvedToday={stats?.resolvedToday ?? 0}
-            total={stats?.total ?? 0}
+            activeCount={stats?.activeCount ?? null}
+            criticalCount={stats?.criticalCount ?? null}
+            resolvedToday={stats?.resolvedToday ?? null}
+            total={stats?.total ?? null}
           />
         )}
 

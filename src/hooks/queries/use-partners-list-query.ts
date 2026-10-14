@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useDebouncedValue, usePaginatedQuery } from "@/hooks/api";
 import { queryKeys, type PartnersListFilters } from "@/lib/api/query-keys";
-import { fetchPartnersList } from "@/services/users";
+import { fetchPartnersList, type PartnerRow, type UsersListPage } from "@/services/users";
 
 export function usePartnersListQuery(params: {
   page: number;
@@ -39,7 +39,7 @@ export function usePartnersListQuery(params: {
     ]
   );
 
-  return usePaginatedQuery({
+  return usePaginatedQuery<PartnerRow, PartnersListFilters, UsersListPage<PartnerRow>>({
     queryKey: queryKeys.users.partners(filters),
     filters,
     fetchPage: ({ token, signal, filters: f }) =>
