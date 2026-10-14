@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useDebouncedValue, usePaginatedQuery } from "@/hooks/api";
 import { queryKeys, type DriversListFilters } from "@/lib/api/query-keys";
-import { fetchDriversList } from "@/services/users";
+import { fetchDriversList, type DriverRow, type UsersListPage } from "@/services/users";
 
 export function useDriversListQuery(params: {
   page: number;
@@ -39,7 +39,7 @@ export function useDriversListQuery(params: {
     ]
   );
 
-  return usePaginatedQuery({
+  return usePaginatedQuery<DriverRow, DriversListFilters, UsersListPage<DriverRow>>({
     queryKey: queryKeys.users.drivers(filters),
     filters,
     fetchPage: ({ token, signal, filters: f }) =>
