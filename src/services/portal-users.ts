@@ -28,7 +28,6 @@ export interface PortalUsersListFilters {
 export interface PortalUserCreatePayload {
   email: string;
   mobileNumber: string;
-  password: string;
   name: string;
   role: string;
   city: string;
