@@ -283,10 +283,14 @@ export function Sidebar({
   const { gate, isAdmin } = useUserPermissionsQuery();
   const navItems = useMemo(() => {
     const isAgent = normalizeRole(user?.role) === ROLES.AGENT;
-    if (!isAdmin && !isAgent && !gate) {
-      return filterNavByPermissions(navForPermissions(user?.role, null), null);
+    const items = navForPermissions(user?.role, isAdmin ? null : gate);
+    // Agent workspace links are not Access Management modules. Do not filter them
+    // through DASHBOARD / page permissions or Dashboard disappears for sales agents.
+    if (isAgent) return items;
+    if (!isAdmin && !gate) {
+      return filterNavByPermissions(items, null);
     }
-    return filterNavByPermissions(navForPermissions(user?.role, gate), gate);
+    return filterNavByPermissions(items, isAdmin ? null : gate);
   }, [isAdmin, user?.role, gate]);
   const homeHref =
     firstAllowedHref(user?.role, gate) ?? getDefaultRouteForRole(user?.role ?? "AGENT");
