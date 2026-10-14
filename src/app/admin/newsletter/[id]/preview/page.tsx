@@ -41,7 +41,7 @@ export default function AdminNewsletterPreviewPage() {
             description="This newsletter could not be loaded."
           >
             <Button asChild>
-              <Link href="/admin/newsletter">Back to newsletter</Link>
+              <Link href="/newsletter">Back to newsletter</Link>
             </Button>
           </SectionCard>
         </PageContainer>
@@ -57,13 +57,13 @@ export default function AdminNewsletterPreviewPage() {
       <PageContainer>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/newsletter" className="gap-1.5">
+            <Link href="/newsletter" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to newsletter
             </Link>
           </Button>
           <Button size="sm" asChild>
-            <Link href={`/admin/newsletter/${idNum}`} className="gap-1.5">
+            <Link href={`/newsletter/${idNum}`} className="gap-1.5">
               <Pencil className="h-4 w-4" />
               Edit
             </Link>

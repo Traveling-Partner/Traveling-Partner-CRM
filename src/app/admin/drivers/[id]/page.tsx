@@ -195,7 +195,7 @@ export default function AdminDriverDetailPage() {
             title="Driver not found"
             description="Unable to load this driver from backend."
             actionLabel="Back to drivers"
-            onActionClick={() => router.push("/admin/drivers")}
+            onActionClick={() => router.push("/drivers")}
           />
         </PageContainer>
       </AppShell>
@@ -224,7 +224,7 @@ export default function AdminDriverDetailPage() {
       <PageContainer>
         <div className="mb-3 flex items-center justify-between gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/drivers" className="gap-1.5">
+            <Link href="/drivers" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to drivers
             </Link>
@@ -232,7 +232,7 @@ export default function AdminDriverDetailPage() {
           {driver ? (
             canWrite ? (
               <Button size="sm" asChild>
-                <Link href={`/admin/drivers/${params.id}/edit`} className="gap-1.5">
+                <Link href={`/drivers/${params.id}/edit`} className="gap-1.5">
                   <Pencil className="h-4 w-4" />
                   Edit driver
                 </Link>

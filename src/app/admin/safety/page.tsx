@@ -112,7 +112,7 @@ export default function AdminSafetyOverviewPage() {
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => router.push(`/admin/safety/incidents/${row.original.id}`)}
+          onClick={() => router.push(`/safety/incidents/${row.original.id}`)}
         >
           View
         </Button>
@@ -140,7 +140,7 @@ export default function AdminSafetyOverviewPage() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <Link href="/admin/safety/services">Emergency services</Link>
+            <Link href="/safety/services">Emergency services</Link>
           </Button>
         </div>
 

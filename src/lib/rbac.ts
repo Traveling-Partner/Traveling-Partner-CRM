@@ -4,6 +4,7 @@ import {
   ROLE_ROUTE_PREFIXES,
   isAppRole,
   getSharedAdminRolesForPath,
+  stripRolePrefix,
   type AppRole
 } from "@/lib/roles";
 import type { Role } from "@/store/slices/authSlice";
@@ -96,11 +97,41 @@ export function toAppRole(role: Role | string | null | undefined): AppRole | nul
 }
 
 export function isAdminRoute(pathname: string): boolean {
-  return pathname.startsWith(ROLE_ROUTE_PREFIXES.ADMIN);
+  if (pathname.startsWith(ROLE_ROUTE_PREFIXES.ADMIN)) return true;
+  const path = stripRolePrefix(pathname);
+  if (path === "/dashboard") return false;
+  if (isAgentRoute(pathname)) return false;
+  return (
+    path === "/drivers" ||
+    path.startsWith("/drivers/") ||
+    path === "/partners" ||
+    path.startsWith("/partners/") ||
+    path === "/agents" ||
+    path.startsWith("/agents/") ||
+    path === "/documents" ||
+    path.startsWith("/documents/") ||
+    path === "/rides" ||
+    path.startsWith("/rides/") ||
+    path === "/safety" ||
+    path.startsWith("/safety/") ||
+    path === "/audit-logs" ||
+    path.startsWith("/audit-logs/") ||
+    path === "/access-management" ||
+    path.startsWith("/access-management/")
+  );
 }
 
 export function isAgentRoute(pathname: string): boolean {
-  return pathname.startsWith(ROLE_ROUTE_PREFIXES.AGENT);
+  if (pathname.startsWith(ROLE_ROUTE_PREFIXES.AGENT)) return true;
+  const path = stripRolePrefix(pathname);
+  return (
+    path === "/listings" ||
+    path.startsWith("/listings/") ||
+    path === "/commissions" ||
+    path.startsWith("/commissions/") ||
+    path === "/profile" ||
+    path.startsWith("/profile/")
+  );
 }
 
 export function isSalesManagerRoute(pathname: string): boolean {

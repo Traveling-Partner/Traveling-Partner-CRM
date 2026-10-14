@@ -187,7 +187,7 @@ function AdminDriversList() {
           variant="ghost"
           size="sm"
           className="text-xs font-medium text-muted-foreground hover:text-foreground"
-          onClick={() => router.push(`/admin/drivers/${row.original.id}`)}
+          onClick={() => router.push(`/drivers/${row.original.id}`)}
         >
           View →
         </Button>

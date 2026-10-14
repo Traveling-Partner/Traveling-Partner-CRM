@@ -31,7 +31,7 @@ export default function EditMarketingContentPage() {
             title="Content not found"
             description="This content item does not exist in the demo catalog."
             actionLabel="Back to content"
-            onActionClick={() => router.push("/marketing-manager/content")}
+            onActionClick={() => router.push("/content")}
           />
         </PageContainer>
       </AppShell>

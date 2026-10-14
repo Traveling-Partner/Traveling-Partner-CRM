@@ -24,12 +24,12 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 export const ROLE_DASHBOARDS: Record<AppRole, string> = {
-  ADMIN: "/admin/dashboard",
-  AGENT: "/agent/dashboard",
-  SALES_MANAGER: "/sales-manager/dashboard",
-  MARKETING_MANAGER: "/admin/dashboard",
-  FINANCE_MANAGER: "/admin/dashboard",
-  MANAGER: "/admin/dashboard"
+  ADMIN: "/dashboard",
+  AGENT: "/dashboard",
+  SALES_MANAGER: "/dashboard",
+  MARKETING_MANAGER: "/dashboard",
+  FINANCE_MANAGER: "/dashboard",
+  MANAGER: "/dashboard"
 };
 
 export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
@@ -50,53 +50,66 @@ export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
  */
 const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }> = [
   {
-    prefixes: ["/admin/commission-management", "/admin/agent-performance"],
+    prefixes: ["/commission-management", "/agent-performance"],
     roles: [ROLES.ADMIN, ROLES.SALES_MANAGER, ROLES.MANAGER]
   },
   {
     prefixes: [
-      "/admin/blog",
-      "/admin/newsletter",
-      "/admin/newsletter-subscribers",
-      "/admin/carousel"
+      "/blog",
+      "/newsletter",
+      "/newsletter-subscribers",
+      "/carousel"
     ],
     roles: [ROLES.ADMIN, ROLES.MARKETING_MANAGER]
   },
   {
     prefixes: [
-      "/admin/tax-management",
-      "/admin/insurance-management",
-      "/admin/platform-fee-management"
+      "/tax-management",
+      "/insurance-management",
+      "/platform-fee-management"
     ],
     roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES_MANAGER]
   },
   {
-    prefixes: [
-      "/admin/drivers",
-      "/admin/partners",
-      "/admin/agents",
-      "/admin/documents"
-    ],
+    prefixes: ["/drivers", "/partners", "/agents", "/documents"],
     roles: [ROLES.ADMIN, ROLES.MANAGER]
   },
   {
-    prefixes: ["/admin/pool-rides", "/admin/rides"],
+    prefixes: ["/pool-rides", "/rides"],
     roles: [ROLES.ADMIN, ROLES.MANAGER]
   },
   {
     prefixes: [
-      "/admin/vehicle-types",
-      "/admin/vehicle-models",
-      "/admin/vehicle-colors",
-      "/admin/vehicle-brands"
+      "/vehicle-types",
+      "/vehicle-models",
+      "/vehicle-colors",
+      "/vehicle-brands",
+      "/vehicle-model-variants"
     ],
     roles: [ROLES.ADMIN, ROLES.MANAGER]
   }
 ];
 
+const ROLE_PATH_PREFIXES = [
+  "/marketing-manager",
+  "/sales-manager",
+  "/admin",
+  "/agent",
+  "/manager"
+] as const;
+
+export function stripRolePrefix(pathname: string): string {
+  for (const prefix of ROLE_PATH_PREFIXES) {
+    if (pathname === prefix) return "/";
+    if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length);
+  }
+  return pathname;
+}
+
 export function getSharedAdminRolesForPath(pathname: string): AppRole[] | undefined {
+  const path = stripRolePrefix(pathname);
   const match = SHARED_ADMIN_ROUTE_ACCESS.find(({ prefixes }) =>
-    prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+    prefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
   );
   return match?.roles;
 }
@@ -114,28 +127,70 @@ export function isAppRole(value: string): value is AppRole {
   return (Object.values(ROLES) as string[]).includes(value);
 }
 
-export function getAllowedRolesForPath(pathname: string): AppRole[] | undefined {
-  const shared = getSharedAdminRolesForPath(pathname);
+function withPortalRoles(roles: AppRole[]): AppRole[] {
   const portalRoles: AppRole[] = [
     ROLES.FINANCE_MANAGER,
     ROLES.MARKETING_MANAGER,
     ROLES.MANAGER
   ];
-  if (shared) {
-    return portalRoles.reduce(
-      (roles, role) => (roles.includes(role) ? roles : [...roles, role]),
-      shared
-    );
+  return portalRoles.reduce(
+    (next, role) => (next.includes(role) ? next : [...next, role]),
+    roles
+  );
+}
+
+export function getAllowedRolesForPath(pathname: string): AppRole[] | undefined {
+  const path = stripRolePrefix(pathname);
+  const shared = getSharedAdminRolesForPath(pathname);
+  if (shared) return withPortalRoles(shared);
+
+  if (path === "/dashboard") {
+    return [
+      ROLES.ADMIN,
+      ROLES.AGENT,
+      ROLES.SALES_MANAGER,
+      ROLES.MARKETING_MANAGER,
+      ROLES.FINANCE_MANAGER,
+      ROLES.MANAGER
+    ];
+  }
+
+  if (
+    path === "/listings" ||
+    path.startsWith("/listings/") ||
+    path === "/commissions" ||
+    path.startsWith("/commissions/") ||
+    path === "/profile" ||
+    path.startsWith("/profile/")
+  ) {
+    return [ROLES.AGENT, ROLES.ADMIN];
+  }
+
+  if (path === "/content" || path.startsWith("/content/")) {
+    return withPortalRoles([ROLES.MARKETING_MANAGER, ROLES.ADMIN]);
+  }
+
+  if (path === "/users" || path.startsWith("/users/")) {
+    return withPortalRoles([ROLES.MANAGER, ROLES.ADMIN]);
   }
 
   const match = ROUTE_PREFIX_CHECKS.find(({ prefix }) => pathname.startsWith(prefix));
-  if (!match) return undefined;
-  if (match.prefix === "/admin") {
-    return portalRoles.reduce(
-      (roles, role) => (roles.includes(role) ? roles : [...roles, role]),
-      match.roles
-    );
+  if (!match) {
+    if (
+      path === "/safety" ||
+      path.startsWith("/safety/") ||
+      path === "/audit-logs" ||
+      path.startsWith("/audit-logs/") ||
+      path === "/access-management" ||
+      path.startsWith("/access-management/") ||
+      path === "/vehicle-model-variants" ||
+      path.startsWith("/vehicle-model-variants/")
+    ) {
+      return withPortalRoles([ROLES.ADMIN]);
+    }
+    return undefined;
   }
+  if (match.prefix === "/admin") return withPortalRoles(match.roles);
   return match.roles;
 }
 

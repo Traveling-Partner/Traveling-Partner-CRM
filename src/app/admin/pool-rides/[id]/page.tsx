@@ -8,7 +8,7 @@ export default function PoolRideDetailRedirectPage({
 }) {
   const id = params.id?.trim() ?? "";
   if (/^\d+$/.test(id)) {
-    redirect(`/admin/rides/${id}`);
+    redirect(`/rides/${id}`);
   }
-  redirect("/admin/rides");
+  redirect("/rides");
 }

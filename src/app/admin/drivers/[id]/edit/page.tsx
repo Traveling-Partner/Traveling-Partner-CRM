@@ -48,7 +48,7 @@ export default function AdminEditDriverPage() {
     invalidateKeys: [queryKeys.users.driverDetail(params.id), queryKeys.users.all],
     onSuccess: () => {
       success("Driver updated.");
-      router.push(`/admin/drivers/${params.id}`);
+      router.push(`/drivers/${params.id}`);
     },
     onError: (err) => error(err.message)
   });
@@ -61,7 +61,7 @@ export default function AdminEditDriverPage() {
             title="Driver not found"
             description="This driver could not be loaded."
             actionLabel="Back"
-            onActionClick={() => router.push("/admin/drivers")}
+            onActionClick={() => router.push("/drivers")}
           />
         </PageContainer>
       </AppShell>
@@ -73,7 +73,7 @@ export default function AdminEditDriverPage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/drivers/${params.id}`} className="gap-1.5">
+            <Link href={`/drivers/${params.id}`} className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to driver
             </Link>

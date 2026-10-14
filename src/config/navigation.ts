@@ -70,10 +70,10 @@ export const userManagementGroup: SidebarGroup = {
   label: "User Management",
   icon: Users,
   items: [
-    { label: "Drivers", href: "/admin/drivers", icon: Users },
-    { label: "Partners", href: "/admin/partners", icon: Briefcase },
-    { label: "Employees List", href: "/admin/agents", icon: UserCircle2 },
-    { label: "Documents", href: "/admin/documents", icon: FileText }
+    { label: "Drivers", href: "/drivers", icon: Users },
+    { label: "Partners", href: "/partners", icon: Briefcase },
+    { label: "Employees List", href: "/agents", icon: UserCircle2 },
+    { label: "Documents", href: "/documents", icon: FileText }
   ]
 };
 
@@ -83,9 +83,9 @@ export const contentManagementGroup: SidebarGroup = {
   icon: FolderOpen,
   items: [
     { label: "Blog", href: "/admin/blog", icon: Newspaper },
-    { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
-    { label: "Newsletter Subscribers", href: "/admin/newsletter-subscribers", icon: Contact },
-    { label: "Carousel", href: "/admin/carousel", icon: Images }
+    { label: "Newsletter", href: "/newsletter", icon: Mail },
+    { label: "Newsletter Subscribers", href: "/newsletter-subscribers", icon: Contact },
+    { label: "Carousel", href: "/carousel", icon: Images }
   ]
 };
 
@@ -94,16 +94,16 @@ export const financialManagementGroup: SidebarGroup = {
   label: "Financial Management",
   icon: BadgeDollarSign,
   items: [
-    { label: "Tax Management", href: "/admin/tax-management", icon: Receipt },
+    { label: "Tax Management", href: "/tax-management", icon: Receipt },
     {
       label: "Commission Management",
-      href: "/admin/commission-management",
+      href: "/commission-management",
       icon: BadgeDollarSign
     },
-    { label: "Insurance Management", href: "/admin/insurance-management", icon: Shield },
+    { label: "Insurance Management", href: "/insurance-management", icon: Shield },
     {
       label: "Platform Fee Management",
-      href: "/admin/platform-fee-management",
+      href: "/platform-fee-management",
       icon: Coins
     }
   ]
@@ -115,7 +115,7 @@ export const commissionManagementGroup: SidebarGroup = {
   label: "Comission Management",
   icon: TrendingUp,
   items: [
-    { label: "Agent Performance", href: "/admin/agent-performance", icon: BadgeDollarSign }
+    { label: "Agent Performance", href: "/agent-performance", icon: BadgeDollarSign }
   ]
 };
 
@@ -123,7 +123,7 @@ export const rideManagementGroup: SidebarGroup = {
   id: "ride-management",
   label: "Ride Management",
   icon: Route,
-  items: [{ label: "Rides", href: "/admin/rides", icon: Share2 }]
+  items: [{ label: "Rides", href: "/rides", icon: Share2 }]
 };
 
 export const vehicleManagementGroup: SidebarGroup = {
@@ -131,10 +131,10 @@ export const vehicleManagementGroup: SidebarGroup = {
   label: "Vehicle Management",
   icon: Car,
   items: [
-    { label: "Vehicle Types", href: "/admin/vehicle-types", icon: Car },
-    { label: "Vehicle Brands", href: "/admin/vehicle-brands", icon: Tags },
-    { label: "Vehicle Models", href: "/admin/vehicle-models", icon: Layers },
-    { label: "Vehicle Model Variants", href: "/admin/vehicle-model-variants", icon: Palette },
+    { label: "Vehicle Types", href: "/vehicle-types", icon: Car },
+    { label: "Vehicle Brands", href: "/vehicle-brands", icon: Tags },
+    { label: "Vehicle Models", href: "/vehicle-models", icon: Layers },
+    { label: "Vehicle Model Variants", href: "/vehicle-model-variants", icon: Palette },
   ]
 };
 
@@ -144,14 +144,14 @@ export const safetyCenterGroup: SidebarGroup = {
   label: "Safety Center",
   icon: ShieldAlert,
   items: [
-    { label: "SOS Overview", href: "/admin/safety", icon: Siren },
-    { label: "Emergency Services", href: "/admin/safety/services", icon: Phone }
+    { label: "SOS Overview", href: "/safety", icon: Siren },
+    { label: "Emergency Services", href: "/safety/services", icon: Phone }
   ]
 };
 
 /** Existing Admin navigation — identical structure as before. */
 export const adminNav: SidebarEntry[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   userManagementGroup,
   rideManagementGroup,
   safetyCenterGroup,
@@ -159,8 +159,8 @@ export const adminNav: SidebarEntry[] = [
   contentManagementGroup,
   financialManagementGroup,
   vehicleManagementGroup,
-  { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText },
-  { label: "Access Management", href: "/admin/access-management", icon: KeyRound }
+  { label: "Audit Logs", href: "/audit-logs", icon: ScrollText },
+  { label: "Access Management", href: "/access-management", icon: KeyRound }
 ];
 
 /**
@@ -168,16 +168,16 @@ export const adminNav: SidebarEntry[] = [
  * Other roles keep their own sidebars via salesManagerNav / marketingManagerNav / managerNav.
  */
 export const agentNav: SidebarEntry[] = [
-  { label: "Dashboard", href: "/agent/dashboard", icon: LayoutDashboard },
-  { label: "My Listings", href: "/agent/listings", icon: Briefcase },
-  { label: "My Commissions", href: "/agent/commissions", icon: BadgeDollarSign },
-  { label: "Profile", href: "/agent/profile", icon: UserCircle2 }
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "My Listings", href: "/listings", icon: Briefcase },
+  { label: "My Commissions", href: "/commissions", icon: BadgeDollarSign },
+  { label: "Profile", href: "/profile", icon: UserCircle2 }
 ];
 
 /** Sales Manager — Agent Performance + full Financial Management (Commission once inside Financial). */
 export const salesManagerNav: SidebarEntry[] = [
   roleSection("section-sales-manager", "Sales Manager"),
-  { label: "Dashboard", href: "/sales-manager/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   commissionManagementGroup,
   financialManagementGroup
 ];
@@ -185,14 +185,14 @@ export const salesManagerNav: SidebarEntry[] = [
 /** Marketing Manager — exact same Content Management dropdown as Admin. */
 export const marketingManagerNav: SidebarEntry[] = [
   roleSection("section-marketing-manager", "Marketing Manager"),
-  { label: "Dashboard", href: "/marketing-manager/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   contentManagementGroup
 ];
 
 /** Manager — same Admin Financial, User, Ride, and Vehicle Management dropdowns. */
 export const managerNav: SidebarEntry[] = [
   roleSection("section-manager", "Manager"),
-  { label: "Dashboard", href: "/manager/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   financialManagementGroup,
   userManagementGroup,
   rideManagementGroup,

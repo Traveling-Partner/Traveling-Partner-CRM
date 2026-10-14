@@ -12,10 +12,10 @@ import { ROLES } from "@/lib/roles";
 import { setAuthRole } from "@/store/slices/authSlice";
 
 const LIST_PAGES_WITHOUT_PERMISSION = new Set([
-  "/admin/drivers",
-  "/admin/partners",
-  "/admin/agents",
-  "/admin/agent-performance"
+  "/drivers",
+  "/partners",
+  "/agents",
+  "/agent-performance"
 ]);
 
 /** One GET /auth/ops/permissions per logged-in user. Admin is never filtered. */

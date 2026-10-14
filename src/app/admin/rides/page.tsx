@@ -162,7 +162,7 @@ function AdminRidesList() {
         header: "",
         cell: ({ row }) => (
           <Button size="sm" variant="outline" asChild>
-            <Link href={`/admin/rides/${row.original.id}`}>View detail</Link>
+            <Link href={`/rides/${row.original.id}`}>View detail</Link>
           </Button>
         )
       }

@@ -144,7 +144,7 @@ export default function AdminEditEmployeePage() {
         cnicBack: values.cnicBack
       });
       success("Employee updated.");
-      router.push(`/admin/agents/${params.id}`);
+      router.push(`/agents/${params.id}`);
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to update employee.");
     }
@@ -170,7 +170,7 @@ export default function AdminEditEmployeePage() {
             title="Employee not found"
             description="This employee does not exist."
             actionLabel="Back to employees"
-            onActionClick={() => router.push("/admin/agents")}
+            onActionClick={() => router.push("/agents")}
           />
         </PageContainer>
       </AppShell>
@@ -182,7 +182,7 @@ export default function AdminEditEmployeePage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/agents/${params.id}`} className="gap-1.5">
+            <Link href={`/agents/${params.id}`} className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to employee
             </Link>

@@ -27,7 +27,7 @@ export default function ManagerUserDetailPage() {
             title="User not found"
             description="This user is not in the demo catalog."
             actionLabel="Back to users"
-            onActionClick={() => router.push("/manager/users")}
+            onActionClick={() => router.push("/users")}
           />
         </PageContainer>
       </AppShell>
@@ -63,7 +63,7 @@ export default function ManagerUserDetailPage() {
             </div>
           </div>
           <div className="mt-4">
-            <Button variant="outline" onClick={() => router.push("/manager/users")}>
+            <Button variant="outline" onClick={() => router.push("/users")}>
               Back to users
             </Button>
           </div>

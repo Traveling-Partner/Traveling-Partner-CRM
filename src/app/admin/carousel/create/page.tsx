@@ -71,7 +71,7 @@ export default function AdminCarouselCreatePage() {
       } else {
         success(`Banner "${values.bannerTitle}" saved.`);
       }
-      router.push("/admin/carousel");
+      router.push("/carousel");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to create banner.");
     } finally {
@@ -87,7 +87,7 @@ export default function AdminCarouselCreatePage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/carousel" className="gap-1.5">
+            <Link href="/carousel" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to carousel list
             </Link>
