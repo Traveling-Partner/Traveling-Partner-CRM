@@ -8,15 +8,26 @@ import {
   addSosCaseNote,
   fetchSosIncidentDetail,
   fetchSosIncidents,
+  fetchSosOverview,
   updateSosIncidentStatus,
   type SosCaseNotePayload,
   type SosIncidentDetail,
   type SosIncidentsPage,
+  type SosOverview,
   type SosStatusUpdatePayload
 } from "@/services/sos-incidents";
 
 /** Reload the same SOS reads while this page is open and the tab is visible. */
 const SOS_REFETCH_INTERVAL_MS = 30_000;
+
+export function useSosOverviewQuery() {
+  return useApiQuery<SosOverview>({
+    queryKey: queryKeys.sos.overview(),
+    refetchInterval: SOS_REFETCH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
+    queryFn: ({ token, signal }) => fetchSosOverview({ token, signal })
+  });
+}
 
 export function useSosIncidentsQuery(params: {
   page: number;
@@ -62,13 +73,13 @@ export function useSosIncidentDetailQuery(id: string | undefined) {
 
 /**
  * Status and case-note endpoints both return the full detail DTO, so the
- * response seeds the detail cache instead of triggering a refetch. List keys
- * are only marked stale — they are inactive on this screen.
+ * response seeds the detail cache instead of triggering a refetch. List and
+ * overview keys are only marked stale — they are inactive on this screen.
  */
 function useIncidentDetailWriter(id: string) {
   const queryClient = useQueryClient();
   return {
-    invalidateKeys: [queryKeys.sos.incidentLists],
+    invalidateKeys: [queryKeys.sos.incidentLists, queryKeys.sos.overview()],
     seedDetail: (data: SosIncidentDetail) => {
       queryClient.setQueryData(queryKeys.sos.incidentDetail(id), data);
     }

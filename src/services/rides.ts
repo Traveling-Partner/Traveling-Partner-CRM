@@ -67,47 +67,14 @@ function unwrapData(res: unknown): unknown {
   return res;
 }
 
-export interface RideStatusCounts {
-  requested: number;
-  completed: number;
-  canceled: number;
-  expired: number;
-}
-
-export interface RidesListPage extends PaginatedResponse<RideRow> {
-  statusCounts: RideStatusCounts | null;
-}
-
-function parseRideStatusCounts(value: unknown): RideStatusCounts | null {
-  if (!value || typeof value !== "object") return null;
-  const row = value as Record<string, unknown>;
-  if (
-    row.requested == null &&
-    row.completed == null &&
-    row.canceled == null &&
-    row.expired == null
-  ) {
-    return null;
-  }
-  const count = (raw: unknown) =>
-    typeof raw === "number" && Number.isFinite(raw) ? raw : 0;
-  return {
-    requested: count(row.requested),
-    completed: count(row.completed),
-    canceled: count(row.canceled),
-    expired: count(row.expired)
-  };
-}
-
-function parseRideListResponse(res: unknown): RidesListPage {
+function parseRideListResponse(res: unknown): PaginatedResponse<RideRow> {
   const payload = unwrapData(res);
 
   if (Array.isArray(payload)) {
     return {
       content: payload as RideRow[],
       totalPages: 1,
-      totalElements: payload.length,
-      statusCounts: null
+      totalElements: payload.length
     };
   }
 
@@ -130,8 +97,7 @@ function parseRideListResponse(res: unknown): RidesListPage {
     content,
     totalPages: Math.max(1, totalPages),
     totalElements,
-    number,
-    statusCounts: parseRideStatusCounts(nested.statusCounts ?? page.statusCounts)
+    number
   };
 }
 
@@ -170,7 +136,7 @@ function buildRidesListUrl(filters: RidesListFilters): string {
 export async function fetchRidesList(
   filters: RidesListFilters,
   opts: RequestOpts
-): Promise<RidesListPage> {
+): Promise<PaginatedResponse<RideRow>> {
   const raw = await fetcher<unknown>(buildRidesListUrl(filters), {
     token: opts.token,
     signal: opts.signal,

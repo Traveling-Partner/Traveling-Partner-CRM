@@ -371,12 +371,7 @@ export default function AdminDashboardPage() {
 
         {isAdmin ? (
           <Suspense fallback={<Skeleton className="h-64 w-full rounded-[1.75rem]" />}>
-            <AuditLogsSection
-              variant="dashboard"
-              preview={data.auditLogs}
-              previewLoading={isLoading}
-              previewError={error}
-            />
+            <AuditLogsSection variant="dashboard" />
           </Suspense>
         ) : null}
       </PageContainer>

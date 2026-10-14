@@ -52,20 +52,10 @@ function formatTimestamp(value: string | null | undefined): string {
 interface AuditLogsSectionProps {
   /** Dashboard uses a shorter default page and a link to the full viewer. */
   variant?: "page" | "dashboard";
-  /** Latest rows from GET /users/dashboard — skips the extra audit-logs call. */
-  preview?: AuditLogRow[] | null;
-  previewLoading?: boolean;
-  previewError?: string | null;
 }
 
-export function AuditLogsSection({
-  variant = "page",
-  preview,
-  previewLoading = false,
-  previewError = null
-}: AuditLogsSectionProps) {
+export function AuditLogsSection({ variant = "page" }: AuditLogsSectionProps) {
   const isDashboard = variant === "dashboard";
-  const usePreview = isDashboard && preview !== undefined;
   const searchParams = useSearchParams();
   const urlSearch = searchParams.get("search") ?? "";
   const highlightId = searchParams.get("highlightId") ?? "";
@@ -99,29 +89,35 @@ export function AuditLogsSection({
   }, [highlightId]);
 
   const { data, isLoading, isFetching, error } = useAuditLogsQuery(
-    {
-      page,
-      pageSize,
-      userType,
-      search,
-      fromDate,
-      toDate,
-      module: moduleFilter,
-      action: actionFilter,
-      userId
-    },
-    { enabled: !usePreview }
+    isDashboard
+      ? {
+          page: 1,
+          pageSize: 10,
+          userType: "all",
+          search: "",
+          fromDate: "",
+          toDate: "",
+          module: "",
+          action: "",
+          userId: ""
+        }
+      : {
+          page,
+          pageSize,
+          userType,
+          search,
+          fromDate,
+          toDate,
+          module: moduleFilter,
+          action: actionFilter,
+          userId
+        }
   );
 
-  const rows = usePreview ? (preview ?? []) : (data?.content ?? []);
+  const rows = data?.content ?? [];
   const totalPages = Math.max(1, data?.totalPages ?? 1);
   const totalElements = data?.totalElements ?? rows.length;
-  const showSkeleton = usePreview ? previewLoading : isLoading && !data;
-  const listError = usePreview
-    ? previewError
-      ? new Error(previewError)
-      : null
-    : error;
+  const showSkeleton = isLoading && !data;
 
   useEffect(() => {
     if (!highlightId || showSkeleton) return;
@@ -323,7 +319,7 @@ export function AuditLogsSection({
           ) : null}
         </div>
       ) : null}
-      {listError ? <p className="pb-3 text-sm text-destructive">{listError.message}</p> : null}
+      {error ? <p className="pb-3 text-sm text-destructive">{error.message}</p> : null}
       {showSkeleton ? (
         <div className="space-y-2 py-3">
           {Array.from({ length: isDashboard ? 5 : 6 }).map((_, i) => (

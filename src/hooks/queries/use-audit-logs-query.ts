@@ -18,7 +18,7 @@ export function useAuditLogsQuery(
     userId: string;
   },
   /** Callers rendered on every page (e.g. the header bell) pass a longer window. */
-  options?: { staleTime?: number; enabled?: boolean }
+  options?: { staleTime?: number }
 ) {
   const debouncedSearch = useDebouncedValue(params.search);
   const debouncedModule = useDebouncedValue(params.module);
@@ -54,7 +54,6 @@ export function useAuditLogsQuery(
     queryKey: queryKeys.audit.logs(filters),
     filters,
     staleTime: options?.staleTime,
-    enabled: options?.enabled,
     fetchPage: ({ token, signal, filters: f }) => fetchAuditLogs(f, { token, signal })
   });
 }

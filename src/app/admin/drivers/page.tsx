@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ListPaginationFooter } from "@/components/common/ListPaginationFooter";
 import { useDriversListQuery } from "@/hooks/queries/use-drivers-list-query";
+import { useDriverStatusCountsQuery } from "@/hooks/queries/use-driver-status-counts-query";
 import type { DriverRow } from "@/services/users";
 import { Search, Filter, UserCircle, Clock, CheckCircle2, Ban, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,18 +50,22 @@ function AdminDriversList() {
     city: cityFilter,
     gender: genderFilter
   });
+  const {
+    data: statusCounts,
+    isLoading: countsLoading,
+    isFetching: countsFetching,
+    error: countsError
+  } = useDriverStatusCountsQuery();
 
   const drivers: DriverRow[] = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
   const loading = isLoading || isFetching;
-  const statusCounts = data?.statusCounts ?? null;
-  const countsLoadingState = isLoading && !data;
-  const countsUnavailable = Boolean(error) || (!countsLoadingState && statusCounts == null);
+  const countsLoadingState = countsLoading || countsFetching;
 
   const statusCountCards = [
     {
       label: "Pending",
-      value: statusCounts?.pending ?? null,
+      value: statusCounts.pending,
       icon: Clock,
       iconBg: "bg-amber-50 dark:bg-amber-500/10",
       iconColor: "text-amber-600 dark:text-amber-400",
@@ -68,7 +73,7 @@ function AdminDriversList() {
     },
     {
       label: "Approved",
-      value: statusCounts?.approved ?? null,
+      value: statusCounts.approved,
       icon: CheckCircle2,
       iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
       iconColor: "text-emerald-600 dark:text-emerald-400",
@@ -76,7 +81,7 @@ function AdminDriversList() {
     },
     {
       label: "Blocked",
-      value: statusCounts?.blocked ?? null,
+      value: statusCounts.blocked,
       icon: Ban,
       iconBg: "bg-red-50 dark:bg-red-500/10",
       iconColor: "text-red-600 dark:text-red-400",
@@ -84,7 +89,7 @@ function AdminDriversList() {
     },
     {
       label: "Rejected",
-      value: statusCounts?.rejected ?? null,
+      value: statusCounts.rejected,
       icon: XCircle,
       iconBg: "bg-orange-50 dark:bg-orange-500/10",
       iconColor: "text-orange-600 dark:text-orange-400",
@@ -218,7 +223,7 @@ function AdminDriversList() {
                     </p>
                     {countsLoadingState ? (
                       <Skeleton className="mt-1 h-7 w-12" />
-                    ) : countsUnavailable || card.value == null ? (
+                    ) : countsError ? (
                       <p className="mt-1 text-sm font-medium text-destructive">Not available</p>
                     ) : (
                       <p className={cn("text-2xl font-bold tracking-tight tabular-nums", card.valueColor)}>

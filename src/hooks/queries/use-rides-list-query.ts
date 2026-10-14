@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useDebouncedValue, usePaginatedQuery } from "@/hooks/api";
 import { queryKeys, type RidesListFilters } from "@/lib/api/query-keys";
-import { fetchRidesList, type RideRow, type RidesListPage } from "@/services/rides";
+import { fetchRidesList } from "@/services/rides";
 
 export function useRidesListQuery(params: {
   page: number;
@@ -42,7 +42,7 @@ export function useRidesListQuery(params: {
     ]
   );
 
-  return usePaginatedQuery<RideRow, RidesListFilters, RidesListPage>({
+  return usePaginatedQuery({
     queryKey: queryKeys.rides.list(filters),
     filters,
     fetchPage: ({ token, signal, filters: f }) => fetchRidesList(f, { token, signal })

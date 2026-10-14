@@ -2,7 +2,6 @@ import { format, parseISO } from "date-fns";
 import { buildApiUrl } from "@/lib/api/endpoints";
 import { unwrapEnvelope } from "@/lib/api/unwrap";
 import { fetcher } from "@/lib/fetcher";
-import { parseAuditLogsPage, type AuditLogRow } from "@/services/audit-logs";
 
 export interface DashboardCounts {
   totalDrivers: number;
@@ -96,7 +95,6 @@ export interface AdminDashboardData {
   ridesTrend: DashboardRidesTrendPoint[];
   rideStatusBreakdown: DashboardRideStatusBreakdown[];
   recentActivity: DashboardAuditLogItem[];
-  auditLogs: AuditLogRow[];
   rideFunnel: DashboardRideFunnel;
   outcomeTrend: DashboardOutcomePoint[];
   ridesByCity: DashboardCityCount[];
@@ -206,7 +204,6 @@ export const EMPTY_ADMIN_DASHBOARD_DATA: AdminDashboardData = {
   ridesTrend: [],
   rideStatusBreakdown: EMPTY_RIDE_STATUS,
   recentActivity: [],
-  auditLogs: [],
   rideFunnel: EMPTY_FUNNEL,
   outcomeTrend: [],
   ridesByCity: [],
@@ -471,7 +468,6 @@ function mapDashboardResponse(overview: Record<string, unknown>): AdminDashboard
       { status: "COMPLETED", count: rideStatus.completed ?? 0 }
     ],
     recentActivity: [],
-    auditLogs: parseAuditLogsPage(overview.auditLogs).content,
     rideFunnel,
     outcomeTrend,
     ridesByCity,

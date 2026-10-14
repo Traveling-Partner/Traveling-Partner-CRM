@@ -39,8 +39,6 @@ export interface SosIncidentsPage {
   totalElements: number;
   /** Distinct cities for the city filter, supplied by the list endpoint. */
   cities: string[];
-  /** Global KPI totals from the list payload (flat or nested `stats`). */
-  stats: SosOverviewStats | null;
 }
 
 export interface SosOverviewStats {
@@ -197,31 +195,6 @@ function toArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
-function parseSosOverviewStats(payload: unknown): SosOverviewStats | null {
-  if (!payload || typeof payload !== "object") return null;
-  const row = payload as Record<string, unknown>;
-  const source =
-    row.stats && typeof row.stats === "object" && !Array.isArray(row.stats)
-      ? (row.stats as Record<string, unknown>)
-      : row;
-  if (
-    source.activeCount == null &&
-    source.criticalCount == null &&
-    source.resolvedToday == null &&
-    source.total == null
-  ) {
-    return null;
-  }
-  const count = (value: unknown) =>
-    typeof value === "number" && Number.isFinite(value) ? value : 0;
-  return {
-    activeCount: count(source.activeCount),
-    criticalCount: count(source.criticalCount),
-    resolvedToday: count(source.resolvedToday),
-    total: count(source.total)
-  };
-}
-
 function normalizeDetail(data: SosIncidentDetail | null): SosIncidentDetail {
   if (!data) {
     throw new Error("SOS incident not found");
@@ -276,19 +249,14 @@ export async function fetchSosIncidents(
     `${apiUrl("/sos/incidents/getAll")}?${params.toString()}`,
     { token: opts.token, signal: opts.signal, debugLabel: "sos:incidents:list" }
   );
-  const data = unwrap<Record<string, unknown>>(res);
-  const page =
-    data ??
-    (res && typeof res === "object" ? (res as Record<string, unknown>) : null);
-  const content = toArray<SosIncidentRow>(page?.content);
+  const data = unwrap<SosIncidentsPage>(res);
+  const content = toArray<SosIncidentRow>(data?.content);
 
   return {
     content,
-    totalPages: typeof page?.totalPages === "number" ? page.totalPages : 1,
-    totalElements:
-      typeof page?.totalElements === "number" ? page.totalElements : content.length,
-    cities: toArray<string>(page?.cities),
-    stats: parseSosOverviewStats(page) ?? parseSosOverviewStats(res)
+    totalPages: data?.totalPages ?? 1,
+    totalElements: data?.totalElements ?? content.length,
+    cities: toArray<string>(data?.cities)
   };
 }
 
