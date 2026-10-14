@@ -31,11 +31,7 @@ function isLinkActive(pathname: string, href: string, siblings?: SidebarLink[]) 
 
   if (
     href.endsWith("/dashboard") &&
-    (href === "/admin/dashboard" ||
-      href === "/agent/dashboard" ||
-      href === "/sales-manager/dashboard" ||
-      href === "/marketing-manager/dashboard" ||
-      href === "/manager/dashboard")
+    href === "/dashboard"
   ) {
     return false;
   }
@@ -43,8 +39,8 @@ function isLinkActive(pathname: string, href: string, siblings?: SidebarLink[]) 
   if (!pathname.startsWith(`${href}/`)) return false;
 
   /**
-   * A more specific sibling owns this path — e.g. on `/admin/safety/services`
-   * only "Emergency Services" highlights, not its parent `/admin/safety`.
+   * A more specific sibling owns this path — e.g. on `/safety/services`
+   * only "Emergency Services" highlights, not its parent `/safety`.
    */
   return !siblings?.some(
     (sibling) =>

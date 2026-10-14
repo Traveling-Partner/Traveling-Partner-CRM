@@ -41,7 +41,7 @@ export const agentDriverColumns: ColumnDef<Driver>[] = [
     header: "",
     cell: ({ row }) => (
       <Button variant="outline" size="sm" className="gap-1.5 text-xs" asChild>
-        <Link href={`/admin/drivers/${extractNumericEntityId(row.original.id)}`}>
+        <Link href={`/drivers/${extractNumericEntityId(row.original.id)}`}>
           <ExternalLink className="h-3.5 w-3.5" />
           View driver
         </Link>
@@ -76,7 +76,7 @@ export const agentPassengerColumns: ColumnDef<Partner>[] = [
     header: "",
     cell: ({ row }) => (
       <Button variant="outline" size="sm" className="gap-1.5 text-xs" asChild>
-        <Link href={`/admin/partners/${extractNumericEntityId(row.original.id)}`}>
+        <Link href={`/partners/${extractNumericEntityId(row.original.id)}`}>
           <ExternalLink className="h-3.5 w-3.5" />
           View passenger
         </Link>

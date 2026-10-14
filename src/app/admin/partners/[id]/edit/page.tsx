@@ -47,7 +47,7 @@ export default function AdminEditPartnerPage() {
     invalidateKeys: [queryKeys.users.partnerDetail(params.id), queryKeys.users.all],
     onSuccess: () => {
       success("Partner updated.");
-      router.push(`/admin/partners/${params.id}`);
+      router.push(`/partners/${params.id}`);
     },
     onError: (err) => error(err.message)
   });
@@ -60,7 +60,7 @@ export default function AdminEditPartnerPage() {
             title="Partner not found"
             description="This partner could not be loaded."
             actionLabel="Back"
-            onActionClick={() => router.push("/admin/partners")}
+            onActionClick={() => router.push("/partners")}
           />
         </PageContainer>
       </AppShell>
@@ -72,7 +72,7 @@ export default function AdminEditPartnerPage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/partners/${params.id}`} className="gap-1.5">
+            <Link href={`/partners/${params.id}`} className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to partner
             </Link>

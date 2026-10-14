@@ -93,7 +93,7 @@ export function BlogEditorWorkspace({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
           <div className="flex min-w-0 items-center gap-2.5">
             <Button variant="ghost" size="sm" asChild className="h-8 shrink-0 px-2">
-              <Link href="/admin/blog" className="gap-1.5">
+              <Link href="/blogs" className="gap-1.5">
                 <ArrowLeft className="h-4 w-4" />
                 Blog
               </Link>

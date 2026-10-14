@@ -115,7 +115,7 @@ export default function AdminCreateEmployeePage() {
         cnicBack: values.cnicBack
       });
       success("Employee created.");
-      router.push("/admin/agents");
+      router.push("/agents");
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to create employee.");
     }
@@ -126,7 +126,7 @@ export default function AdminCreateEmployeePage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/agents" className="gap-1.5">
+            <Link href="/agents" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to employees
             </Link>

@@ -77,7 +77,7 @@ interface PoolRideResponsiveTableProps {
 function RideMobileCard({ ride }: { ride: PoolRide }) {
   return (
     <Link
-      href={`/admin/pool-rides/${ride.id}`}
+      href={`/pool-rides/${ride.id}`}
       className="group block rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-muted/25 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/30 hover:shadow-md active:scale-[0.99]"
     >
       <div className="flex items-start justify-between gap-3">
@@ -318,7 +318,7 @@ export function PoolRideResponsiveTable({
                       className="h-8 gap-1 border-amber-500/30 bg-gradient-to-b from-[#fce001]/10 to-transparent text-xs font-semibold hover:border-amber-500/50 hover:from-[#fce001]/20"
                       asChild
                     >
-                      <Link href={`/admin/pool-rides/${ride.id}`}>
+                      <Link href={`/pool-rides/${ride.id}`}>
                         View
                         <ArrowRight className="h-3 w-3" />
                       </Link>

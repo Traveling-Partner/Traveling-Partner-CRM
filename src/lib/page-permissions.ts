@@ -7,33 +7,34 @@ import {
   type SidebarEntry
 } from "@/config/navigation";
 import { normalizeRole } from "@/lib/rbac";
-import { ROLES } from "@/lib/roles";
+import { ROLES, stripRolePrefix } from "@/lib/roles";
 import type { PermissionLevel, RolePermissionsData } from "@/services/permissions";
 
-/** Longest path first so `/admin/safety/services` is not treated as `/admin/safety`. */
+/** Longest path first so `/safety/services` is not treated as `/safety`. */
 const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
-  { path: "/admin/safety/services", modules: ["EMERGENCY_LIST"] },
-  { path: "/admin/newsletter-subscribers", modules: ["NEWSLETTER_SUBSCRIBER"] },
-  { path: "/admin/vehicle-model-variants", modules: ["VEHICLE_MODEL_VARIANT"] },
-  { path: "/admin/access-management", modules: ["ACCESS_MANAGEMENT"] },
-  { path: "/admin/agent-performance", modules: ["AGENT_PERFORMANCE"] },
-  { path: "/admin/commission-management", modules: ["COMMISSION", "COMMISSION_MANAGEMENT"] },
-  { path: "/admin/insurance-management", modules: ["INSURANCE"] },
-  { path: "/admin/platform-fee-management", modules: ["PLATFORM_FEE"] },
-  { path: "/admin/tax-management", modules: ["TAX"] },
-  { path: "/admin/vehicle-brands", modules: ["VEHICLE_BRANDS"] },
-  { path: "/admin/vehicle-models", modules: ["VEHICLE_MODEL"] },
-  { path: "/admin/vehicle-types", modules: ["VEHICLE_TYPE"] },
-  { path: "/admin/newsletter", modules: ["NEWSLETTER_LIST"] },
-  { path: "/admin/documents", modules: ["DOCUMENT"] },
-  { path: "/admin/partners", modules: ["PARTNER"] },
-  { path: "/admin/drivers", modules: ["DRIVER"] },
-  { path: "/admin/agents", modules: ["MANAGERS_USERS"] },
-  { path: "/admin/carousel", modules: ["BANNER"] },
-  { path: "/admin/safety", modules: ["SOS_OVERVIEW", "SAFETY_CENTER"] },
+  { path: "/safety/services", modules: ["EMERGENCY_LIST"] },
+  { path: "/newsletter-subscribers", modules: ["NEWSLETTER_SUBSCRIBER"] },
+  { path: "/vehicle-model-variants", modules: ["VEHICLE_MODEL_VARIANT"] },
+  { path: "/access-management", modules: ["ACCESS_MANAGEMENT"] },
+  { path: "/agent-performance", modules: ["AGENT_PERFORMANCE"] },
+  { path: "/commission-management", modules: ["COMMISSION", "COMMISSION_MANAGEMENT"] },
+  { path: "/insurance-management", modules: ["INSURANCE"] },
+  { path: "/platform-fee-management", modules: ["PLATFORM_FEE"] },
+  { path: "/tax-management", modules: ["TAX"] },
+  { path: "/vehicle-brands", modules: ["VEHICLE_BRANDS"] },
+  { path: "/vehicle-models", modules: ["VEHICLE_MODEL"] },
+  { path: "/vehicle-types", modules: ["VEHICLE_TYPE"] },
+  { path: "/newsletter", modules: ["NEWSLETTER_LIST"] },
+  { path: "/documents", modules: ["DOCUMENT"] },
+  { path: "/partners", modules: ["PARTNER"] },
+  { path: "/drivers", modules: ["DRIVER"] },
+  { path: "/agents", modules: ["MANAGERS_USERS"] },
+  { path: "/carousel", modules: ["BANNER"] },
+  { path: "/safety", modules: ["SOS_OVERVIEW", "SAFETY_CENTER"] },
+  { path: "/blogs", modules: ["BLOGS"] },
   { path: "/admin/blog", modules: ["BLOGS"] },
-  { path: "/admin/rides", modules: ["RIDES"] },
-  { path: "/admin/dashboard", modules: ["DASHBOARD"] }
+  { path: "/rides", modules: ["RIDES"] },
+  { path: "/dashboard", modules: ["DASHBOARD"] }
 ];
 
 export type PagePermissionGate = {
@@ -59,19 +60,21 @@ export function toPagePermissionGate(
 }
 
 /** Not a permission module. Visible to admin only (admin has no permission gate). */
-const ADMIN_ONLY_PATHS = ["/admin/audit-logs"];
+const ADMIN_ONLY_PATHS = ["/audit-logs"];
 
 function matchesPath(pathname: string, path: string): boolean {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 function modulesForPath(pathname: string): string[] {
-  const match = MODULE_PATHS.find(({ path }) => matchesPath(pathname, path));
+  const path = stripRolePrefix(pathname);
+  const match = MODULE_PATHS.find(({ path: prefix }) => matchesPath(path, prefix) || matchesPath(pathname, prefix));
   return match?.modules ?? [];
 }
 
 function isAdminOnlyPath(pathname: string): boolean {
-  return ADMIN_ONLY_PATHS.some((path) => matchesPath(pathname, path));
+  const path = stripRolePrefix(pathname);
+  return ADMIN_ONLY_PATHS.some((prefix) => matchesPath(path, prefix) || matchesPath(pathname, prefix));
 }
 
 export function getLevelForPath(
@@ -112,7 +115,7 @@ export function navForPermissions(
     if (!gate) return agentNav;
     const extras = filterNavByPermissions(adminNav, gate).filter((entry) => {
       if (isSidebarGroup(entry) || isSidebarSection(entry)) return true;
-      return entry.href !== "/admin/dashboard";
+      return entry.href !== "/dashboard";
     });
     return extras.length ? [...agentNav, ...extras] : agentNav;
   }
@@ -147,7 +150,7 @@ export function firstAllowedHref(
   role: string | null | undefined,
   gate: PagePermissionGate | null
 ): string | null {
-  if (normalizeRole(role) === ROLES.AGENT) return "/agent/dashboard";
+  if (normalizeRole(role) === ROLES.AGENT) return "/dashboard";
   const walk = (entries: SidebarEntry[]): string | null => {
     for (const entry of entries) {
       if (isSidebarSection(entry)) continue;

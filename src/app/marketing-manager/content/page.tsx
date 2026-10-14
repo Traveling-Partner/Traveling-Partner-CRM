@@ -73,7 +73,7 @@ export default function MarketingContentPage() {
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           <Button size="sm" variant="outline" className="h-7 text-[11px]" asChild>
-            <Link href={`/marketing-manager/content/${row.original.id}`}>Edit</Link>
+            <Link href={`/content/${row.original.id}`}>Edit</Link>
           </Button>
           <Button
             size="sm"
@@ -114,7 +114,7 @@ export default function MarketingContentPage() {
           description="Create, edit, publish, schedule, and analyze marketing content."
           headerAction={
             <Button asChild>
-              <Link href="/marketing-manager/content/create">Create content</Link>
+              <Link href="/content/create">Create content</Link>
             </Button>
           }
         >

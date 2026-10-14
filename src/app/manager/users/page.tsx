@@ -75,7 +75,7 @@ export default function ManagerUsersPage() {
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           <Button size="sm" variant="outline" className="h-7 text-[11px]" asChild>
-            <Link href={`/manager/users/${row.original.id}`}>View</Link>
+            <Link href={`/users/${row.original.id}`}>View</Link>
           </Button>
           <Button
             size="sm"
@@ -110,7 +110,7 @@ export default function ManagerUsersPage() {
           description="Search, filter, activate/deactivate, and manage workspace users."
           headerAction={
             <Button asChild>
-              <Link href="/manager/users/create">Create user</Link>
+              <Link href="/users/create">Create user</Link>
             </Button>
           }
         >

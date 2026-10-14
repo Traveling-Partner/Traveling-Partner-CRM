@@ -143,7 +143,7 @@ export default function AdminRideDetailPage() {
                 : error?.message || "The ride could not be loaded from the server."
             }
             actionLabel="Back to rides"
-            onActionClick={() => router.push("/admin/rides")}
+            onActionClick={() => router.push("/rides")}
           />
         </PageContainer>
       </AppShell>
@@ -160,7 +160,7 @@ export default function AdminRideDetailPage() {
       <PageContainer>
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/rides" className="gap-1.5">
+            <Link href="/rides" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               All rides
             </Link>
@@ -358,7 +358,7 @@ export default function AdminRideDetailPage() {
                   <p className="whitespace-nowrap text-sm text-muted-foreground">{text(formatPhone(ride.driverPhone))}</p>
                   {ride.driverId != null ? (
                     <Button variant="link" className="h-auto px-0 pt-1 text-xs" asChild>
-                      <Link href={`/admin/drivers/${ride.driverId}`}>Open driver profile</Link>
+                      <Link href={`/drivers/${ride.driverId}`}>Open driver profile</Link>
                     </Button>
                   ) : null}
                 </div>
@@ -389,7 +389,7 @@ export default function AdminRideDetailPage() {
                   <p className="font-heading font-semibold">{text(ride.partnerName)}</p>
                   {ride.partnerId != null ? (
                     <Button variant="link" className="h-auto px-0 pt-1 text-xs" asChild>
-                      <Link href={`/admin/partners/${ride.partnerId}`}>Open partner</Link>
+                      <Link href={`/partners/${ride.partnerId}`}>Open partner</Link>
                     </Button>
                   ) : null}
                 </div>

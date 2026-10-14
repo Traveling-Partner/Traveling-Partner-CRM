@@ -143,7 +143,7 @@ export default function AdminBlogEditPage() {
       const payload = buildBlogUpsertPayload(values, nextStatus, existingRecord);
       await updateBlog(idNum, payload, token);
       success(`Blog "${values.mainTitle.trim()}" updated.`);
-      router.push("/admin/blog");
+      router.push("/blogs");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to update blog.");
     } finally {
@@ -217,7 +217,7 @@ export default function AdminBlogEditPage() {
             description="This blog could not be loaded. Check the id or try again from the list."
           >
             <Button asChild>
-              <Link href="/admin/blog">Back to blog</Link>
+              <Link href="/blogs">Back to blog</Link>
             </Button>
           </SectionCard>
         </PageContainer>

@@ -150,7 +150,7 @@ export default function AdminPartnerDetailPage() {
             title="Partner not found"
             description="This partner could not be loaded from backend."
             actionLabel="Back to partners"
-            onActionClick={() => router.push("/admin/partners")}
+            onActionClick={() => router.push("/partners")}
           />
         </PageContainer>
       </AppShell>
@@ -162,7 +162,7 @@ export default function AdminPartnerDetailPage() {
       <PageContainer>
         <div className="mb-4 flex items-center justify-between gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/partners" className="gap-1.5">
+            <Link href="/partners" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to partners
             </Link>
@@ -170,7 +170,7 @@ export default function AdminPartnerDetailPage() {
           {partner ? (
             canWrite ? (
               <Button size="sm" asChild>
-                <Link href={`/admin/partners/${params.id}/edit`} className="gap-1.5">
+                <Link href={`/partners/${params.id}/edit`} className="gap-1.5">
                   <Pencil className="h-4 w-4" />
                   Edit partner
                 </Link>
