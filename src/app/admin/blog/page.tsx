@@ -260,7 +260,7 @@ export default function AdminBlogPage() {
         cell: ({ row }) => (
           <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/admin/blog/${row.original.id}`}>Edit</Link>
+              <Link href={`/blogs/${row.original.id}`}>Edit</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <a href={`/blog/${row.original.id}`} target="_blank" rel="noopener noreferrer">
@@ -299,7 +299,7 @@ export default function AdminBlogPage() {
           headerAction={
             <WriteOnly>
               <Button asChild>
-                <Link href="/admin/blog/create">Create post</Link>
+                <Link href="/blogs/create">Create post</Link>
               </Button>
             </WriteOnly>
           }

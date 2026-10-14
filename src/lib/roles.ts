@@ -55,7 +55,7 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
   },
   {
     prefixes: [
-      "/blog",
+      "/blogs",
       "/newsletter",
       "/newsletter-subscribers",
       "/carousel"

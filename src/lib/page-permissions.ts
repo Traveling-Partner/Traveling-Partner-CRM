@@ -31,6 +31,7 @@ const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
   { path: "/agents", modules: ["MANAGERS_USERS"] },
   { path: "/carousel", modules: ["BANNER"] },
   { path: "/safety", modules: ["SOS_OVERVIEW", "SAFETY_CENTER"] },
+  { path: "/blogs", modules: ["BLOGS"] },
   { path: "/admin/blog", modules: ["BLOGS"] },
   { path: "/rides", modules: ["RIDES"] },
   { path: "/dashboard", modules: ["DASHBOARD"] }

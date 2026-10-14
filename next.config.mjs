@@ -75,12 +75,16 @@ const nextConfig = {
       { source: "/manager/financial/:path*", destination: "/financial/:path*", permanent: false },
       { source: "/manager/settings", destination: "/settings", permanent: false },
       { source: "/manager/notifications", destination: "/notifications", permanent: false },
-      { source: "/manager/profile", destination: "/profile", permanent: false }
+      { source: "/manager/profile", destination: "/profile", permanent: false },
+      { source: "/admin/blog", destination: "/blogs", permanent: false },
+      { source: "/admin/blog/:path*", destination: "/blogs/:path*", permanent: false }
     ];
   },
   async rewrites() {
     return [
       ...pageRules("/admin", ADMIN_PAGES),
+      { source: "/blogs", destination: "/admin/blog" },
+      { source: "/blogs/:path*", destination: "/admin/blog/:path*" },
       { source: "/listings", destination: "/agent/listings" },
       { source: "/listings/:path*", destination: "/agent/listings/:path*" },
       { source: "/commissions", destination: "/agent/commissions" },

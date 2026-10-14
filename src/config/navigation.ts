@@ -82,7 +82,7 @@ export const contentManagementGroup: SidebarGroup = {
   label: "Content Management",
   icon: FolderOpen,
   items: [
-    { label: "Blog", href: "/admin/blog", icon: Newspaper },
+    { label: "Blog", href: "/blogs", icon: Newspaper },
     { label: "Newsletter", href: "/newsletter", icon: Mail },
     { label: "Newsletter Subscribers", href: "/newsletter-subscribers", icon: Contact },
     { label: "Carousel", href: "/carousel", icon: Images }

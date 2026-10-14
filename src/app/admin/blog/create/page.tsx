@@ -77,7 +77,7 @@ export default function AdminBlogCreatePage() {
       const payload = buildBlogUpsertPayload(values, nextStatus);
       await createBlog(payload, token);
       success(`Blog "${values.mainTitle.trim()}" saved successfully.`);
-      router.push("/admin/blog");
+      router.push("/blogs");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to create blog.");
     } finally {
