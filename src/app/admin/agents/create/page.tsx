@@ -30,7 +30,6 @@ const schema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   email: z.string().trim().email("Valid email required"),
   mobileNumber: z.string().trim().min(10, "Valid mobile number required"),
-  password: z.string().min(6, "Password is required"),
   role: z.string().trim().min(1, "Role is required"),
   city: z.string().trim().min(2, "City is required"),
   gender: z.string().trim().min(1, "Gender is required"),
@@ -61,7 +60,6 @@ export default function AdminCreateEmployeePage() {
       name: "",
       email: "",
       mobileNumber: "",
-      password: "",
       role: "",
       city: "",
       gender: "",
@@ -105,7 +103,6 @@ export default function AdminCreateEmployeePage() {
       await createMutation.mutateAsync({
         email: values.email,
         mobileNumber: values.mobileNumber,
-        password: values.password,
         name: values.name,
         role: values.role,
         city: values.city,
@@ -178,14 +175,9 @@ export default function AdminCreateEmployeePage() {
               </FormField>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Password" htmlFor="password" required error={errors.password}>
-                <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
-              </FormField>
               <FormField label="City" htmlFor="city" required error={errors.city}>
                 <Input id="city" {...register("city")} placeholder="Lahore" />
               </FormField>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Gender" required error={errors.gender}>
                 <Controller
                   name="gender"
@@ -204,6 +196,8 @@ export default function AdminCreateEmployeePage() {
                   )}
                 />
               </FormField>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="CNIC Number" htmlFor="cnicNumber" required error={errors.cnicNumber}>
                 <Input id="cnicNumber" {...register("cnicNumber")} placeholder="4310212345674" maxLength={13} />
               </FormField>
