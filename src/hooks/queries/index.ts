@@ -1,8 +1,6 @@
 export { useAdminDashboardQuery } from "@/hooks/queries/use-admin-dashboard-query";
 export { useDriversListQuery } from "@/hooks/queries/use-drivers-list-query";
-export { useDriverStatusCountsQuery } from "@/hooks/queries/use-driver-status-counts-query";
 export { usePartnersListQuery } from "@/hooks/queries/use-partners-list-query";
-export { usePartnerStatusCountsQuery } from "@/hooks/queries/use-partner-status-counts-query";
 export { useAgentsListQuery } from "@/hooks/queries/use-agents-list-query";
 export {
   usePortalUsersListQuery,
@@ -25,7 +23,6 @@ export { useNewsletterSubscriberDetailQuery } from "@/hooks/queries/use-newslett
 export { useRidesListQuery } from "@/hooks/queries/use-rides-list-query";
 export { useRideDetailQuery } from "@/hooks/queries/use-ride-detail-query";
 export {
-  useSosOverviewQuery,
   useSosIncidentsQuery,
   useSosIncidentDetailQuery,
   useUpdateSosIncidentStatusMutation,

@@ -61,10 +61,72 @@ function readOpts({ token, signal, debugLabel }: RequestOpts) {
   return { token, signal, dedupe: false as const, debugLabel };
 }
 
+export interface DriverStatusCounts {
+  pending: number;
+  approved: number;
+  blocked: number;
+  rejected: number;
+}
+
+export type PartnerStatusCounts = DriverStatusCounts;
+export type AgentStatusCounts = DriverStatusCounts;
+
+export interface UsersListPage<T> extends PaginatedResponse<T> {
+  statusCounts: DriverStatusCounts | null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function parseUserStatusCounts(value: unknown): DriverStatusCounts | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  if (
+    row.pending == null &&
+    row.approved == null &&
+    row.blocked == null &&
+    row.rejected == null
+  ) {
+    return null;
+  }
+  return {
+    pending: finiteNumber(row.pending) ?? 0,
+    approved: finiteNumber(row.approved) ?? 0,
+    blocked: finiteNumber(row.blocked) ?? 0,
+    rejected: finiteNumber(row.rejected) ?? 0
+  };
+}
+
+function parseUsersListPage<T>(res: unknown): UsersListPage<T> {
+  const payload = unwrapEnvelope(res);
+  const page = asRecord(payload);
+  const nested =
+    !Array.isArray(page.content) && page.data && typeof page.data === "object"
+      ? asRecord(page.data)
+      : page;
+  const content = Array.isArray(nested.content) ? (nested.content as T[]) : [];
+  const totalPages = finiteNumber(nested.totalPages) ?? 1;
+  const totalElements = finiteNumber(nested.totalElements) ?? content.length;
+  const number = finiteNumber(nested.number);
+
+  return {
+    content,
+    totalPages: Math.max(1, totalPages),
+    totalElements,
+    number,
+    statusCounts: parseUserStatusCounts(nested.statusCounts ?? page.statusCounts)
+  };
+}
+
 export async function fetchDriversList(
   filters: DriversListFilters,
   opts: RequestOpts
-): Promise<PaginatedResponse<DriverRow>> {
+): Promise<UsersListPage<DriverRow>> {
   const url = buildApiUrl("/users/drivers", {
     page: Math.max(1, filters.page),
     size: filters.pageSize,
@@ -74,22 +136,9 @@ export async function fetchDriversList(
     city: filters.city.trim() || undefined,
     gender: filters.gender === "all" ? undefined : filters.gender
   });
-  return fetcher<PaginatedResponse<DriverRow>>(url, readOpts({ ...opts, debugLabel: "users:drivers" }));
+  const raw = await fetcher<unknown>(url, readOpts({ ...opts, debugLabel: "users:drivers" }));
+  return parseUsersListPage<DriverRow>(raw);
 }
-
-export interface DriverStatusCounts {
-  pending: number;
-  approved: number;
-  blocked: number;
-  rejected: number;
-}
-
-export const EMPTY_DRIVER_STATUS_COUNTS: DriverStatusCounts = {
-  pending: 0,
-  approved: 0,
-  blocked: 0,
-  rejected: 0
-};
 
 export async function fetchDriverStatusCounts(opts: RequestOpts): Promise<DriverStatusCounts> {
   const response = await fetcher<{
@@ -106,12 +155,6 @@ export async function fetchDriverStatusCounts(opts: RequestOpts): Promise<Driver
     rejected: response.rejected ?? 0
   };
 }
-
-export type PartnerStatusCounts = DriverStatusCounts;
-export type AgentStatusCounts = DriverStatusCounts;
-
-export const EMPTY_PARTNER_STATUS_COUNTS = EMPTY_DRIVER_STATUS_COUNTS;
-export const EMPTY_AGENT_STATUS_COUNTS = EMPTY_DRIVER_STATUS_COUNTS;
 
 export async function fetchPartnerStatusCounts(opts: RequestOpts): Promise<PartnerStatusCounts> {
   const response = await fetcher<{
@@ -148,7 +191,7 @@ export async function fetchAgentStatusCounts(opts: RequestOpts): Promise<AgentSt
 export async function fetchPartnersList(
   filters: PartnersListFilters,
   opts: RequestOpts
-): Promise<PaginatedResponse<PartnerRow>> {
+): Promise<UsersListPage<PartnerRow>> {
   const url = buildApiUrl("/users/partners", {
     page: Math.max(1, filters.page),
     size: filters.pageSize,
@@ -158,7 +201,8 @@ export async function fetchPartnersList(
     city: filters.city.trim() || undefined,
     gender: filters.gender === "all" ? undefined : filters.gender
   });
-  return fetcher<PaginatedResponse<PartnerRow>>(url, readOpts({ ...opts, debugLabel: "users:partners" }));
+  const raw = await fetcher<unknown>(url, readOpts({ ...opts, debugLabel: "users:partners" }));
+  return parseUsersListPage<PartnerRow>(raw);
 }
 
 export async function fetchAgentsList(

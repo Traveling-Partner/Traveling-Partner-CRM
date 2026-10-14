@@ -109,24 +109,14 @@ function AdminRidesList() {
     startedAt
   };
   const { data, isLoading, isFetching, error } = useRidesListQuery(listFilters);
-  const countFilters = {
-    page: 1,
-    pageSize: 1,
-    city: "",
-    search: "",
-    bookingReference: "",
-    rideType: "all",
-    startedAt: ""
-  };
-  const requestedCount = useRidesListQuery({ ...countFilters, status: "REQUESTED" });
-  const completedCount = useRidesListQuery({ ...countFilters, status: "COMPLETED" });
-  const canceledCount = useRidesListQuery({ ...countFilters, status: "CANCELED" });
-  const expiredCount = useRidesListQuery({ ...countFilters, status: "EXPIRED" });
 
   const rides = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
   const total = error ? null : (data?.totalElements ?? 0);
+  const statusCounts = data?.statusCounts ?? null;
   const loading = isLoading || isFetching;
+  const countsLoading = loading && !data;
+  const countsFailed = Boolean(error) || (!countsLoading && statusCounts == null);
 
   const columns: ColumnDef<RideRow>[] = useMemo(
     () => [
@@ -192,27 +182,27 @@ function AdminRidesList() {
           />
           <RideCountCard
             label="Requested"
-            value={requestedCount.data?.totalElements ?? null}
-            loading={requestedCount.isLoading && !requestedCount.data}
-            failed={Boolean(requestedCount.error)}
+            value={statusCounts?.requested ?? null}
+            loading={countsLoading}
+            failed={countsFailed}
           />
           <RideCountCard
             label="Completed"
-            value={completedCount.data?.totalElements ?? null}
-            loading={completedCount.isLoading && !completedCount.data}
-            failed={Boolean(completedCount.error)}
+            value={statusCounts?.completed ?? null}
+            loading={countsLoading}
+            failed={countsFailed}
           />
           <RideCountCard
             label="Canceled"
-            value={canceledCount.data?.totalElements ?? null}
-            loading={canceledCount.isLoading && !canceledCount.data}
-            failed={Boolean(canceledCount.error)}
+            value={statusCounts?.canceled ?? null}
+            loading={countsLoading}
+            failed={countsFailed}
           />
           <RideCountCard
             label="Expired"
-            value={expiredCount.data?.totalElements ?? null}
-            loading={expiredCount.isLoading && !expiredCount.data}
-            failed={Boolean(expiredCount.error)}
+            value={statusCounts?.expired ?? null}
+            loading={countsLoading}
+            failed={countsFailed}
           />
         </div>
         <SectionCard
