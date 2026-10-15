@@ -29,6 +29,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
+  LIST_STATUS_FILTER_OPTIONS,
   VISIBLE_STATUS_OPTIONS,
   vehicleTypeSchema,
   type VehicleTypeForm
@@ -40,6 +41,7 @@ export function VehicleTypesSection() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
   const [editingId, setEditingId] = useState<number | string | null>(null);
@@ -48,7 +50,7 @@ export function VehicleTypesSection() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const typesQuery = useVehicleTypesQuery(page, pageSize, search);
+  const typesQuery = useVehicleTypesQuery(page, pageSize, search, statusFilter);
   const vehicleTypes = (typesQuery.data?.content ?? []) as VehicleEntity[];
   const totalPages = typesQuery.data?.totalPages ?? 1;
   const loading = typesQuery.isLoading || typesQuery.isFetching;
@@ -146,6 +148,24 @@ export function VehicleTypesSection() {
                 className="pl-9"
               />
             </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[13rem]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {LIST_STATUS_FILTER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {loading ? (

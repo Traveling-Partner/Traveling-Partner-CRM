@@ -34,6 +34,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
+  LIST_STATUS_FILTER_OPTIONS,
   VISIBLE_STATUS_OPTIONS,
   variantSchema,
   type VariantForm
@@ -45,6 +46,7 @@ export function VehicleModelVariantsSection() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [brandFilter, setBrandFilter] = useState("all");
   const [modelFilter, setModelFilter] = useState("all");
@@ -68,7 +70,8 @@ export function VehicleModelVariantsSection() {
     search,
     vehicleTypeId,
     brandId,
-    modelYearId
+    modelYearId,
+    statusFilter
   );
   const typesQuery = useVehicleTypeOptionsQuery(showModal || loadTypes);
   const brandsQuery = useVehicleBrandOptionsQuery(undefined, showModal || loadBrands);
@@ -286,6 +289,24 @@ export function VehicleModelVariantsSection() {
                 {modelsForFilter.map((model) => (
                   <SelectItem key={String(model.id)} value={String(model.id)}>
                     {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[13rem]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {LIST_STATUS_FILTER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>

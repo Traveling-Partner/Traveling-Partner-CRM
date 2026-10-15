@@ -29,6 +29,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import {
   DEFAULT_VEHICLE_PAGE_SIZE,
+  LIST_STATUS_FILTER_OPTIONS,
   VISIBLE_STATUS_OPTIONS,
   brandSchema,
   type BrandForm
@@ -40,6 +41,7 @@ export function VehicleBrandsSection() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_VEHICLE_PAGE_SIZE);
@@ -51,7 +53,7 @@ export function VehicleBrandsSection() {
   const [loadTypes, setLoadTypes] = useState(false);
 
   const vehicleTypeId = typeFilter === "all" ? undefined : Number(typeFilter);
-  const brandsQuery = useVehicleBrandsQuery(page, pageSize, search, vehicleTypeId);
+  const brandsQuery = useVehicleBrandsQuery(page, pageSize, search, vehicleTypeId, statusFilter);
   const typesQuery = useVehicleTypeOptionsQuery(showModal || loadTypes);
 
   const vehicleBrands = (brandsQuery.data?.content ?? []) as VehicleBrand[];
@@ -176,6 +178,24 @@ export function VehicleBrandsSection() {
                 {vehicleTypes.map((type) => (
                   <SelectItem key={String(type.id)} value={String(type.id)}>
                     {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[13rem]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {LIST_STATUS_FILTER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>

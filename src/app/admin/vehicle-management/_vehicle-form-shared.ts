@@ -5,6 +5,17 @@ export const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED", "PENDING", "APPR
 /** Choices shown in vehicle status menus. Saved values outside this list stay valid. */
 export const VISIBLE_STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BLOCKED", "PENDING"] as const;
 
+/** List filter only. Omit `status` on the API when value is `all`. */
+export const LIST_STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "All status" },
+  { value: "PENDING", label: "Pending" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "BLOCKED", label: "Blocked" }
+] as const;
+
 export { DEFAULT_PAGE_SIZE as DEFAULT_VEHICLE_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/page-size";
 
 export const vehicleTypeSchema = z.object({

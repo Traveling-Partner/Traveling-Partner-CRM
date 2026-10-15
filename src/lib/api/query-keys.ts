@@ -204,6 +204,7 @@ export interface VehicleListFiltersBase {
   page: number;
   pageSize: number;
   search: string;
+  status?: string;
 }
 
 export interface VehicleBrandsListFilters extends VehicleListFiltersBase {
