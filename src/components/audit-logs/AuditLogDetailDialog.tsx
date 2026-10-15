@@ -53,7 +53,7 @@ export function AuditLogDetailDialog({ log, onOpenChange }: AuditLogDetailDialog
 
   return (
     <Dialog open={Boolean(log)} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[min(90dvh,40rem)] max-w-md overflow-y-auto">
         <DialogHeader>
           <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-light)]">
             <ScrollText className="h-5 w-5 text-foreground" />
@@ -63,64 +63,64 @@ export function AuditLogDetailDialog({ log, onOpenChange }: AuditLogDetailDialog
         </DialogHeader>
 
         {log ? (
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
             <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 What happened
               </p>
-              <p className="mt-1 text-sm leading-relaxed text-foreground">
+              <p className="mt-1 break-words text-sm leading-relaxed text-foreground">
                 {log.description?.trim() || "—"}
               </p>
             </div>
-            <dl className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-lg border border-border/50 px-3 py-2">
+            <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+              <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2">
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   User type
                 </dt>
-                <dd className="mt-0.5 font-medium">{log.userType?.trim() || "—"}</dd>
+                <dd className="mt-0.5 break-words font-medium">{log.userType?.trim() || "—"}</dd>
               </div>
-              <div className="rounded-lg border border-border/50 px-3 py-2">
+              <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2">
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Mobile
                 </dt>
-                <dd className="mt-0.5 whitespace-nowrap font-medium tabular-nums">{showPhone(log.mobileNumber)}</dd>
+                <dd className="mt-0.5 break-all font-medium tabular-nums">{showPhone(log.mobileNumber)}</dd>
               </div>
               {log.module ? (
-                <div className="rounded-lg border border-border/50 px-3 py-2">
+                <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2">
                   <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Module
                   </dt>
-                  <dd className="mt-0.5 font-medium">{log.module}</dd>
+                  <dd className="mt-0.5 break-words font-medium">{log.module}</dd>
                 </div>
               ) : null}
               {log.action ? (
-                <div className="rounded-lg border border-border/50 px-3 py-2">
+                <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2">
                   <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Action
                   </dt>
-                  <dd className="mt-0.5 font-medium">{log.action}</dd>
+                  <dd className="mt-0.5 break-words font-medium">{log.action}</dd>
                 </div>
               ) : null}
               {log.userId ? (
-                <div className="rounded-lg border border-border/50 px-3 py-2">
+                <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2">
                   <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     User ID
                   </dt>
-                  <dd className="mt-0.5 font-medium tabular-nums">{log.userId}</dd>
+                  <dd className="mt-0.5 break-all font-medium tabular-nums">{log.userId}</dd>
                 </div>
               ) : null}
-              <div className="col-span-2 rounded-lg border border-border/50 px-3 py-2">
+              <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2 sm:col-span-2">
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Time
                 </dt>
-                <dd className="mt-0.5 font-medium tabular-nums">{formatTimestamp(log.createdAt)}</dd>
+                <dd className="mt-0.5 break-words font-medium tabular-nums">{formatTimestamp(log.createdAt)}</dd>
               </div>
               {log.id != null ? (
-                <div className="col-span-2 rounded-lg border border-border/50 px-3 py-2">
+                <div className="min-w-0 rounded-lg border border-border/50 px-3 py-2 sm:col-span-2">
                   <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Log ID
                   </dt>
-                  <dd className="mt-0.5 font-medium tabular-nums">{log.id}</dd>
+                  <dd className="mt-0.5 break-all font-medium tabular-nums">{log.id}</dd>
                 </div>
               ) : null}
             </dl>
