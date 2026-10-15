@@ -105,7 +105,7 @@ export default function AdminAgentPerformancePage() {
           variant="outline"
           size="sm"
           className="h-7 text-[11px]"
-          onClick={() => router.push(`/agents/${row.original.id}`)}
+          onClick={() => router.push(`/employees-list/${row.original.id}`)}
         >
           View performance
         </Button>

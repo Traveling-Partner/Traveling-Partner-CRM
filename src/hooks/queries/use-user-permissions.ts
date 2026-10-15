@@ -14,6 +14,7 @@ import { setAuthRole } from "@/store/slices/authSlice";
 const LIST_PAGES_WITHOUT_PERMISSION = new Set([
   "/drivers",
   "/partners",
+  "/employees-list",
   "/agents",
   "/agent-performance"
 ]);
