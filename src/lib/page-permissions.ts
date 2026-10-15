@@ -34,7 +34,8 @@ const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
   { path: "/blogs", modules: ["BLOGS"] },
   { path: "/admin/blog", modules: ["BLOGS"] },
   { path: "/rides", modules: ["RIDES"] },
-  { path: "/dashboard", modules: ["DASHBOARD"] }
+  { path: "/dashboard", modules: ["DASHBOARD"] },
+  { path: "/audit-logs", modules: ["AUDIT_LOGS"] }
 ];
 
 export type PagePermissionGate = {
@@ -59,8 +60,13 @@ export function toPagePermissionGate(
   return { allowed, levels };
 }
 
-/** Not a permission module. Visible to admin only (admin has no permission gate). */
-const ADMIN_ONLY_PATHS = ["/audit-logs"];
+/**
+ * Paths with no corresponding permission module - visible to admin only
+ * (admin has no permission gate). /audit-logs used to live here, but the
+ * backend now enforces @RequirePermission(AUDIT_LOGS, READ) on it, so it
+ * is mapped through MODULE_PATHS above instead.
+ */
+const ADMIN_ONLY_PATHS: string[] = [];
 
 function matchesPath(pathname: string, path: string): boolean {
   return pathname === path || pathname.startsWith(`${path}/`);

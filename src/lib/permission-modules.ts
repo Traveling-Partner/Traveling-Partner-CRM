@@ -1,34 +1,41 @@
 /**
  * Module names accepted by PUT /api/permission/role.
- * Audit Logs is admin-only and is not a permission module.
+ * Mirrors backend com.travelpartner.permission.enums.PermissionModule
+ * exactly (32 values, same order) - keep in sync with the backend enum.
  */
 export const PERMISSION_MODULES = [
   "DASHBOARD",
   "USER_MANAGEMENT",
   "DRIVER",
   "PARTNER",
+  "SALES_AGENT",
   "MANAGERS_USERS",
   "DOCUMENT",
-  "SOS_MANAGEMENT",
+  "RIDE_MANAGEMENT",
   "RIDES",
+  "SOS_MANAGEMENT",
   "SAFETY_CENTER",
   "SOS_OVERVIEW",
   "EMERGENCY_LIST",
   "COMMISSION_MANAGEMENT",
   "AGENT_PERFORMANCE",
+  "CONTENT_MANAGEMENT",
   "BLOGS",
   "NEWSLETTER_LIST",
   "NEWSLETTER_SUBSCRIBER",
   "BANNER",
+  "FINANCIAL_MANAGEMENT",
   "TAX",
   "COMMISSION",
   "INSURANCE",
   "PLATFORM_FEE",
+  "VEHICLE_MANAGEMENT",
   "VEHICLE_TYPE",
   "VEHICLE_BRANDS",
   "VEHICLE_MODEL",
   "VEHICLE_MODEL_VARIANT",
-  "ACCESS_MANAGEMENT"
+  "ACCESS_MANAGEMENT",
+  "AUDIT_LOGS"
 ] as const;
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];
@@ -50,7 +57,7 @@ function levelRank(level: string): number {
 
 export function canonicalPermissionModule(module: string): PermissionModule | null {
   const raw = module.trim();
-  if (!raw || raw === "AUDIT_LOGS") return null;
+  if (!raw) return null;
   const name = LEGACY_MODULE_ALIASES[raw] ?? raw;
   return CANONICAL_MODULES.has(name) ? (name as PermissionModule) : null;
 }

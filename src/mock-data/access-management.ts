@@ -36,9 +36,17 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     ]
   },
   {
+    id: "sales-agent-section",
+    label: "Sales Agent",
+    children: [{ id: "SALES_AGENT", label: "Sales Agent" }]
+  },
+  {
     id: "ride-management",
     label: "Ride Management",
-    children: [{ id: "RIDES", label: "Rides" }]
+    children: [
+      { id: "RIDE_MANAGEMENT", label: "Ride Management", hidden: true },
+      { id: "RIDES", label: "Rides" }
+    ]
   },
   {
     id: "safety-center",
@@ -62,6 +70,7 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "content-management",
     label: "Content Management",
     children: [
+      { id: "CONTENT_MANAGEMENT", label: "Content Management", hidden: true },
       { id: "BLOGS", label: "Blog" },
       { id: "NEWSLETTER_LIST", label: "Newsletter" },
       { id: "NEWSLETTER_SUBSCRIBER", label: "Newsletter Subscribers" },
@@ -72,6 +81,7 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "financial-management",
     label: "Financial Management",
     children: [
+      { id: "FINANCIAL_MANAGEMENT", label: "Financial Management", hidden: true },
       { id: "TAX", label: "Tax Management" },
       { id: "COMMISSION", label: "Commission Management" },
       { id: "INSURANCE", label: "Insurance Management" },
@@ -82,6 +92,7 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "vehicle-management",
     label: "Vehicle Management",
     children: [
+      { id: "VEHICLE_MANAGEMENT", label: "Vehicle Management", hidden: true },
       { id: "VEHICLE_TYPE", label: "Vehicle Types" },
       { id: "VEHICLE_BRANDS", label: "Vehicle Brands" },
       { id: "VEHICLE_MODEL", label: "Vehicle Models" },
@@ -92,6 +103,11 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     id: "access-management-section",
     label: "Access Management",
     children: [{ id: "ACCESS_MANAGEMENT", label: "Access Management" }]
+  },
+  {
+    id: "audit-logs-section",
+    label: "Audit Logs",
+    children: [{ id: "AUDIT_LOGS", label: "Audit Logs" }]
   }
 ];
 
