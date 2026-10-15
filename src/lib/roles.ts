@@ -78,7 +78,7 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
     roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES_MANAGER]
   },
   {
-    prefixes: ["/drivers", "/partners", "/agents", "/documents"],
+    prefixes: ["/drivers", "/partners", "/employees-list", "/agents", "/documents"],
     roles: [ROLES.ADMIN, ROLES.MANAGER]
   },
   {

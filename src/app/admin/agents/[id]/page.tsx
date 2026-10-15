@@ -42,7 +42,7 @@ export default function AdminEmployeeDetailPage() {
     try {
       await deleteMutation.mutateAsync(params.id);
       success("Employee deleted.");
-      router.push("/agents");
+      router.push("/employees-list");
     } catch (err) {
       showError(err instanceof Error ? err.message : "Failed to delete employee.");
     }
@@ -68,7 +68,7 @@ export default function AdminEmployeeDetailPage() {
             title="Employee not found"
             description="This employee could not be loaded."
             actionLabel="Back to employees"
-            onActionClick={() => router.push("/agents")}
+            onActionClick={() => router.push("/employees-list")}
           />
         </PageContainer>
       </AppShell>
@@ -82,7 +82,7 @@ export default function AdminEmployeeDetailPage() {
       <PageContainer>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/agents" className="gap-1.5">
+            <Link href="/employees-list" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to employees
             </Link>
@@ -90,7 +90,7 @@ export default function AdminEmployeeDetailPage() {
           <WriteOnly>
             <div className="flex items-center gap-2">
               <Button size="sm" asChild>
-                <Link href={`/agents/${params.id}/edit`} className="gap-1.5">
+                <Link href={`/employees-list/${params.id}/edit`} className="gap-1.5">
                   <Pencil className="h-4 w-4" />
                   Edit
                 </Link>

@@ -3,7 +3,6 @@
 const ADMIN_PAGES = [
   "drivers",
   "partners",
-  "agents",
   "documents",
   "rides",
   "access-management",
@@ -15,6 +14,7 @@ const ADMIN_PAGES = [
 
 /** Public URL → existing /admin folder. Old public URLs redirect here. */
 const RENAMED_PAGES = [
+  { to: "employees-list", folder: "agents", from: "agents" },
   { to: "newsletter-list", folder: "newsletter", from: "newsletter" },
   { to: "newsletter-subscribers-list", folder: "newsletter-subscribers", from: "newsletter-subscribers" },
   { to: "app-banner-list", folder: "carousel", from: "carousel" },

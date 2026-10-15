@@ -106,7 +106,7 @@ export default function AdminEmployeesPage() {
           variant="ghost"
           size="sm"
           className="text-xs font-medium text-muted-foreground hover:text-foreground"
-          onClick={() => router.push(`/agents/${row.original.id}`)}
+          onClick={() => router.push(`/employees-list/${row.original.id}`)}
         >
           View
         </Button>
@@ -122,7 +122,7 @@ export default function AdminEmployeesPage() {
           description="Create and manage portal employees by role."
           headerAction={
             <WriteOnly>
-              <Button onClick={() => router.push("/agents/create")}>
+              <Button onClick={() => router.push("/employees-list/create")}>
                 Create employee
               </Button>
             </WriteOnly>

@@ -106,6 +106,8 @@ export function isAdminRoute(pathname: string): boolean {
     path.startsWith("/drivers/") ||
     path === "/partners" ||
     path.startsWith("/partners/") ||
+    path === "/employees-list" ||
+    path.startsWith("/employees-list/") ||
     path === "/agents" ||
     path.startsWith("/agents/") ||
     path === "/documents" ||
