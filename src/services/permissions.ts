@@ -127,14 +127,18 @@ export async function fetchRolePermissions(
 }
 
 /**
- * GET /api/auth/ops/permissions — logged-in employee's modules.
+ * GET /api/user/permission — logged-in employee's modules.
  * `data` may be `{ role, permissions }` or a permissions array.
+ *
+ * Was /auth/ops/permissions, which TP-1225 removed server-side as a
+ * confirmed duplicate of this endpoint on 2026-10-12 - that landed after
+ * this file started calling it (2026-10-08), so the old path 404s today.
  */
 export async function fetchUserPermissions(opts: {
   token: string;
   signal?: AbortSignal;
 }): Promise<RolePermissionsData> {
-  const res = await fetcher<unknown>(apiUrl("/auth/ops/permissions"), {
+  const res = await fetcher<unknown>(apiUrl("/user/permission"), {
     token: opts.token,
     signal: opts.signal,
     debugLabel: "permissions:me"

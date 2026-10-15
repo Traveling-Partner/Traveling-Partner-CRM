@@ -18,7 +18,7 @@ const LIST_PAGES_WITHOUT_PERMISSION = new Set([
   "/agent-performance"
 ]);
 
-/** One GET /auth/ops/permissions per logged-in user. Admin is never filtered. */
+/** One GET /user/permission per logged-in user. Admin is never filtered. */
 export function useUserPermissionsQuery() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
