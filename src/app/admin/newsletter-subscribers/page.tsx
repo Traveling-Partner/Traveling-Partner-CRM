@@ -117,7 +117,7 @@ export default function NewsletterSubscribersPage() {
             variant="ghost"
             size="sm"
             className="text-xs font-medium text-muted-foreground hover:text-foreground"
-            onClick={() => router.push(`/newsletter-subscribers/${row.original.id}`)}
+            onClick={() => router.push(`/newsletter-subscribers-list/${row.original.id}`)}
           >
             View →
           </Button>
@@ -210,7 +210,7 @@ export default function NewsletterSubscribersPage() {
           <p className="mt-4 text-xs text-muted-foreground">
             Manage newsletter content on the{" "}
             <Link
-              href="/newsletter"
+              href="/newsletter-list"
               className="font-medium text-foreground underline-offset-2 hover:underline"
             >
               Newsletter

@@ -223,7 +223,7 @@ export function AuditLogsSection({
       headerAction={
         isDashboard ? (
           <Button variant="outline" size="sm" asChild>
-            <Link href="/audit-logs">
+            <Link href="/audit-logs-list">
               Full viewer
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>

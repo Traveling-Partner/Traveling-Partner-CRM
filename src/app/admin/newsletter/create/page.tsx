@@ -55,7 +55,7 @@ export default function AdminNewsletterCreatePage() {
       const payload = buildNewsletterUpsertPayload(values, nextStatus, authUser);
       await createNewsletter(payload, token);
       success(`Newsletter saved successfully.`);
-      router.push("/newsletter");
+      router.push("/newsletter-list");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to create newsletter.");
     } finally {
@@ -89,7 +89,7 @@ export default function AdminNewsletterCreatePage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/newsletter" className="gap-1.5">
+            <Link href="/newsletter-list" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to newsletter
             </Link>

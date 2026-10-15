@@ -8,8 +8,8 @@ export default function CommissionManagementPage() {
 
   return (
     <PercentageManagementView
-      pageTitle="Commission Management"
-      sectionTitle="Commission Management"
+      pageTitle="App Commission"
+      sectionTitle="App Commission"
       sectionDescription="Configure commission percentages for agents and partners."
       entityLabel="Commission"
       searchPlaceholder="Search commissions..."

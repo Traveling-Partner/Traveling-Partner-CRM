@@ -10,31 +10,46 @@ import { normalizeRole } from "@/lib/rbac";
 import { ROLES, stripRolePrefix } from "@/lib/roles";
 import type { PermissionLevel, RolePermissionsData } from "@/services/permissions";
 
-/** Longest path first so `/safety/services` is not treated as `/safety`. */
+/** Longest path first so `/emergency-services-list` is not treated as `/sos`. */
 const MODULE_PATHS: Array<{ path: string; modules: string[] }> = [
+  { path: "/emergency-services-list", modules: ["EMERGENCY_LIST"] },
   { path: "/safety/services", modules: ["EMERGENCY_LIST"] },
+  { path: "/newsletter-subscribers-list", modules: ["NEWSLETTER_SUBSCRIBER"] },
   { path: "/newsletter-subscribers", modules: ["NEWSLETTER_SUBSCRIBER"] },
+  { path: "/vehicle-model-variants-list", modules: ["VEHICLE_MODEL_VARIANT"] },
   { path: "/vehicle-model-variants", modules: ["VEHICLE_MODEL_VARIANT"] },
   { path: "/access-management", modules: ["ACCESS_MANAGEMENT"] },
   { path: "/agent-performance", modules: ["AGENT_PERFORMANCE"] },
+  { path: "/app-commission-list", modules: ["COMMISSION", "COMMISSION_MANAGEMENT"] },
   { path: "/commission-management", modules: ["COMMISSION", "COMMISSION_MANAGEMENT"] },
+  { path: "/insurance-management-list", modules: ["INSURANCE"] },
   { path: "/insurance-management", modules: ["INSURANCE"] },
+  { path: "/platform-fee-list", modules: ["PLATFORM_FEE"] },
   { path: "/platform-fee-management", modules: ["PLATFORM_FEE"] },
+  { path: "/sales-tax-list", modules: ["TAX"] },
   { path: "/tax-management", modules: ["TAX"] },
+  { path: "/vehicle-brands-list", modules: ["VEHICLE_BRANDS"] },
   { path: "/vehicle-brands", modules: ["VEHICLE_BRANDS"] },
+  { path: "/vehicle-models-list", modules: ["VEHICLE_MODEL"] },
   { path: "/vehicle-models", modules: ["VEHICLE_MODEL"] },
+  { path: "/vehicle-types-list", modules: ["VEHICLE_TYPE"] },
   { path: "/vehicle-types", modules: ["VEHICLE_TYPE"] },
+  { path: "/newsletter-list", modules: ["NEWSLETTER_LIST"] },
   { path: "/newsletter", modules: ["NEWSLETTER_LIST"] },
   { path: "/documents", modules: ["DOCUMENT"] },
   { path: "/partners", modules: ["PARTNER"] },
   { path: "/drivers", modules: ["DRIVER"] },
   { path: "/agents", modules: ["MANAGERS_USERS"] },
+  { path: "/app-banner-list", modules: ["BANNER"] },
   { path: "/carousel", modules: ["BANNER"] },
+  { path: "/sos", modules: ["SOS_OVERVIEW", "SAFETY_CENTER"] },
   { path: "/safety", modules: ["SOS_OVERVIEW", "SAFETY_CENTER"] },
+  { path: "/blog-list", modules: ["BLOGS"] },
   { path: "/blogs", modules: ["BLOGS"] },
   { path: "/admin/blog", modules: ["BLOGS"] },
   { path: "/rides", modules: ["RIDES"] },
   { path: "/dashboard", modules: ["DASHBOARD"] },
+  { path: "/audit-logs-list", modules: ["AUDIT_LOGS"] },
   { path: "/audit-logs", modules: ["AUDIT_LOGS"] }
 ];
 

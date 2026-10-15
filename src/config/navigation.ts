@@ -82,10 +82,10 @@ export const contentManagementGroup: SidebarGroup = {
   label: "Content Management",
   icon: FolderOpen,
   items: [
-    { label: "Blog", href: "/blogs", icon: Newspaper },
-    { label: "Newsletter", href: "/newsletter", icon: Mail },
-    { label: "Newsletter Subscribers", href: "/newsletter-subscribers", icon: Contact },
-    { label: "Carousel", href: "/carousel", icon: Images }
+    { label: "Blog", href: "/blog-list", icon: Newspaper },
+    { label: "Newsletter", href: "/newsletter-list", icon: Mail },
+    { label: "Newsletter Subscribers", href: "/newsletter-subscribers-list", icon: Contact },
+    { label: "App Banner", href: "/app-banner-list", icon: Images }
   ]
 };
 
@@ -94,16 +94,16 @@ export const financialManagementGroup: SidebarGroup = {
   label: "Financial Management",
   icon: BadgeDollarSign,
   items: [
-    { label: "Tax Management", href: "/tax-management", icon: Receipt },
+    { label: "Sales Tax", href: "/sales-tax-list", icon: Receipt },
     {
-      label: "Commission Management",
-      href: "/commission-management",
+      label: "App Commission",
+      href: "/app-commission-list",
       icon: BadgeDollarSign
     },
-    { label: "Insurance Management", href: "/insurance-management", icon: Shield },
+    { label: "Insurance Management", href: "/insurance-management-list", icon: Shield },
     {
-      label: "Platform Fee Management",
-      href: "/platform-fee-management",
+      label: "Platform Fee",
+      href: "/platform-fee-list",
       icon: Coins
     }
   ]
@@ -131,21 +131,21 @@ export const vehicleManagementGroup: SidebarGroup = {
   label: "Vehicle Management",
   icon: Car,
   items: [
-    { label: "Vehicle Types", href: "/vehicle-types", icon: Car },
-    { label: "Vehicle Brands", href: "/vehicle-brands", icon: Tags },
-    { label: "Vehicle Models", href: "/vehicle-models", icon: Layers },
-    { label: "Vehicle Model Variants", href: "/vehicle-model-variants", icon: Palette },
+    { label: "Vehicle Types", href: "/vehicle-types-list", icon: Car },
+    { label: "Vehicle Brands", href: "/vehicle-brands-list", icon: Tags },
+    { label: "Vehicle Models", href: "/vehicle-models-list", icon: Layers },
+    { label: "Vehicle Model Variants", href: "/vehicle-model-variants-list", icon: Palette },
   ]
 };
 
-/** Admin-only Safety Center (SOS). */
+/** Admin SOS (incidents + emergency directory). */
 export const safetyCenterGroup: SidebarGroup = {
   id: "safety-center",
-  label: "Safety Center",
+  label: "SOS",
   icon: ShieldAlert,
   items: [
-    { label: "SOS Overview", href: "/safety", icon: Siren },
-    { label: "Emergency Services", href: "/safety/services", icon: Phone }
+    { label: "SOS", href: "/sos", icon: Siren },
+    { label: "Emergency Services", href: "/emergency-services-list", icon: Phone }
   ]
 };
 
@@ -159,7 +159,7 @@ export const adminNav: SidebarEntry[] = [
   contentManagementGroup,
   financialManagementGroup,
   vehicleManagementGroup,
-  { label: "Audit Logs", href: "/audit-logs", icon: ScrollText },
+  { label: "Audit Logs", href: "/audit-logs-list", icon: ScrollText },
   { label: "Access Management", href: "/access-management", icon: KeyRound }
 ];
 

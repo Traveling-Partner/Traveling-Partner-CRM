@@ -8,8 +8,8 @@ export default function TaxManagementPage() {
 
   return (
     <PercentageManagementView
-      pageTitle="Tax Management"
-      sectionTitle="Tax Management"
+      pageTitle="Sales Tax"
+      sectionTitle="Sales Tax"
       sectionDescription="Configure tax rates applied to rides and services."
       entityLabel="Tax"
       searchPlaceholder="Search taxes..."

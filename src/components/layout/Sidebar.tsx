@@ -39,8 +39,8 @@ function isLinkActive(pathname: string, href: string, siblings?: SidebarLink[]) 
   if (!pathname.startsWith(`${href}/`)) return false;
 
   /**
-   * A more specific sibling owns this path — e.g. on `/safety/services`
-   * only "Emergency Services" highlights, not its parent `/safety`.
+   * A more specific sibling owns this path — e.g. on `/emergency-services-list`
+   * only "Emergency Services" highlights, not its parent `/sos`.
    */
   return !siblings?.some(
     (sibling) =>

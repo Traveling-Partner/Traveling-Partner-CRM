@@ -8,8 +8,8 @@ export default function PlatformFeeManagementPage() {
 
   return (
     <PercentageManagementView
-      pageTitle="Platform Fee Management"
-      sectionTitle="Platform Fee Management"
+      pageTitle="Platform Fee"
+      sectionTitle="Platform Fee"
       sectionDescription="Configure platform fee percentages charged on bookings."
       entityLabel="Platform Fee"
       searchPlaceholder="Search platform fees..."

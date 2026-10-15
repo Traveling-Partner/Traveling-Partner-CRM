@@ -74,7 +74,7 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
       { id: "BLOGS", label: "Blog" },
       { id: "NEWSLETTER_LIST", label: "Newsletter" },
       { id: "NEWSLETTER_SUBSCRIBER", label: "Newsletter Subscribers" },
-      { id: "BANNER", label: "Carousel" }
+      { id: "BANNER", label: "App Banner" }
     ]
   },
   {
@@ -82,10 +82,10 @@ export const ACCESS_MODULES: AccessModuleNode[] = [
     label: "Financial Management",
     children: [
       { id: "FINANCIAL_MANAGEMENT", label: "Financial Management", hidden: true },
-      { id: "TAX", label: "Tax Management" },
-      { id: "COMMISSION", label: "Commission Management" },
+      { id: "TAX", label: "Sales Tax" },
+      { id: "COMMISSION", label: "App Commission" },
       { id: "INSURANCE", label: "Insurance Management" },
-      { id: "PLATFORM_FEE", label: "Platform Fee Management" }
+      { id: "PLATFORM_FEE", label: "Platform Fee" }
     ]
   },
   {

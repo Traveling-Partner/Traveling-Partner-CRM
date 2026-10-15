@@ -33,7 +33,7 @@ export function auditLogSearchHref(log: AuditLogRow): string {
   if (q) params.set("search", q);
   if (log.id != null) params.set("highlightId", String(log.id));
   const qs = params.toString();
-  return qs ? `/audit-logs?${qs}` : "/audit-logs";
+  return qs ? `/audit-logs-list?${qs}` : "/audit-logs-list";
 }
 
 interface AuditLogDetailDialogProps {

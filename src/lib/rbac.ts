@@ -112,8 +112,14 @@ export function isAdminRoute(pathname: string): boolean {
     path.startsWith("/documents/") ||
     path === "/rides" ||
     path.startsWith("/rides/") ||
+    path === "/sos" ||
+    path.startsWith("/sos/") ||
+    path === "/emergency-services-list" ||
+    path.startsWith("/emergency-services-list/") ||
     path === "/safety" ||
     path.startsWith("/safety/") ||
+    path === "/audit-logs-list" ||
+    path.startsWith("/audit-logs-list/") ||
     path === "/audit-logs" ||
     path.startsWith("/audit-logs/") ||
     path === "/access-management" ||

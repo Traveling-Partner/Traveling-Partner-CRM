@@ -113,7 +113,7 @@ export default function AdminCarouselListPage() {
           <WriteOnly>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/carousel/${row.original.id}`}>Edit</Link>
+                <Link href={`/app-banner-list/${row.original.id}`}>Edit</Link>
               </Button>
               <Button variant="destructive" size="sm" onClick={() => openDelete(row.original)}>
                 Delete
@@ -127,7 +127,7 @@ export default function AdminCarouselListPage() {
   );
 
   return (
-    <AppShell title="Carousel Management">
+    <AppShell title="App Banner">
       <PageContainer>
         <SectionCard
           title="App home carousel banners"
@@ -135,7 +135,7 @@ export default function AdminCarouselListPage() {
           headerAction={
             <WriteOnly>
               <Button asChild>
-                <Link href="/carousel/create">Create Banner</Link>
+                <Link href="/app-banner-list/create">Create Banner</Link>
               </Button>
             </WriteOnly>
           }

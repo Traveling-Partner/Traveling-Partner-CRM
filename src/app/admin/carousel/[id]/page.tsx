@@ -109,7 +109,7 @@ export default function AdminCarouselEditPage() {
             : "Updated. Not in carousel feed — list status follows /banners/carousel."
         );
       }
-      router.push("/carousel");
+      router.push("/app-banner-list");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to update banner.");
     } finally {
@@ -141,7 +141,7 @@ export default function AdminCarouselEditPage() {
             description="This banner could not be loaded. Please try again from the list."
           >
             <Button asChild>
-              <Link href="/carousel">Back to carousel list</Link>
+              <Link href="/app-banner-list">Back to App Banner</Link>
             </Button>
           </SectionCard>
         </PageContainer>
@@ -154,7 +154,7 @@ export default function AdminCarouselEditPage() {
       <PageContainer>
         <div className="mb-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/carousel" className="gap-1.5">
+            <Link href="/app-banner-list" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to carousel list
             </Link>
