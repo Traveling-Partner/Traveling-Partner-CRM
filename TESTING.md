@@ -232,7 +232,42 @@ Smoke-test: **Commissions**, **Notifications**, **Settings**, **Audit logs** (`/
 
 ---
 
-## 17. Regression checklist (release)
+## 17. Admin — Access Management (`/admin/access-management`)
+
+| ID | Case | Expected |
+|----|------|----------|
+| AM1 | Page requires ADMIN | Non-admin visiting the URL directly → redirect per `allowedRoles={["ADMIN"]}` |
+| AM2 | Sidebar entry | "Access Management" link visible only in the admin sidebar |
+| AM3 | Role list loads | `GET /admin/permissions/roles`; dropdown populated, first role auto-selected |
+| AM4 | Switching roles | `GET /admin/permissions/{role}` refetches; matrix resets to that role's saved values (no bleed-over from the previous role's edits) |
+| AM5 | Matrix shows every module | All `PERMISSION_MODULES` rows render, defaulting to `NONE` for any module absent from the response |
+| AM6 | Edit a level | `Save changes` enabled only once at least one row differs from the loaded values |
+| AM7 | Save | `PUT /permission/role` sent with **every** module (not just the changed one), to avoid relying on the backend's partial-update semantics unexpectedly dropping unedited rows |
+| AM8 | Save success | Toast confirmation; query invalidated/refetched so the table reflects the server's own echoed state |
+| AM9 | Roles fetch fails | Toast error; no crash, no stale matrix shown |
+| AM10 | Role-permissions fetch fails | Toast error; matrix area shows nothing stale from a previous role |
+| AM11 | Save fails (e.g. invalid module/level, network) | Toast error; local edits are preserved so the admin doesn't lose their in-progress changes |
+
+**Edge cases**
+
+- A role with zero configured permission rows still renders every module at `NONE` (matches backend's `buildFullPermissionList` default).
+- Rapidly switching roles before a prior `GET /admin/permissions/{role}` resolves must not apply the stale response to the newly-selected role (React Query's per-role query key already scopes this).
+- This screen's own backend enforcement is admin-role-gated (`RoleChecker.isCurrentUserAdmin()`), not `@RequirePermission` — it cannot lock the admin out of managing permissions.
+
+**Known limitation (not a defect in this page):** saving a role's permissions here does not retroactively secure any endpoint. Per the prior audit, backend `@RequirePermission` enforcement is only active on a small subset of endpoints (audit logs, SOS, one dashboard route, ride admin) — most modules shown in this matrix are not yet enforced server-side. This UI is a configuration/UX surface today, not a security boundary.
+
+---
+
+## 17a. `GET /api/user/permission` service (not yet wired into UI)
+
+| ID | Case | Expected |
+|----|------|----------|
+| MP1 | `fetchMyPermissions` / `useMyPermissionsQuery` exist and compile | `src/services/permissions.ts`, `src/hooks/queries/use-permissions-queries.ts` |
+| MP2 | Not called anywhere yet | No navigation filtering or CRUD-button gating in this ticket's scope — confirm no regression to login/redirect flow from this addition alone |
+
+---
+
+## 18. Regression checklist (release)
 
 - [ ] Login + logout + refresh session  
 - [ ] Admin vs Agent route guards  
@@ -244,6 +279,7 @@ Smoke-test: **Commissions**, **Notifications**, **Settings**, **Audit logs** (`/
 - [ ] Vehicle types: brand form fields  
 - [ ] Blog: views column + list fetch URL  
 - [ ] Pagination component: 5-window + First/Last on high page counts  
+- [ ] Access Management: role switch resets matrix, full-matrix save, admin-only gate  
 
 ---
 

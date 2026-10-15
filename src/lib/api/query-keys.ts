@@ -56,6 +56,11 @@ export const queryKeys = {
   },
   audit: {
     logs: (page: number, size: number) => ["audit", "logs", { page, size }] as const
+  },
+  permissions: {
+    roles: () => ["permissions", "roles"] as const,
+    role: (role: string) => ["permissions", "role", role] as const,
+    mine: () => ["permissions", "mine"] as const
   }
 } as const;
 

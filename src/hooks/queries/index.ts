@@ -19,3 +19,8 @@ export {
   useVehicleColorsQuery,
   useVehicleBrandsQuery
 } from "@/hooks/queries/use-vehicle-queries";
+export {
+  useAssignableRolesQuery,
+  useRolePermissionsQuery,
+  useMyPermissionsQuery
+} from "@/hooks/queries/use-permissions-queries";

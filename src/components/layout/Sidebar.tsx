@@ -26,7 +26,8 @@ import {
   Layers,
   Palette,
   Tags,
-  TrendingUp
+  TrendingUp,
+  Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -122,6 +123,7 @@ const adminNav: SidebarEntry[] = [
       { label: "Vehicle Brands", href: "/admin/vehicle-brands", icon: Tags }
     ]
   },
+  { label: "Access Management", href: "/admin/access-management", icon: Lock },
   {
     id: "system",
     label: "System",
