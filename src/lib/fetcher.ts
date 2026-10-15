@@ -92,7 +92,6 @@ function isFailedEnvelope(data: unknown): boolean {
 }
 
 function isAuthRequest(endpoint: string): boolean {
-  if (endpoint.includes("/auth/ops/permissions")) return false;
   return endpoint.includes("/auth/");
 }
 
