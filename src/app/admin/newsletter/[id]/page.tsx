@@ -87,7 +87,7 @@ export default function AdminNewsletterEditPage() {
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.newsletter.all });
       success("Newsletter updated.");
-      router.push("/newsletter");
+      router.push("/newsletter-list");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to update newsletter.");
     } finally {
@@ -137,7 +137,7 @@ export default function AdminNewsletterEditPage() {
             description="This newsletter could not be loaded. Check the id or try again from the list."
           >
             <Button asChild>
-              <Link href="/newsletter">Back to newsletter</Link>
+              <Link href="/newsletter-list">Back to newsletter</Link>
             </Button>
           </SectionCard>
         </PageContainer>
@@ -150,13 +150,13 @@ export default function AdminNewsletterEditPage() {
       <PageContainer>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/newsletter" className="gap-1.5">
+            <Link href="/newsletter-list" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back to newsletter
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/newsletter/${idNum}/preview`}>Preview</Link>
+            <Link href={`/newsletter-list/${idNum}/preview`}>Preview</Link>
           </Button>
         </div>
 

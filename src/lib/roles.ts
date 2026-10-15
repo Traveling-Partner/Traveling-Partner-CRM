@@ -50,22 +50,29 @@ export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
  */
 const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }> = [
   {
-    prefixes: ["/commission-management", "/agent-performance"],
+    prefixes: ["/app-commission-list", "/commission-management", "/agent-performance"],
     roles: [ROLES.ADMIN, ROLES.SALES_MANAGER, ROLES.MANAGER]
   },
   {
     prefixes: [
+      "/blog-list",
       "/blogs",
+      "/newsletter-list",
       "/newsletter",
+      "/newsletter-subscribers-list",
       "/newsletter-subscribers",
+      "/app-banner-list",
       "/carousel"
     ],
     roles: [ROLES.ADMIN, ROLES.MARKETING_MANAGER]
   },
   {
     prefixes: [
+      "/sales-tax-list",
       "/tax-management",
+      "/insurance-management-list",
       "/insurance-management",
+      "/platform-fee-list",
       "/platform-fee-management"
     ],
     roles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES_MANAGER]
@@ -80,10 +87,14 @@ const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }>
   },
   {
     prefixes: [
+      "/vehicle-types-list",
       "/vehicle-types",
+      "/vehicle-models-list",
       "/vehicle-models",
       "/vehicle-colors",
+      "/vehicle-brands-list",
       "/vehicle-brands",
+      "/vehicle-model-variants-list",
       "/vehicle-model-variants"
     ],
     roles: [ROLES.ADMIN, ROLES.MANAGER]
@@ -177,12 +188,20 @@ export function getAllowedRolesForPath(pathname: string): AppRole[] | undefined 
   const match = ROUTE_PREFIX_CHECKS.find(({ prefix }) => pathname.startsWith(prefix));
   if (!match) {
     if (
+      path === "/sos" ||
+      path.startsWith("/sos/") ||
+      path === "/emergency-services-list" ||
+      path.startsWith("/emergency-services-list/") ||
       path === "/safety" ||
       path.startsWith("/safety/") ||
+      path === "/audit-logs-list" ||
+      path.startsWith("/audit-logs-list/") ||
       path === "/audit-logs" ||
       path.startsWith("/audit-logs/") ||
       path === "/access-management" ||
       path.startsWith("/access-management/") ||
+      path === "/vehicle-model-variants-list" ||
+      path.startsWith("/vehicle-model-variants-list/") ||
       path === "/vehicle-model-variants" ||
       path.startsWith("/vehicle-model-variants/")
     ) {

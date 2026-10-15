@@ -6,24 +6,28 @@ const ADMIN_PAGES = [
   "agents",
   "documents",
   "rides",
-  "safety",
-  "audit-logs",
   "access-management",
-  "newsletter",
-  "newsletter-subscribers",
-  "carousel",
-  "tax-management",
-  "commission-management",
-  "insurance-management",
-  "platform-fee-management",
-  "vehicle-types",
-  "vehicle-brands",
-  "vehicle-models",
-  "vehicle-model-variants",
   "agent-performance",
   "pool-rides",
   "settings",
   "notifications"
+];
+
+/** Public URL → existing /admin folder. Old public URLs redirect here. */
+const RENAMED_PAGES = [
+  { to: "newsletter-list", folder: "newsletter", from: "newsletter" },
+  { to: "newsletter-subscribers-list", folder: "newsletter-subscribers", from: "newsletter-subscribers" },
+  { to: "app-banner-list", folder: "carousel", from: "carousel" },
+  { to: "sales-tax-list", folder: "tax-management", from: "tax-management" },
+  { to: "app-commission-list", folder: "commission-management", from: "commission-management" },
+  { to: "insurance-management-list", folder: "insurance-management", from: "insurance-management" },
+  { to: "platform-fee-list", folder: "platform-fee-management", from: "platform-fee-management" },
+  { to: "vehicle-types-list", folder: "vehicle-types", from: "vehicle-types" },
+  { to: "vehicle-brands-list", folder: "vehicle-brands", from: "vehicle-brands" },
+  { to: "vehicle-models-list", folder: "vehicle-models", from: "vehicle-models" },
+  { to: "vehicle-model-variants-list", folder: "vehicle-model-variants", from: "vehicle-model-variants" },
+  { to: "audit-logs-list", folder: "audit-logs", from: "audit-logs" },
+  { to: "sos", folder: "safety", from: "safety" }
 ];
 
 function pageRules(fromPrefix, pages) {
@@ -42,6 +46,12 @@ const nextConfig = {
       { source: "/sales-manager/dashboard", destination: "/dashboard", permanent: false },
       { source: "/marketing-manager/dashboard", destination: "/dashboard", permanent: false },
       { source: "/manager/dashboard", destination: "/dashboard", permanent: false },
+      { source: "/admin/safety/services", destination: "/emergency-services-list", permanent: false },
+      { source: "/admin/safety/services/:path*", destination: "/emergency-services-list/:path*", permanent: false },
+      { source: "/safety/services", destination: "/emergency-services-list", permanent: false },
+      { source: "/safety/services/:path*", destination: "/emergency-services-list/:path*", permanent: false },
+      { source: "/sos/services", destination: "/emergency-services-list", permanent: false },
+      { source: "/sos/services/:path*", destination: "/emergency-services-list/:path*", permanent: false },
       ...ADMIN_PAGES.map((page) => ({
         source: `/admin/${page}`,
         destination: `/${page}`,
@@ -52,6 +62,12 @@ const nextConfig = {
         destination: `/${page}/:path*`,
         permanent: false
       })),
+      ...RENAMED_PAGES.flatMap(({ from, to, folder }) => [
+        { source: `/admin/${folder}`, destination: `/${to}`, permanent: false },
+        { source: `/admin/${folder}/:path*`, destination: `/${to}/:path*`, permanent: false },
+        { source: `/${from}`, destination: `/${to}`, permanent: false },
+        { source: `/${from}/:path*`, destination: `/${to}/:path*`, permanent: false }
+      ]),
       { source: "/agent/listings", destination: "/listings", permanent: false },
       { source: "/agent/listings/:path*", destination: "/listings/:path*", permanent: false },
       { source: "/agent/commissions", destination: "/commissions", permanent: false },
@@ -76,15 +92,23 @@ const nextConfig = {
       { source: "/manager/settings", destination: "/settings", permanent: false },
       { source: "/manager/notifications", destination: "/notifications", permanent: false },
       { source: "/manager/profile", destination: "/profile", permanent: false },
-      { source: "/admin/blog", destination: "/blogs", permanent: false },
-      { source: "/admin/blog/:path*", destination: "/blogs/:path*", permanent: false }
+      { source: "/admin/blog", destination: "/blog-list", permanent: false },
+      { source: "/admin/blog/:path*", destination: "/blog-list/:path*", permanent: false },
+      { source: "/blogs", destination: "/blog-list", permanent: false },
+      { source: "/blogs/:path*", destination: "/blog-list/:path*", permanent: false }
     ];
   },
   async rewrites() {
     return [
+      { source: "/emergency-services-list", destination: "/admin/safety/services" },
+      { source: "/emergency-services-list/:path*", destination: "/admin/safety/services/:path*" },
       ...pageRules("/admin", ADMIN_PAGES),
-      { source: "/blogs", destination: "/admin/blog" },
-      { source: "/blogs/:path*", destination: "/admin/blog/:path*" },
+      ...RENAMED_PAGES.flatMap(({ to, folder }) => [
+        { source: `/${to}`, destination: `/admin/${folder}` },
+        { source: `/${to}/:path*`, destination: `/admin/${folder}/:path*` }
+      ]),
+      { source: "/blog-list", destination: "/admin/blog" },
+      { source: "/blog-list/:path*", destination: "/admin/blog/:path*" },
       { source: "/listings", destination: "/agent/listings" },
       { source: "/listings/:path*", destination: "/agent/listings/:path*" },
       { source: "/commissions", destination: "/agent/commissions" },

@@ -166,7 +166,7 @@ export default function AdminSafetyIncidentDetailPage() {
           />
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild variant="outline">
-              <Link href="/safety">
+              <Link href="/sos">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to incidents
               </Link>
@@ -187,7 +187,7 @@ export default function AdminSafetyIncidentDetailPage() {
       <PageContainer>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm">
-            <Link href="/safety">
+            <Link href="/sos">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>

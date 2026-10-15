@@ -93,7 +93,7 @@ export default function NewsletterSubscriberDetailPage() {
             title="Subscriber not found"
             description="This subscriber record could not be found."
             actionLabel="Back to subscribers"
-            onActionClick={() => router.push("/newsletter-subscribers")}
+            onActionClick={() => router.push("/newsletter-subscribers-list")}
           />
         </PageContainer>
       </AppShell>
@@ -109,7 +109,7 @@ export default function NewsletterSubscriberDetailPage() {
       <PageContainer>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/newsletter-subscribers">
+            <Link href="/newsletter-subscribers-list">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to subscribers
             </Link>

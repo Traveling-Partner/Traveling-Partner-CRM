@@ -141,10 +141,10 @@ export default function AdminNewsletterPage() {
         cell: ({ row }) => (
           <div className="flex flex-wrap gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/newsletter/${row.original.id}/preview`}>Preview</Link>
+              <Link href={`/newsletter-list/${row.original.id}/preview`}>Preview</Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/newsletter/${row.original.id}`}>Edit</Link>
+              <Link href={`/newsletter-list/${row.original.id}`}>Edit</Link>
             </Button>
           </div>
         )
@@ -177,7 +177,7 @@ export default function AdminNewsletterPage() {
           headerAction={
             <WriteOnly>
               <Button asChild>
-                <Link href="/newsletter/create">Create newsletter</Link>
+                <Link href="/newsletter-list/create">Create newsletter</Link>
               </Button>
             </WriteOnly>
           }
