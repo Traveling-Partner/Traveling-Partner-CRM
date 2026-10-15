@@ -25,23 +25,30 @@ function toApiFilters(
   page: number,
   pageSize: number,
   search: string,
-  extra?: { vehicleTypeId?: number; brandId?: number; modelYearId?: number }
+  extra?: { status?: string; vehicleTypeId?: number; brandId?: number; modelYearId?: number }
 ) {
+  const status = extra?.status?.trim();
   return {
     page: Math.max(1, page),
     pageSize,
     search,
+    status: status && status !== "all" ? status : undefined,
     vehicleTypeId: extra?.vehicleTypeId,
     brandId: extra?.brandId,
     modelYearId: extra?.modelYearId
   };
 }
 
-export function useVehicleTypesQuery(page: number, pageSize: number, search: string) {
+export function useVehicleTypesQuery(
+  page: number,
+  pageSize: number,
+  search: string,
+  status?: string
+) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleTypesListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch),
-    [page, pageSize, debouncedSearch]
+    () => toApiFilters(page, pageSize, debouncedSearch, { status }),
+    [page, pageSize, debouncedSearch, status]
   );
 
   return usePaginatedQuery({
@@ -56,12 +63,13 @@ export function useVehicleModelsQuery(
   pageSize: number,
   search: string,
   vehicleTypeId?: number,
-  brandId?: number
+  brandId?: number,
+  status?: string
 ) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleModelsListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId, brandId }),
-    [page, pageSize, debouncedSearch, vehicleTypeId, brandId]
+    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId, brandId, status }),
+    [page, pageSize, debouncedSearch, vehicleTypeId, brandId, status]
   );
 
   return usePaginatedQuery({
@@ -77,12 +85,19 @@ export function useVehicleColorsQuery(
   search: string,
   vehicleTypeId?: number,
   brandId?: number,
-  modelYearId?: number
+  modelYearId?: number,
+  status?: string
 ) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleColorsListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId, brandId, modelYearId }),
-    [page, pageSize, debouncedSearch, vehicleTypeId, brandId, modelYearId]
+    () =>
+      toApiFilters(page, pageSize, debouncedSearch, {
+        vehicleTypeId,
+        brandId,
+        modelYearId,
+        status
+      }),
+    [page, pageSize, debouncedSearch, vehicleTypeId, brandId, modelYearId, status]
   );
 
   return usePaginatedQuery({
@@ -96,12 +111,13 @@ export function useVehicleBrandsQuery(
   page: number,
   pageSize: number,
   search: string,
-  vehicleTypeId?: number
+  vehicleTypeId?: number,
+  status?: string
 ) {
   const debouncedSearch = useDebouncedValue(search);
   const filters = useMemo<VehicleBrandsListFilters>(
-    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId }),
-    [page, pageSize, debouncedSearch, vehicleTypeId]
+    () => toApiFilters(page, pageSize, debouncedSearch, { vehicleTypeId, status }),
+    [page, pageSize, debouncedSearch, vehicleTypeId, status]
   );
 
   return usePaginatedQuery({

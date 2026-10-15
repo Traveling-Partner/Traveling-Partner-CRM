@@ -60,6 +60,7 @@ async function fetchEnvelopePage<T>(
     page: number;
     pageSize: number;
     search: string;
+    status?: string;
     vehicleTypeId?: number;
     brandId?: number;
     modelYearId?: number;
@@ -72,6 +73,7 @@ async function fetchEnvelopePage<T>(
       page: Math.max(1, filters.page),
       size: filters.pageSize,
       search: filters.search.trim(),
+      status: filters.status,
       vehicleTypeId: filters.vehicleTypeId,
       brandId: filters.brandId,
       modelYearId: filters.modelYearId
