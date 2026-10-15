@@ -128,11 +128,7 @@ export async function fetchRolePermissions(
 
 /**
  * GET /api/user/permission — logged-in employee's modules.
- * `data` may be `{ role, permissions }` or a permissions array.
- *
- * Was /auth/ops/permissions, which TP-1225 removed server-side as a
- * confirmed duplicate of this endpoint on 2026-10-12 - that landed after
- * this file started calling it (2026-10-08), so the old path 404s today.
+ * Shape: `{ role, permissions: [{ module, level }] }` on `data` or the body.
  */
 export async function fetchUserPermissions(opts: {
   token: string;
@@ -144,7 +140,7 @@ export async function fetchUserPermissions(opts: {
     debugLabel: "permissions:me"
   });
   const envelope = assertSuccess(res);
-  return parseRolePermissions(envelope.data);
+  return parseRolePermissions(envelope.data ?? res);
 }
 
 /**
