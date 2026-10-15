@@ -50,6 +50,17 @@ export const ROLE_ROUTE_PREFIXES: Record<AppRole, string> = {
  */
 const SHARED_ADMIN_ROUTE_ACCESS: Array<{ prefixes: string[]; roles: AppRole[] }> = [
   {
+    prefixes: ["/audit-logs-list", "/audit-logs"],
+    roles: [
+      ROLES.ADMIN,
+      ROLES.AGENT,
+      ROLES.SALES_MANAGER,
+      ROLES.MARKETING_MANAGER,
+      ROLES.FINANCE_MANAGER,
+      ROLES.MANAGER
+    ]
+  },
+  {
     prefixes: ["/app-commission-list", "/commission-management", "/agent-performance"],
     roles: [ROLES.ADMIN, ROLES.SALES_MANAGER, ROLES.MANAGER]
   },
@@ -194,10 +205,6 @@ export function getAllowedRolesForPath(pathname: string): AppRole[] | undefined 
       path.startsWith("/emergency-services-list/") ||
       path === "/safety" ||
       path.startsWith("/safety/") ||
-      path === "/audit-logs-list" ||
-      path.startsWith("/audit-logs-list/") ||
-      path === "/audit-logs" ||
-      path.startsWith("/audit-logs/") ||
       path === "/access-management" ||
       path.startsWith("/access-management/") ||
       path === "/vehicle-model-variants-list" ||
